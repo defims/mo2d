@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>mo2d stage</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #101014; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; touch-action: none; cursor: crosshair; }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<script type="module">
+"use strict";
+// mo2d minimal stage — four operations, zero standard controls.
+//   1. draw: drag on empty canvas → line.create
+//   2. drag node: pointer on a node → node.set (auto-key when tracked)
+//   3. connect: line→line = bind, node→node = share, node→timeline = track.create
+//   4. play: the time baseline (a line) — drag playhead to scrub, tap to play
+// Every interaction is a protocol command POSTed to /cmd.
+
+const canvas = document.getElementById("stage");
+const ctx = canvas.getContext("2d");
+const frameImg = new Image();
+
+let scene = { width: 640, height: 360, tps: 254016000000, fps: 24, lines: [], relations: [] };
+let tick = 0;
+let playing = false;
+let playAnchor = null;          // {wall: ms, tick}
+let transform = { scale: 1, ox: 0, oy: 0 };   // world → screen
+let baseline = { y: 0, x0: 0, x1: 0, durSec: 4 };
+
+// gesture state
+let gesture = null;             // {kind: "draw"|"dragNode"|"connect"|"scrub", ...}
+
+function resize() {
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  layout();
+}
+window.addEventListener("resize", resize);
+
+function layout() {
+  const W = scene.width, H = scene.height;
+  const cw = window.innerWidth, ch = window.innerHeight;
+  const margin = 40, timelineH = 72;
+  const scale = Math.min((cw - 2 * margin) / W, (ch - 2 * margin - timelineH) / H);
+  const ox = (cw - W * scale) / 2;
+  const oy = (ch - timelineH - H * scale) / 2;
+  transform = { scale, ox, oy };
+  baseline.y = ch - timelineH / 2;
+  baseline.x0 = ox;
+  baseline.x1 = ox + W * scale;
+}
+
+const w2s = (x, y) => [transform.ox + x * transform.scale, transform.oy + (scene.height - y) * transform.scale];
+const s2w = (sx, sy) => [(sx - transform.ox) / transform.scale, scene.height - (sy - transform.oy) / transform.scale];
+const t2s = (t) => baseline.x0 + (t / (baseline.durSec * scene.tps)) * (baseline.x1 - baseline.x0);
+const s2t = (sx) => Math.max(0, Math.min(baseline.durSec * scene.tps, Math.round((sx - baseline.x0) / (baseline.x1 - baseline.x0) * baseline.durSec * scene.tps)));
+
+async function post(op, args) {
+  const cmd = Object.assign({ op }, args || {});
+  const res = await fetch("/cmd", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(cmd),
+  });
+  const data = await res.json();
+  if (!data.ok) console.error("command rejected:", data.error);
+  return data;
+}
+
+async function refreshScene() {
+  try {
+    const res = await fetch(`/scene?tick=${tick}`);
+    scene = await res.json();
+    layout();
+  } catch (e) { /* server gone */ }
+}
+
+function refreshFrame() {
+  frameImg.src = `/frame?tick=${tick}&r=${Math.random()}`;
+}
+
+// ---------------------------------------------------------------------------
+// picking
+// ---------------------------------------------------------------------------
+
+function distSeg(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const l2 = dx * dx + dy * dy;
+  const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2));
+  const cx = ax + t * dx, cy = ay + t * dy;
+  return { d: Math.hypot(px - cx, py - cy), t };
+}
+
+function pickNode(sx, sy) {
+  let best = null;
+  for (const line of scene.lines) {
+    line.nodes.forEach((n, i) => {
+      const [nx, ny] = w2s(n[0], n[1]);
+      const d = Math.hypot(sx - nx, sy - ny);
+      if (d < 10 && (!best || d < best.d)) best = { line: line.id, index: i, d, wx: n[0], wy: n[1] };
+    });
+  }
+  return best;
+}
+
+function pickLine(sx, sy) {
+  let best = null;
+  for (const line of scene.lines) {
+    if (line.nodes.length < 2) continue;
+    const n = line.nodes.length;
+    const count = line.closed ? n : n - 1;
+    for (let i = 0; i < count; i++) {
+      const a = line.nodes[i], b = line.nodes[(i + 1) % n];
+      const [ax, ay] = w2s(a[0], a[1]);
+      const [bx, by] = w2s(b[0], b[1]);
+      const r = distSeg(sx, sy, ax, ay, bx, by);
+      if (r.d < 8 && (!best || r.d < best.d)) best = { line: line.id, d: r.d };
+    }
+  }
+  return best;
+}
+
+function onBaseline(sx, sy) {
+  return sy > baseline.y - 24 && sy < baseline.y + 24 && sx > baseline.x0 - 10 && sx < baseline.x1 + 10;
+}
+
+// ---------------------------------------------------------------------------
+// gestures
+// ---------------------------------------------------------------------------
+
+canvas.addEventListener("pointerdown", (e) => {
+  canvas.setPointerCapture(e.pointerId);
+  const sx = e.clientX, sy = e.clientY;
+  if (onBaseline(sx, sy)) {
+    gesture = { kind: "scrub", x0: sx, y0: sy, moved: false };
+    tick = s2t(sx);
+    post("session.seek", { tick });
+    refreshFrame();
+    return;
+  }
+  const node = pickNode(sx, sy);
+  if (node) {
+    gesture = { kind: "dragNode", node, x0: sx, y0: sy, moved: false };
+    return;
+  }
+  const line = pickLine(sx, sy);
+  if (line) {
+    gesture = { kind: "connect", from: line.line, fromNode: null, x0: sx, y0: sy, x: sx, y: sy, moved: false };
+    return;
+  }
+  // empty canvas → draw
+  const [wx, wy] = s2w(sx, sy);
+  gesture = { kind: "draw", x0: sx, y0: sy, moved: false, pts: [[wx, wy]] };
+});
+
+canvas.addEventListener("pointermove", (e) => {
+  if (!gesture) return;
+  const sx = e.clientX, sy = e.clientY;
+  gesture.moved = gesture.moved || Math.hypot(sx - gesture.x0, sy - gesture.y0) > 4;
+  if (gesture.kind === "draw") {
+    const [wx, wy] = s2w(sx, sy);
+    const last = gesture.pts[gesture.pts.length - 1];
+    const [lx, ly] = w2s(last[0], last[1]);
+    if (Math.hypot(sx - lx, sy - ly) > 6) gesture.pts.push([wx, wy]);
+  } else if (gesture.kind === "dragNode") {
+    const [wx, wy] = s2w(sx, sy);
+    gesture.node.wx = wx; gesture.node.wy = wy;
+  } else if (gesture.kind === "connect") {
+    gesture.x = sx; gesture.y = sy;
+    const node = pickNode(sx, sy);
+    gesture.toNode = node ? { line: node.line, index: node.index } : null;
+    const line = pickLine(sx, sy);
+    gesture.toLine = line ? line.line : null;
+    gesture.toBaseline = onBaseline(sx, sy);
+  } else if (gesture.kind === "scrub") {
+    tick = s2t(sx);
+    refreshFrame();
+  }
+});
+
+canvas.addEventListener("pointerup", async (e) => {
+  if (!gesture) return;
+  const g = gesture; gesture = null;
+  const sx = e.clientX, sy = e.clientY;
+  if (g.kind === "scrub") {
+    if (!g.moved) {           // tap on the time line = play/pause
+      playing = !playing;
+      post(playing ? "session.play" : "session.pause", { tick });
+      if (playing) playAnchor = { wall: performance.now(), tick };
+    } else {
+      post("session.seek", { tick });
+    }
+    return;
+  }
+  if (g.kind === "draw") {
+    if (g.pts.length >= 2) {
+      const nodes = g.pts.map(([x, y]) => ({ p: [round(x), round(y), 0] }));
+      // Stroke closed on itself (endpoint near start) → closed line = fill
+      // domain (the hand path's way to build closed shapes like the sucker).
+      const [sx0, sy0] = w2s(g.pts[0][0], g.pts[0][1]);
+      const closed = g.pts.length >= 3 && Math.hypot(sx - sx0, sy - sy0) < 14;
+      const cmd = { nodes };
+      if (closed) { cmd.closed = true; cmd.fillOn = true; }
+      await post("line.create", cmd);
+    }
+  } else if (g.kind === "dragNode") {
+    if (g.moved) {
+      // Drop target disambiguates: another node = share, timeline = track.create,
+      // empty space = move/auto-key.
+      const dropNode = pickNode(sx, sy);
+      const dropIsOtherNode = dropNode && !(dropNode.line === g.node.line && dropNode.index === g.node.index);
+      if (dropIsOtherNode) {
+        await post("relation.create", { type: "share", driver: { line: g.node.line, node: g.node.index }, driven: { line: dropNode.line, node: dropNode.index } });
+      } else if (onBaseline(sx, sy)) {
+        await post("track.create", { line: g.node.line, node: g.node.index, tick });
+      } else {
+        const args = { line: g.node.line, index: g.node.index, p: [round(g.node.wx), round(g.node.wy), 0], atTick: tick };
+        await post("node.set", args);
+      }
+    }
+  } else if (g.kind === "connect") {
+    if (g.toBaseline && g.fromNode) {
+      // node → timeline: create a track for that node (first key = now)
+      await post("track.create", { line: g.fromNode.line, node: g.fromNode.index, tick });
+    } else if (g.toNode && g.fromNode && g.toNode.line !== g.fromNode.line) {
+      await post("relation.create", { type: "share", driver: { line: g.fromNode.line, node: g.fromNode.index }, driven: { line: g.toNode.line, node: g.toNode.index } });
+    } else if (g.toLine && g.toLine !== g.from) {
+      await post("relation.create", { type: "bind", target: g.from, skeleton: g.toLine });
+    }
+  }
+  await refreshScene();
+  refreshFrame();
+});
+
+function round(x) { return Math.round(x * 100) / 100; }
+
+// ---------------------------------------------------------------------------
+// render loop
+// ---------------------------------------------------------------------------
+
+function draw() {
+  const W = window.innerWidth, H = window.innerHeight;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = "#101014";
+  ctx.fillRect(0, 0, W, H);
+
+  // document frame (rendered by the same headless pipeline as export/MCP)
+  if (frameImg.complete && frameImg.naturalWidth) {
+    ctx.drawImage(frameImg, transform.ox, transform.oy, scene.width * transform.scale, scene.height * transform.scale);
+  }
+  // canvas border
+  ctx.strokeStyle = "#3a3a44";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(transform.ox, transform.oy, scene.width * transform.scale, scene.height * transform.scale);
+
+  // session overlay: nodes (small squares) — the picking affordance
+  for (const line of scene.lines) {
+    const tracked = scene.relations.some(r => r.type === "track" && r.target && r.target.line === line.id);
+    ctx.fillStyle = line.tags && line.tags.includes("skeleton") ? "#ffb84d" : "#4dc3ff";
+    for (let i = 0; i < line.nodes.length; i++) {
+      const n = line.nodes[i];
+      const [x, y] = w2s(n[0], n[1]);
+      const s = tracked ? 5 : 4;
+      ctx.fillRect(x - s / 2, y - s / 2, s, s);
+    }
+  }
+
+  // gesture previews
+  if (gesture) {
+    if (gesture.kind === "draw") {
+      ctx.strokeStyle = "#7dffb0";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      gesture.pts.forEach(([x, y], i) => {
+        const [sx, sy] = w2s(x, y);
+        i === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+      });
+      ctx.stroke();
+    } else if (gesture.kind === "dragNode") {
+      const [sx, sy] = w2s(gesture.node.wx, gesture.node.wy);
+      ctx.strokeStyle = "#7dffb0";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(sx - 6, sy - 6, 12, 12);
+    } else if (gesture.kind === "connect" && gesture.moved) {
+      ctx.strokeStyle = "#ff7d7d";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(gesture.x0, gesture.y0);
+      ctx.lineTo(gesture.x, gesture.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // the time baseline — itself a line, with tick nodes (control-as-line)
+  ctx.strokeStyle = "#8a8a99";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(baseline.x0, baseline.y);
+  ctx.lineTo(baseline.x1, baseline.y);
+  ctx.stroke();
+  // second marks = nodes on the baseline
+  ctx.fillStyle = "#8a8a99";
+  for (let s = 0; s <= baseline.durSec; s++) {
+    const x = t2s(s * scene.tps);
+    ctx.fillRect(x - 1, baseline.y - 6, 2, 12);
+    if (s > 0) {
+      ctx.font = "10px ui-monospace, monospace";
+      ctx.fillText(`${s}s`, x - 6, baseline.y + 20);
+    }
+  }
+  // the playhead — a short vertical line on the baseline
+  const px = t2s(tick);
+  ctx.strokeStyle = playing ? "#7dffb0" : "#ff9d5c";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(px, baseline.y - 18);
+  ctx.lineTo(px, baseline.y + 18);
+  ctx.stroke();
+
+  // hint (drawn, not a control)
+  ctx.fillStyle = "#6a6a78";
+  ctx.font = "11px ui-monospace, monospace";
+  ctx.fillText("drag empty: draw · drag node: move/auto-key · drop node on node: share · drop node on timeline: track · line→line: bind · tap timeline: play", 12, 16);
+  ctx.fillText(`tick ${tick}`, 12, 32);
+
+  requestAnimationFrame(draw);
+}
+
+async function playLoop() {
+  if (playing && playAnchor) {
+    const elapsed = performance.now() - playAnchor.wall;
+    const dur = baseline.durSec * scene.tps;
+    tick = ((playAnchor.tick + Math.floor(elapsed / 1000 * scene.tps)) % dur + dur) % dur;
+    refreshFrame();
+  }
+  setTimeout(playLoop, 1000 / 30);
+}
+
+resize();
+await refreshScene();
+refreshFrame();
+playLoop();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

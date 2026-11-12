@@ -1,0 +1,21 @@
+[package]
+name = "mo2d"
+version = "0.1.0"
+edition = "2021"
+description = "mo2d headless engine — everything is a line (万物皆线). MVP: a moving tentacle + a z≠0 static scene, built entirely via the command protocol."
+license = "MIT OR Apache-2.0"
+
+# Zero external dependencies by design: byte-level determinism must not depend
+# on third-party serializer behavior, and the engine must build offline.
+[dependencies]
+
+[lib]
+name = "mo2d"
+path = "src/lib.rs"
+
+[[bin]]
+name = "mo2d"
+path = "src/bin/mo2d.rs"
+
+[profile.release]
+debug = false

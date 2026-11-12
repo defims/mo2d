@@ -1,0 +1,537 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "face_front",
+      "closed": true,
+      "width": 1.5,
+      "color": [
+        40,
+        40,
+        40,
+        255
+      ],
+      "fillColor": [
+        212,
+        90,
+        52,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": true,
+      "nodes": [
+        {
+          "p": [
+            460.0,
+            300.0,
+            120.0
+          ]
+        },
+        {
+          "p": [
+            370.0,
+            90.0,
+            40.0
+          ]
+        },
+        {
+          "p": [
+            550.0,
+            90.0,
+            40.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "face_right",
+      "closed": true,
+      "width": 1.5,
+      "color": [
+        40,
+        40,
+        40,
+        255
+      ],
+      "fillColor": [
+        236,
+        150,
+        40,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": true,
+      "nodes": [
+        {
+          "p": [
+            460.0,
+            300.0,
+            120.0
+          ]
+        },
+        {
+          "p": [
+            550.0,
+            90.0,
+            200.0
+          ]
+        },
+        {
+          "p": [
+            550.0,
+            90.0,
+            40.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "face_back",
+      "closed": true,
+      "width": 1.5,
+      "color": [
+        40,
+        40,
+        40,
+        255
+      ],
+      "fillColor": [
+        96,
+        140,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": true,
+      "nodes": [
+        {
+          "p": [
+            460.0,
+            300.0,
+            120.0
+          ]
+        },
+        {
+          "p": [
+            370.0,
+            90.0,
+            200.0
+          ]
+        },
+        {
+          "p": [
+            550.0,
+            90.0,
+            200.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "face_left",
+      "closed": true,
+      "width": 1.5,
+      "color": [
+        40,
+        40,
+        40,
+        255
+      ],
+      "fillColor": [
+        70,
+        160,
+        130,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": true,
+      "nodes": [
+        {
+          "p": [
+            460.0,
+            300.0,
+            120.0
+          ]
+        },
+        {
+          "p": [
+            370.0,
+            90.0,
+            40.0
+          ]
+        },
+        {
+          "p": [
+            370.0,
+            90.0,
+            200.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "box_bottom",
+      "closed": true,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            120.0,
+            90.0,
+            60.0
+          ]
+        },
+        {
+          "p": [
+            280.0,
+            90.0,
+            60.0
+          ]
+        },
+        {
+          "p": [
+            280.0,
+            90.0,
+            220.0
+          ]
+        },
+        {
+          "p": [
+            120.0,
+            90.0,
+            220.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "box_top",
+      "closed": true,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            120.0,
+            250.0,
+            60.0
+          ]
+        },
+        {
+          "p": [
+            280.0,
+            250.0,
+            60.0
+          ]
+        },
+        {
+          "p": [
+            280.0,
+            250.0,
+            220.0
+          ]
+        },
+        {
+          "p": [
+            120.0,
+            250.0,
+            220.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "box_pillar_0",
+      "closed": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            120.0,
+            90.0,
+            60.0
+          ]
+        },
+        {
+          "p": [
+            120.0,
+            250.0,
+            60.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "box_pillar_1",
+      "closed": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            280.0,
+            90.0,
+            60.0
+          ]
+        },
+        {
+          "p": [
+            280.0,
+            250.0,
+            60.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "box_pillar_2",
+      "closed": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            280.0,
+            90.0,
+            220.0
+          ]
+        },
+        {
+          "p": [
+            280.0,
+            250.0,
+            220.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "box_pillar_3",
+      "closed": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            120.0,
+            90.0,
+            220.0
+          ]
+        },
+        {
+          "p": [
+            120.0,
+            250.0,
+            220.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    }
+  ],
+  "relations": []
+}

@@ -1,0 +1,29 @@
+{
+  "note": "Frozen acceptance references (mvp.md A1 3D scene gate / P1-7 hash freeze). Regenerate via demo/freeze.py.",
+  "tentacle": {
+    "docSha256": "7d2ace88f1029cc69712daf61f75fb9e483725eb270954fae7d7564394c4fee1",
+    "frameCount": 48,
+    "firstFrameSha256": "d638fe7ae06cfa52665b1cc02de0a17be4c46ac5bd05c2821e3277219e00a517",
+    "loopFrameSha256": "d638fe7ae06cfa52665b1cc02de0a17be4c46ac5bd05c2821e3277219e00a517",
+    "midFrameSha256": "6a555cefed3bc52953a3cc5239462f20802d3a1e624044de4bf1010d15272b28",
+    "midTick": 127008000000
+  },
+  "scene3d": {
+    "docSha256": "6871eddf9c2d07a9c96b70578e889b01de0ef0f13922654aa69469322c047b20",
+    "frameSha256": "1a8e8d5ac986aa7c353386ac1ae8a377c388c00d7916f5c0613f71e4e2153d0f",
+    "camera": {
+      "type": "perspective",
+      "eye": [
+        320,
+        200,
+        600
+      ],
+      "target": [
+        320,
+        190,
+        120
+      ],
+      "fovY": 42
+    }
+  }
+}

@@ -1,0 +1,733 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "skel",
+      "tags": [
+        "skeleton"
+      ],
+      "closed": false,
+      "width": 2.0,
+      "color": [
+        255,
+        170,
+        60,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            110.0,
+            184.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            185.0,
+            192.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            260.0,
+            196.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            335.0,
+            192.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            410.0,
+            184.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "closed": false,
+      "width": 8.0,
+      "color": [
+        16,
+        84,
+        96,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            110.0,
+            184.0,
+            0.0
+          ],
+          "w": 34.0
+        },
+        {
+          "p": [
+            150.0,
+            188.3,
+            0.0
+          ],
+          "w": 30.0
+        },
+        {
+          "p": [
+            190.0,
+            192.3,
+            0.0
+          ],
+          "w": 26.0
+        },
+        {
+          "p": [
+            230.0,
+            194.4,
+            0.0
+          ],
+          "w": 22.0
+        },
+        {
+          "p": [
+            270.0,
+            195.5,
+            0.0
+          ],
+          "w": 18.5
+        },
+        {
+          "p": [
+            310.0,
+            193.3,
+            0.0
+          ],
+          "w": 15.0
+        },
+        {
+          "p": [
+            350.0,
+            190.4,
+            0.0
+          ],
+          "w": 12.0
+        },
+        {
+          "p": [
+            390.0,
+            186.1,
+            0.0
+          ],
+          "w": 9.0
+        },
+        {
+          "p": [
+            425.0,
+            184.0,
+            0.0
+          ],
+          "w": 7.0
+        }
+      ],
+      "segs": [
+        {
+          "type": "curve",
+          "visible": true
+        },
+        {
+          "type": "curve",
+          "visible": true
+        },
+        {
+          "type": "curve",
+          "visible": true
+        },
+        {
+          "type": "curve",
+          "visible": true
+        },
+        {
+          "type": "curve",
+          "visible": true
+        },
+        {
+          "type": "curve",
+          "visible": true
+        },
+        {
+          "type": "curve",
+          "visible": true
+        },
+        {
+          "type": "curve",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "sucker",
+      "closed": true,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        236,
+        88,
+        52,
+        255
+      ],
+      "strokeOn": false,
+      "fillOn": true,
+      "nodes": [
+        {
+          "p": [
+            423.0,
+            184.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            462.0,
+            168.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            462.0,
+            200.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "fork",
+      "closed": false,
+      "width": 2.0,
+      "color": [
+        255,
+        170,
+        60,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            410.0,
+            184.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            458.0,
+            150.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "trk_skel_1_position",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": [
+            185,
+            192,
+            0
+          ]
+        },
+        {
+          "p": [
+            127008000000
+          ],
+          "v": [
+            185,
+            258,
+            0
+          ]
+        },
+        {
+          "p": [
+            254016000000
+          ],
+          "v": [
+            185,
+            192,
+            0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        },
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        }
+      ]
+    },
+    {
+      "id": "trk_skel_2_position",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": [
+            260,
+            196,
+            0
+          ]
+        },
+        {
+          "p": [
+            127008000000
+          ],
+          "v": [
+            260,
+            286,
+            0
+          ]
+        },
+        {
+          "p": [
+            254016000000
+          ],
+          "v": [
+            260,
+            196,
+            0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        },
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        }
+      ]
+    },
+    {
+      "id": "trk_skel_3_position",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": [
+            335,
+            192,
+            0
+          ]
+        },
+        {
+          "p": [
+            127008000000
+          ],
+          "v": [
+            335,
+            262,
+            0
+          ]
+        },
+        {
+          "p": [
+            254016000000
+          ],
+          "v": [
+            335,
+            192,
+            0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        },
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        }
+      ]
+    },
+    {
+      "id": "trk_skel_4_position",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": [
+            410,
+            184,
+            0
+          ]
+        },
+        {
+          "p": [
+            127008000000
+          ],
+          "v": [
+            410,
+            254,
+            0
+          ]
+        },
+        {
+          "p": [
+            254016000000
+          ],
+          "v": [
+            410,
+            184,
+            0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        },
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        }
+      ]
+    },
+    {
+      "id": "trk_body_0_width",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": 34.0
+        },
+        {
+          "p": [
+            127008000000
+          ],
+          "v": 44.0
+        },
+        {
+          "p": [
+            254016000000
+          ],
+          "v": 34.0
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        },
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9
+          }
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "bind_body",
+      "type": "bind",
+      "target": "body",
+      "skeleton": "skel",
+      "falloff": 0.0,
+      "stretch": true
+    },
+    {
+      "id": "bind_sucker",
+      "type": "bind",
+      "target": "sucker",
+      "skeleton": "skel",
+      "falloff": 0.0,
+      "stretch": true
+    },
+    {
+      "id": "share_tip",
+      "type": "share",
+      "driver": {
+        "line": "skel",
+        "node": 4
+      },
+      "driven": {
+        "line": "fork",
+        "node": 0
+      }
+    },
+    {
+      "id": "rel_trk_skel_1",
+      "type": "track",
+      "trackLine": "trk_skel_1_position",
+      "target": {
+        "line": "skel",
+        "node": 1,
+        "attr": "position"
+      }
+    },
+    {
+      "id": "rel_trk_skel_2",
+      "type": "track",
+      "trackLine": "trk_skel_2_position",
+      "target": {
+        "line": "skel",
+        "node": 2,
+        "attr": "position"
+      }
+    },
+    {
+      "id": "rel_trk_skel_3",
+      "type": "track",
+      "trackLine": "trk_skel_3_position",
+      "target": {
+        "line": "skel",
+        "node": 3,
+        "attr": "position"
+      }
+    },
+    {
+      "id": "rel_trk_skel_4",
+      "type": "track",
+      "trackLine": "trk_skel_4_position",
+      "target": {
+        "line": "skel",
+        "node": 4,
+        "attr": "position"
+      }
+    },
+    {
+      "id": "rel_trk_body_w",
+      "type": "track",
+      "trackLine": "trk_body_0_width",
+      "target": {
+        "line": "body",
+        "node": 0,
+        "attr": "width"
+      }
+    }
+  ]
+}

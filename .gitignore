@@ -1,0 +1,10 @@
+# 会话产物
+.zcode/
+
+# 构建产物
+engine/target/
+**/__pycache__/
+*.pyc
+
+# 系统噪音
+.DS_Store

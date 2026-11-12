@@ -1,0 +1,387 @@
+{
+  "v": 1,
+  "cmds": [
+    {
+      "op": "doc.setRoot",
+      "width": 640,
+      "height": 360,
+      "fps": 24.0
+    },
+    {
+      "op": "line.create",
+      "id": "face_front",
+      "closed": true,
+      "fillOn": true,
+      "fillColor": [
+        212,
+        90,
+        52,
+        255
+      ],
+      "strokeOn": true,
+      "width": 1.5,
+      "color": [
+        40,
+        40,
+        40,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            460,
+            300,
+            120
+          ]
+        },
+        {
+          "p": [
+            370,
+            90,
+            40
+          ]
+        },
+        {
+          "p": [
+            550,
+            90,
+            40
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "face_right",
+      "closed": true,
+      "fillOn": true,
+      "fillColor": [
+        236,
+        150,
+        40,
+        255
+      ],
+      "strokeOn": true,
+      "width": 1.5,
+      "color": [
+        40,
+        40,
+        40,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            460,
+            300,
+            120
+          ]
+        },
+        {
+          "p": [
+            550,
+            90,
+            200
+          ]
+        },
+        {
+          "p": [
+            550,
+            90,
+            40
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "face_back",
+      "closed": true,
+      "fillOn": true,
+      "fillColor": [
+        96,
+        140,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "width": 1.5,
+      "color": [
+        40,
+        40,
+        40,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            460,
+            300,
+            120
+          ]
+        },
+        {
+          "p": [
+            370,
+            90,
+            200
+          ]
+        },
+        {
+          "p": [
+            550,
+            90,
+            200
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "face_left",
+      "closed": true,
+      "fillOn": true,
+      "fillColor": [
+        70,
+        160,
+        130,
+        255
+      ],
+      "strokeOn": true,
+      "width": 1.5,
+      "color": [
+        40,
+        40,
+        40,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            460,
+            300,
+            120
+          ]
+        },
+        {
+          "p": [
+            370,
+            90,
+            40
+          ]
+        },
+        {
+          "p": [
+            370,
+            90,
+            200
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "box_bottom",
+      "closed": true,
+      "strokeOn": true,
+      "fillOn": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            120,
+            90,
+            60
+          ]
+        },
+        {
+          "p": [
+            280,
+            90,
+            60
+          ]
+        },
+        {
+          "p": [
+            280,
+            90,
+            220
+          ]
+        },
+        {
+          "p": [
+            120,
+            90,
+            220
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "box_top",
+      "closed": true,
+      "strokeOn": true,
+      "fillOn": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            120,
+            250,
+            60
+          ]
+        },
+        {
+          "p": [
+            280,
+            250,
+            60
+          ]
+        },
+        {
+          "p": [
+            280,
+            250,
+            220
+          ]
+        },
+        {
+          "p": [
+            120,
+            250,
+            220
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "box_pillar_0",
+      "strokeOn": true,
+      "fillOn": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            120,
+            90,
+            60
+          ]
+        },
+        {
+          "p": [
+            120,
+            250,
+            60
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "box_pillar_1",
+      "strokeOn": true,
+      "fillOn": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            280,
+            90,
+            60
+          ]
+        },
+        {
+          "p": [
+            280,
+            250,
+            60
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "box_pillar_2",
+      "strokeOn": true,
+      "fillOn": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            280,
+            90,
+            220
+          ]
+        },
+        {
+          "p": [
+            280,
+            250,
+            220
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "box_pillar_3",
+      "strokeOn": true,
+      "fillOn": false,
+      "width": 2.0,
+      "color": [
+        50,
+        50,
+        64,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            120,
+            90,
+            220
+          ]
+        },
+        {
+          "p": [
+            120,
+            250,
+            220
+          ]
+        }
+      ]
+    }
+  ]
+}
