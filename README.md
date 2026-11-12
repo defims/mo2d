@@ -41,4 +41,6 @@ cargo run --release -- stage --doc ../demo/out/tentacle.mo2d   # 打开最小舞
 ## 许可证
 
 MIT OR Apache-2.0 双许可,任选其一——见 [LICENSE-MIT](LICENSE-MIT) / [LICENSE-APACHE](LICENSE-APACHE)。
-版权所有 © 2026 defims 及 mo2d 贡献者。贡献即同意按此双许可发布(工程规范见 [AGENTS.md](AGENTS.md))。
+**两者均强制署名**:分发本软件(全部或实质部分,含修改)必须保留版权与许可声明,
+Apache-2.0 §4.1(d) 另要求**原样随附 [NOTICE](NOTICE)**。版权所有 © 2026 defims 及 mo2d 贡献者。
+贡献即同意按此双许可发布(工程规范见 [AGENTS.md](AGENTS.md))。

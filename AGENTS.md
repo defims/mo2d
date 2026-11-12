@@ -8,6 +8,9 @@ mo2d——AI 原生的 2D 矢量动画引擎(万物皆线)。**文档库在 [`do
 
 - 本项目 **MIT OR Apache-2.0 双许可**(见 `LICENSE-MIT` / `LICENSE-APACHE`),
   版权署名 `defims and the mo2d contributors`;
+- **两者均强制署名**:分发(全部或实质部分,含修改)必须保留版权与许可声明;
+  根目录 **NOTICE** 文件依 Apache-2.0 §4.1(d) 必须被分发者原样随附——
+  改动 NOTICE 需 owner 批准,贡献者不得删除/篡改署名;
 - 新增源文件应在文件头携带 SPDX 标识:`SPDX-License-Identifier: MIT OR Apache-2.0`;
 - 文档的生成/修订署名走 OKF 的 `generated: { by, at }` 信任戳
   (代理 `zcode-agent/<model>`、人 `human:<id>`);git 提交署名为仓库身份

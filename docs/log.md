@@ -2,6 +2,8 @@
 
 ## 2026-11-12
 
+* **补强**: owner 问"MIT/Apache 需要署名吗"并要求强制署名——答复:**两者本就强制署名**(MIT 条款:分发全部/实质部分必须随附版权与许可声明;Apache §4 另要求标注修改+NOTICE 随附),只是强度为"保留声明"级而非"显著标注/传染"级。零成本强化:新增根 **NOTICE**(Apache §4.1(d) 使其成为**法定必须原样随附**的署名载体);README 许可证节与 AGENTS 署名政策同步( NOTICE 改动需 owner 批准、贡献者不得删改署名)。维持 MIT OR Apache-2.0 双许可不变;若日后要更强(显著署名=CC BY 文档/文件级开源=MPL/传染=GPL)另议并整体换装。
+
 * **维护**: 完工审计——全量重跑 47 测试(单测 22+门 A1×4/A2×4/A3×5/A4×5/A5×4/A6×2+吞吐)全绿、check-okf 0 errors、`demo/freeze.py` 再生后 `frozen.json` 字节不变(确定性实证);发现 `demo/out/tentacle.mo2d` 为舞台拖拽会话遗留的陈旧产物(哈希 58c7f8a0…≠冻结 7d2ace88…,含手拖浮点坐标),经 freeze.py 刷新为命令流规范重放产物(与 frozen.json 一致,其余 demo 文件均逐字节不变);根 README 测试计数 49→47 修正;A6 舞台 HTTP 冒烟通过,触手中帧/3D 场景渲染人工过目符合预期。
 * **新增**: [legal-risks.md](legal-risks.md)(owner 要求仔细检查法务风险)。**盘面取证**:vectorcraft 与 maohou 均持有 LICENSE-MIT+LICENSE-APACHE(MIT OR Apache-2.0)——"vectorcraft 代码可合法参照"成立;engine/ 实现已存在但**仍无 LICENSE、非 git 仓库**(R8 升格为立即行动)。十项风险:R1 GPL 污染(BUI=GPL-3.0 含 Blender 衍生;现有文档仅思想引用低危,须写隔离条款+评审检查项);R2 Moho 商标("mo 系封区"裁定对产品名同样成立;mo2d 保持引擎代号;公开材料禁"复刻/兼容 Moho"措辞);R3 净室链(moho-mapping 消费格式事实;maohou 实机门属黑盒使用;EULA 未审——导入器立项时请法律意见);R4 教程语料红线(永不入公开仓库/CI fixtures 自造/不随 mo2d 分发);R5 事实表薄版权(同 owner 无险,公开保留引注);R6 许可证误读已消除;R7 专利未检索(诚实声明,产品化前 FTO);R8 立即行动(git init+LICENSE+GPL 隔离条款);R9 AI 隐私远期;R10 maohou 复用无险。八项行动清单。
 * **落地**: owner 提供远端 `github.com/defims/mo2d` 并要求署名——**git init(main)+ 仓库身份 `Long, Wei <lostaim@gmail.com>`**(取自 maohou 最近提交的既有身份,弃用机器默认假邮箱);**LICENSE-MIT + LICENSE-APACHE 双许可**,版权署名 `defims and the mo2d contributors`;根 **AGENTS.md**(许可证与署名/SPDX 规则/GPL 隔离三条硬红线/ Moho 语料红线/质量门);**.gitignore**(会话产物/构建产物);README 补许可证节。legal-risks R8 解决、行动清单 1–3 关闭。首次提交变基至远端初始提交之上(README 冲突以本地为准);首次两推撞上网络窗口关闭(HTTP2 成帧错→443 不通,通道间歇),后台重试第 2 次(14:33)推成并经 ls-remote 核实:远端 main = **cee4d07**(107 文件)。
