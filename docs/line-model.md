@@ -1,10 +1,10 @@
 ---
 type: Design Document
-title: "万物皆线:线、节点与关系的统一模型"
-description: mo2d 核心概念文档——线=有序节点序列,三级属性(线级默认/节点级覆盖插值/段级直存);骨骼/骨架/时间轴/渐变/层/网格/模拟皆为线的投影;四类非线边界与判定标准;附 Moho 概念对照吸收表。
+title: "Everything is Lines: The Unified Model of Lines, Nodes, and Relations"
+description: mo2d core concept document — a line = an ordered sequence of nodes, with three-level attributes (line-level defaults / node-level overrides with interpolation / segment-level direct storage); bones/skeletons/timelines/gradients/layers/meshes/simulation are all projections of lines; four categories of non-line boundary with criteria; plus a Moho concept mapping and absorption table.
 tags: [line-model, node, segment, attribute, core-concepts]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T13:58:22Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -17,177 +17,188 @@ sources:
     title: "本 bundle:关系即函数"
 ---
 
-# 万物皆线
+**English** | [简体中文](line-model.zh-CN.md)
 
-mo2d 的核心主张:**一切结构与控制皆可归约为线**(Line)。骨骼、时间轴、矢量图形、
-位图网格、渐变、层——这些传统软件里彼此异构的概念,在 mo2d 里都是同一种东西:
-**由节点组成的线,以及线与线之间的关系**(关系见 [relations.md](relations.md))。
+# Everything is Lines
 
-## 0. 规范表述(owner 给定,逐字收录)
+mo2d's core claim: **all structure and control can be reduced to lines** (Line). Bones, timelines, vector graphics,
+bitmap meshes, gradients, layers — concepts that are mutually heterogeneous in traditional software are, in mo2d, all the same thing:
+**lines composed of nodes, plus relations between lines** (for relations see [relations.md](relations.md)).
+
+## 0. Normative Statements (owner-given, verbatim)
 
 > **骨骼是 2 个节点的线段,骨架是一条折线。**
+> *A bone is a segment of 2 nodes; a skeleton is a polyline.*
 >
 > **时间轴是多条有多个节点的直线,每个节点是一个关键帧。**
+> *A timeline is multiple straight lines with multiple nodes, and each node is a keyframe.*
 >
 > **渐变是控制棒决定的,控制棒就是线段。**
+> *Gradients are determined by control bars, and a control bar is a segment.*
 >
 > **层和群组本质相同,都是线的集合;嵌套层、父子层本质是线与线的关系映射;层的缩放旋转用方框表示。**
+> *Layers and groups are essentially the same — both are sets of lines; nested layers and parent-child layers are essentially relation mappings between lines; a layer's scaling and rotation are represented with a box.*
 >
 > **模拟过程本质是线和线的关系。**
+> *A simulation process is, in essence, a relation between lines.*
 >
 > **集合本质是线和线的关系,只不过是预定义关系;关系就是函数;关系的参数就是集合的参数。**
+> *A set is, in essence, a relation between lines — merely a predefined one; a relation is a function; a relation's parameters are the set's parameters.*
 >
 > **线有属性(比如笔触),节点也有相应的属性。**
+> *Lines have attributes (such as brush), and nodes also have corresponding attributes.*
 >
 > **一条线,每个节点有属性,每条线段也有属性值。**
+> *One line: every node has attributes, and every segment also has attribute values.*
 >
 > **线和线关系可以最大化地利用 GPU,概念契合,提高性能。**
+> *Lines and line relations can maximize GPU utilization; the concepts fit, improving performance.*
 
-## 1. 线原语与三级属性
+## 1. The Line Primitive and Three-Level Attributes
 
-**线 = 有序节点序列 + 线级属性。**
+**Line = an ordered sequence of nodes + line-level attributes.**
 
-- **节点(Node)是一等公民**:矢量图形的控制点、骨骼的关节、时间轴的关键帧、
-  位图网格的纹理锚点、渐变的色标——统一为"线上的节点"。
-- **节点 = 位置 + 节点级属性 + 语义标签**。
-- 相邻节点之间的**段(Segment)**也是一等属性载体:**每条线段有自己的属性值**;
-  段可直可曲,其弯曲由两端节点的手柄决定(手柄存于节点、作用于段)。
-- 线可**开放**可**闭合**;闭合线围合出**填充域**(填充规则属逻辑载荷,见 §4);
-  **推广注记**:3 节点闭合线=三角形面——3D 曲面表示的天然入口([3d-extension.md](3d-extension.md) §2)。
+- **The node (Node) is a first-class citizen**: control points of vector graphics, joints of bones, keyframes of timelines,
+  texture anchors of bitmap meshes, color stops of gradients — all unified as "nodes on a line".
+- **Node = position + node-level attributes + semantic tag**.
+- The **segment (Segment)** between adjacent nodes is also a first-class attribute carrier: **each segment has its own attribute values**;
+  a segment can be straight or curved, its curvature determined by the handles of the nodes at its two ends (handles are stored on nodes and act on segments).
+- A line can be **open** or **closed**; a closed line encloses a **fill region** (the fill rule belongs to logical payload, see §4);
+  **Generalization note**: a 3-node closed line = a triangular face — the natural entry into 3D surface representation ([3d-extension.md](3d-extension.md) §2).
 
-**三级属性模型**(owner:"线有属性,比如笔触;节点也有相应的属性"+"一条线,每个节点有属性,每条线段也有属性值"):
+**Three-level attribute model** (owner: "Lines have attributes, e.g. brush; nodes also have corresponding attributes" + "One line: every node has attributes, and every segment also has attribute values"):
 
-| 层级 | 角色 | 例子 |
+| Level | Role | Examples |
 |---|---|---|
-| 线级属性 | 整条线的默认值 | 笔触(brush style)、基准宽度、颜色、不透明度 |
-| 节点级属性 | 同名属性的逐点覆盖,在段之间**插值**;缺省回落线级值 | 节点宽度、节点颜色、压力 |
-| 段级属性 | 每条线段的**直接状态值**,不在段间插值(它就是段自身的值) | 段类型(直/曲)、段可见、段插值模式(轨道)、段填充参与 |
+| Line-level attributes | Default values for the whole line | Brush (brush style), base width, color, opacity |
+| Node-level attributes | Per-point overrides of same-named attributes, **interpolated** between segments; fall back to the line-level value when absent | Node width, node color, pressure |
+| Segment-level attributes | **Direct state values** for each segment, not interpolated between segments (they are the segment's own values) | Segment type (straight/curved), segment visibility, segment interpolation mode (track), segment fill participation |
 
-- 解析顺序:**段级 → 节点级(两端插值)→ 线级**;下级缺省向上回落。
-- 属性本身就是**通道(Channel)**:可采样、可随时间动画(见 [relations.md](relations.md) §轨道)。
-- 笔触 = 线级样式 + 节点级压力/宽度变化——一条均匀笔触的线,在节点上压出粗细节奏。
-- 佐证:Moho 的 Shape 级 Style(fill_color/line_color)与 Point 级 color/width/color_strength
-  通道覆盖 = 线/节点两级先例;`segments_on`(段可见)与插值设置"每键一份、作用于出段"
-  ([moho-mapping.md](moho-mapping.md) §5.2)= 段级属性的工程先例。
+- Resolution order: **segment-level → node-level (interpolated between both ends) → line-level**; lower levels fall back upward when absent.
+- Attributes are themselves **channels (Channel)**: samplable, animatable over time (see [relations.md](relations.md) § Track).
+- Brush = line-level style + node-level pressure/width variation — a line of uniform brush is pressed into a thick-thin rhythm at its nodes.
+- Corroboration: Moho's Shape-level Style (fill_color/line_color) and Point-level color/width/color_strength
+  channel overrides = precedent for the line/node two levels; `segments_on` (segment visibility) and interpolation settings "one per key, acting on the outgoing segment"
+  ([moho-mapping.md](moho-mapping.md) §5.2) = engineering precedent for segment-level attributes.
 
-**GPU 契合**(owner:"线和线关系可以最大化地利用 GPU,概念契合"):
-节点级属性天然是 SoA(Structure-of-Arrays)数组——位置数组、宽数组、颜色数组——
-直接映射 GPU 顶点属性/存储缓冲,一次上传全场景;详见 [architecture.md](architecture.md) §GPU 策略。
+**GPU fit** (owner: "Lines and line relations can maximize GPU utilization; the concepts fit"):
+node-level attributes are naturally SoA (Structure-of-Arrays) arrays — a position array, a width array, a color array —
+mapping directly onto GPU vertex attributes/storage buffers and uploading the whole scene at once; see [architecture.md](architecture.md) § GPU strategy.
 
-## 2. 关系原语
+## 2. The Relation Primitive
 
-**关系 = 函数**:输入若干线与参数,输出派生的结构与值。**集合 = 预定义关系**,
-关系的参数就是集合的参数(owner 规范表述)。文档 = 全部线 + 全部关系构成的关系图。
-完整的关系分类学见 [relations.md](relations.md),本文只保留一句话:层、群组是组织类预定义关系,
-绑定、约束、传导、派生、轨道、模拟是其余各类。
+**Relation = function**: takes several lines and parameters as input, and outputs derived structure and values. **Set = predefined relation**,
+and a relation's parameters are the set's parameters (owner normative statement). Document = the relation graph formed by all lines + all relations.
+The full taxonomy of relations is in [relations.md](relations.md); this document keeps only one sentence: layers and groups are organizational predefined relations,
+and bind, constraint, propagate, derive, track, and simulate make up the remaining categories.
 
-## 3. 九大映射
+## 3. The Nine Mappings
 
-每个传统概念 = 线(或关系)的投影。前四条与第 6/7 条为 owner 规范表述;标 [推导] 者为本文档延伸,待 owner 确认。
+Each traditional concept = a projection of lines (or relations). The first four items and items 6/7 are owner normative statements; those marked [derived] are extensions of this document, pending owner confirmation.
 
-| # | 传统概念 | mo2d 表述 | 依据 |
+| # | Traditional concept | mo2d formulation | Basis |
 |---|---|---|---|
-| 1 | 矢量图形 | **线**:开放线→描边,闭合线→填充域;变宽=节点宽度通道;笔触=线级样式+节点级压力 | 规范表述 |
-| 2 | 骨骼 | **2 个节点的线段**;关节即节点 | 规范表述 |
-| 3 | 骨架 | **一条折线**;骨骼链首尾相接;分叉(如双臂)= 多条折线**共享节点** | 规范表述 |
-| 4 | 时间轴 | **多条含多节点的直线**;每条直线=一条轨道,**节点=关键帧**(position=Tick、值=节点级属性);**插值/缓动=段级属性**(每分量句柄);track 预定义关系=把轨道线接到被动画属性的引用/采样;(t,v) 缓动曲线=轨道的派生视图 | 规范表述 + 已决议([mvp.md](mvp.md) §2.2 P0-1) |
-| 5 | 位图网格 | **经纬两组交织的线**;节点即纹理锚点;[推导] 交叉点为经纬线共享节点,变形=线动纹理随动 | 推导 |
-| 6 | 渐变 | **控制棒=线段**(2 节点);色标=棒上节点(位置通道=色标位置,颜色通道=色标颜色);[推导] 节点可动画 ⇒ 渐变自然可动画 | 规范表述 + 推导 |
-| 7 | 层/群组 | **线的集合**(预定义关系);嵌套/父子=关系映射;深度/遮挡=关系上的排序参数 | 规范表述 |
-| 8 | 层变换 | **方框=4 节点闭合线**;[推导] 拖方框的节点/边即施加缩放旋转,变换是对方框这条线的操作 | 规范表述 + 推导 |
-| 9 | 模拟 | **线与线的动态关系**(弹簧/力/碰撞/粒子);粒子=发射线发出的有向短线段(位置+速度向量) | 规范表述 |
+| 1 | Vector graphics | **Line**: open line → stroke, closed line → fill region; variable width = node width channel; brush = line-level style + node-level pressure | Normative statement |
+| 2 | Bone | **A segment of 2 nodes**; joints are nodes | Normative statement |
+| 3 | Skeleton | **A polyline**; bone chains connect end to end; branching (e.g. two arms) = multiple polylines **sharing nodes** | Normative statement |
+| 4 | Timeline | **Multiple straight lines containing multiple nodes**; each straight line = a track, **node = keyframe** (position = tick, value = node-level attribute); **interpolation/easing = segment-level attribute** (per-component handles); the track predefined relation = wiring the track line to the attribute being animated for reference/sampling; the (t,v) easing curve = a derived view of the track | Normative statement + resolved ([mvp.md](mvp.md) §2.2 P0-1) |
+| 5 | Bitmap mesh | **Two interwoven sets of warp and weft lines**; nodes are texture anchors; [derived] crossing points are nodes shared by the warp and weft lines; deformation = the lines move and the texture follows | Derived |
+| 6 | Gradient | **Control bar = segment** (2 nodes); color stops = nodes on the bar (position channel = stop position, color channel = stop color); [derived] nodes are animatable ⇒ gradients are naturally animatable | Normative statement + derived |
+| 7 | Layer/group | **A set of lines** (predefined relation); nesting/parent-child = relation mapping; depth/occlusion = ordering parameters on the relation | Normative statement |
+| 8 | Layer transform | **Box = a 4-node closed line**; [derived] dragging the box's nodes/edges applies scaling and rotation — the transform is an operation on the box line | Normative statement + derived |
+| 9 | Simulation | **Dynamic relations between lines** (springs/forces/collisions/particles); a particle = a short directed segment emitted by an emitter line (position + velocity vector) | Normative statement |
 
-### 3.1 看似不是线、其实归约自然
+### 3.1 Things That Don't Look Like Lines but Reduce Naturally
 
-| 概念 | 归约 |
+| Concept | Reduction |
 |---|---|
-| 摄像机 | 一个方框线(4 节点闭合线),推拉摇移=方框节点的动画 |
-| 舞台边界 | 一条方框线 |
-| 播放头 | 时间基准线上的一条垂直短线 |
-| 运动路径 | 舞台上一条线(物体沿它走) |
-| 音量包络 | 一条线 |
-| 笔刷散布 | 沿线按间距通道盖章 |
-| 口型/切换(Switch) | 轨道直线上携带离散值的节点 |
+| Camera | A box line (4-node closed line); dolly in/out, pan, truck = animation of the box nodes |
+| Stage boundary | A box line |
+| Playhead | A short vertical line on the time baseline |
+| Motion path | A line on the stage (objects travel along it) |
+| Volume envelope | A line |
+| Brush scattering | Stamping along a line at intervals of a spacing channel |
+| Lipsync/Switch | Nodes carrying discrete values on a track's straight line |
 
-## 4. 非线边界(四类)
+## 4. The Non-Line Boundary (Four Categories)
 
-经压力测试(owner 问"还有哪些概念不能和线关联/和线没关系"两轮)收敛:**结构与关系上万物皆线;
-以下四类不可再收编,再收编即硬扯**(如把一段 MP3 说成"线"没有意义)。
+Converged through stress testing (two rounds of the owner asking "which further concepts cannot be associated with lines / have nothing to do with lines"): **in structure and in relations, everything is lines;
+the following four categories cannot be annexed any further — any further annexation is a stretch** (e.g., calling an MP3 clip a "line" is meaningless).
 
-| # | 类别 | 内容 | 收不进来的原因 |
+| # | Category | Contents | Why it cannot be absorbed |
 |---|---|---|---|
-| 1 | **采样场** | 位图像素、音频采样、视频帧 | 非几何——是数据。线只负责锚定(网格)、变形(经纬线)、驱动(包络线);图像轮廓可**派生**为线,但那是输出,不是数据本身 |
-| 2 | **符号与逻辑** | 代码(表达式/自定义关系函数体/求解器/事件脚本)、文本串与字体(字形轮廓可派生为线,语义源不是线)、命名/注释/语义标签(依附于线的元数据) | 非几何——是语义/规则。填充规则(非零/奇偶)归此类:它是线集合的解释规则 |
-| 3 | **文档外的流程与状态** | 会话状态(视图相机/选择集/撤销栈/剪贴板/吸附设置)、协作与版本、导出与发布配置 | 非文档——是环境 |
-| 4 | **外部资产引用** | 位图/音频/字体文件等文档外实体 | 不在文档内——关系的一端可以指向非线实体 |
+| 1 | **Sampling fields** | Bitmap pixels, audio samples, video frames | Not geometry — data. Lines only anchor (the mesh), deform (warp/weft lines), drive (envelope lines); image outlines can be **derived** as lines, but that is an output, not the data itself |
+| 2 | **Symbols and logic** | Code (expressions/custom relation function bodies/solvers/event scripts), text strings and fonts (glyph outlines can be derived as lines; the semantic source is not lines), naming/annotations/semantic tags (metadata attached to lines) | Not geometry — semantics/rules. Fill rules (nonzero/even-odd) belong here: they are interpretation rules over a set of lines |
+| 3 | **Out-of-document processes and state** | Session state (view camera/selection set/undo stack/clipboard/snapping settings), collaboration and versioning, export and publishing configuration | Not document — environment |
+| 4 | **External asset references** | Out-of-document entities such as bitmap/audio/font files | Not inside the document — one end of a relation may point to a non-line entity |
 
-判定标准:**非几何 / 非文档 / 文档外端点**。
-文档级参数(帧率、色彩空间)不是独立类别——它们是**根关系的参数**(见 [relations.md](relations.md))。
+Criteria: **non-geometric / non-document / out-of-document endpoint**.
+Document-level parameters (frame rate, color space) are not an independent category — they are **parameters of the root relation** (see [relations.md](relations.md)).
 
-## 5. 数据模型骨架(栈无关伪类型)
+## 5. Data Model Skeleton (stack-agnostic pseudo-types)
 
 ```ts
 Line {
   id: LineId
-  nodes: [Node]                 // 有序;闭合线首尾相接
-  segAttrs: [SegmentAttrs]      // 段级属性——与"节点间段"一一平行(n-1 条;闭合线 n 条)
-  attrs: LineAttrs              // 线级属性(笔触/基准宽度/颜色/不透明度…)
-  tags: [SemanticTag]           // 语义标签(如 "bone"/"skeleton"/"track"/"mesh-warp")
+  nodes: [Node]                 // ordered; a closed line's ends join
+  segAttrs: [SegmentAttrs]      // segment-level attributes — parallel one-to-one with the "segments between nodes" (n-1 of them; n for a closed line)
+  attrs: LineAttrs              // line-level attributes (brush/base width/color/opacity…)
+  tags: [SemanticTag]           // semantic tags (e.g. "bone"/"skeleton"/"track"/"mesh-warp")
 }
 
 Node {
   id: NodeId
-  position: Vec3 | Tick         // 几何线节点=Vec3(2D 恒 z=0,3D 扩展决议);轨道线节点=Tick(1D 时间)
-  attrs: NodeAttrs              // 节点级属性——与线级同名者覆盖,段间插值,缺省回落线级
-  handleIn/handleOut: Offset?   // 手柄存于节点、作用于相邻段(出/入)
+  position: Vec3 | Tick         // geometric-line node = Vec3 (2D always z=0, per the 3D extension decision); track-line node = Tick (1D time)
+  attrs: NodeAttrs              // node-level attributes — same-named ones override the line level, are interpolated between segments, and fall back to line level when absent
+  handleIn/handleOut: Offset?   // handles are stored on the node and act on the adjacent segments (out/in)
 }
 
-SegmentAttrs {                  // 段的直接状态值,不在段间插值
-  type: straight | curve        // 段类型(直/曲;弯曲程度由两端节点手柄决定)
-  visible: bool                 // 段可见(源:Moho segments_on)
-  fillRole?: fillFlag           // 段参与填充边界的方式(源:Moho Shape edges flag)
-  interp?: InterpSpec           // 轨道线的段:插值/缓动模式(源:Moho InterpSetting 出段语义)
+SegmentAttrs {                  // the segment's direct state values, not interpolated between segments
+  type: straight | curve        // segment type (straight/curved; the curvature is determined by the handles of the two end nodes)
+  visible: bool                 // segment visibility (source: Moho segments_on)
+  fillRole?: fillFlag           // how the segment participates in the fill boundary (source: Moho Shape edges flag)
+  interp?: InterpSpec           // segments of track lines: interpolation/easing mode (source: Moho InterpSetting outgoing-segment semantics)
 }
 
-Relation {                       // 关系 = 函数
+Relation {                       // relation = function
   id: RelationId
   kind: "predefined" | "custom"
   type: RelationType             // layer/group/bind/constraint/propagate/derive/track/simulate/…
   inputs: [LineRef | NodeRef | RelationRef]
-  params: Params                 // 关系的参数 = 集合的参数;参数即通道,可动画
-  body?: LogicPayload            // 自定义关系的函数体(逻辑载荷)
+  params: Params                 // the relation's parameters = the set's parameters; parameters are channels, animatable
+  body?: LogicPayload            // function body of a custom relation (logical payload)
 }
 
-Document {                       // 文档 = 全部线 + 全部关系
+Document {                       // document = all lines + all relations
   lines: [Line]
-  relations: [Relation]          // 含根关系(文档级参数挂在它上面)
+  relations: [Relation]          // includes the root relation (document-level parameters hang on it)
 }
 ```
 
-## 6. Moho 概念对照吸收表
+## 6. Moho Concept Mapping and Absorption Table
 
-Moho 是骨骼动画领域概念最完整的参照系。**逐概念完整映射(31 顶层键/10 层型/Bone 61 键/
-mesh 三层/styles 34 键/通道码 135 项,含 mo2d 侧完整属性与关系参数词表)见
-[moho-mapping.md](moho-mapping.md)**——本节只保留骨架级对照。
-下表事实取自 maohou 知识库的一手归档(Moho Pro 14.4 / mohoscripting.com)[^mohoproj-format][^m-bone],映射为吸收/简化决策:
+Moho is the most conceptually complete reference frame in the bone-animation domain. **The complete per-concept mapping (31 top-level keys / 10 layer types / Bone's 61 keys /
+mesh's three layers / styles' 34 keys / 135 channel-code entries, including the complete mo2d-side vocabulary of attributes and relation parameters) is in
+[moho-mapping.md](moho-mapping.md)** — this section keeps only the skeleton-level comparison.
+Facts in the table below are taken from first-hand archives of the maohou knowledge base (Moho Pro 14.4 / mohoscripting.com)[^mohoproj-format][^m-bone], with the mappings recorded as absorption/simplification decisions:
 
-| Moho 概念 | Moho 事实 | mo2d 映射 | 决策 |
+| Moho concept | Moho facts | mo2d mapping | Decision |
 |---|---|---|---|
-| Curve(曲线) | 每点 5 通道(smoothness/offset_in/out/weight_in/out)+ trim 起止百分比(可动画)+ 变宽轮廓 profile_curve_id[^mohoproj-format] | 线 + 节点手柄/宽度通道;trim=轨道上的起止通道 | 吸收(几乎同构) |
-| Point(点) | position/width/color/color_strength 通道(均可动画)+ parent 绑骨索引[^mohoproj-format] | 节点 + 节点级属性 + 绑定关系的输入端 | 吸收(两级属性同构) |
-| Bone(骨骼) | fLength/fAngle/fPos(静态)+ AnimChannel:angle/pos/scale;角约束 fConstraints/fMin/fMax;动力学 fBoneDynamics+弹簧/阻尼/力族;智能骨骼 Action 权重[^m-bone] | 2 节点线段;角度/位置/缩放=轨道;角约束→约束关系;动力学→动态关系;智能骨骼→传导关系 | 吸收(语义),简化(长度=两点距离,非独立字段) |
-| mesh(矢量网格) | points/curves/shapes 三层;Shape 的 edges 引用 curve 段,has_fill/has_outline 决定同一曲线的线/面角色[^mohoproj-format] | 线集合;闭合线围合填充;描边/填充为线的渲染解释 | 吸收+简化(去三层容器,直接线+关系) |
-| 10 种图层类型(Vector/Image/Audio/Group/Switch/Bone/Particle/Note/Text/Patch) | 各带专有键族[^mohoproj-format] | 预定义关系的类型模板(层的参数表) | 参照(哪些进标准关系库、哪些退化为语义标签,工程期定) |
-| fileref{path,relativeTo} | 外部资产引用机制[^mohoproj-format] | 引用类关系(端点为文档外实体) | 吸收 |
-| 智能骨骼(Action) | 拨盘骨骼角度驱动多通道查找表[^m-bone] | 传导关系(控制线驱动多条目标线) | 吸收并推广 |
+| Curve | 5 channels per point (smoothness/offset_in/out/weight_in/out) + trim start/end percentages (animatable) + variable-width profile profile_curve_id[^mohoproj-format] | Line + node handles/width channels; trim = start/end channels on a track | Absorb (nearly isomorphic) |
+| Point | position/width/color/color_strength channels (all animatable) + parent bone index[^mohoproj-format] | Node + node-level attributes + the input end of a bind relation | Absorb (two-level attributes isomorphic) |
+| Bone | fLength/fAngle/fPos (static) + AnimChannel: angle/pos/scale; angle constraints fConstraints/fMin/fMax; dynamics fBoneDynamics + spring/damping/force families; smart bone Action weights[^m-bone] | A 2-node segment; angle/position/scale = tracks; angle constraints → constraint relations; dynamics → dynamic relations; smart bones → propagate relations | Absorb (semantics), simplify (length = distance between the two points, not an independent field) |
+| mesh (vector mesh) | Three layers: points/curves/shapes; a Shape's edges reference curve segments, has_fill/has_outline decide the same curve's line/face role[^mohoproj-format] | A set of lines; closed lines enclose fills; stroke/fill are rendering interpretations of a line | Absorb + simplify (drop the three-layer containers; lines + relations directly) |
+| 10 layer types (Vector/Image/Audio/Group/Switch/Bone/Particle/Note/Text/Patch) | Each carries its own key family[^mohoproj-format] | Type templates of predefined relations (a layer's parameter table) | Reference (which ones enter the standard relation library and which degrade into semantic tags — decided during engineering) |
+| fileref{path,relativeTo} | External asset reference mechanism[^mohoproj-format] | A reference-type relation (the endpoint is an out-of-document entity) | Absorb |
+| Smart bones (Action) | Dial bone angle drives multi-channel lookup tables[^m-bone] | A propagate relation (one control line drives multiple target lines) | Absorb and generalize |
 
-**工程红线**:本表仅作概念对照;mo2d 为净室自主实现,不承诺 .moho 兼容
-(导入器仅列远期可选项,见 [roadmap.md](roadmap.md))。
+**Engineering red line**: this table is a concept comparison only; mo2d is a clean-room independent implementation and promises no .moho compatibility
+(the importer is listed only as a long-term option, see [roadmap.md](roadmap.md)).
 
-## 7. 待确认事项
+## 7. Open Questions
 
-- [ ] 段级属性已入规范;轨道段"插值/缓动=段属性"的取值语义(im 12 模式、h/in、
-      贝塞尔句柄与段几何的关系)沿 [moho-mapping.md](moho-mapping.md) §5.2 待 owner 确认;
-- [ ] [推导] 位图网格交叉点=经纬线共享节点,是否采纳;
-- [ ] [推导] 变换=拖方框线,交互细节工程期定;
-- [ ] 语义标签的初始词表(bone/skeleton/track/mesh-warp/…)工程期定。
+- [ ] Segment-level attributes are now normative; the value semantics of track-segment "interpolation/easing = segment attribute" (the 12 im modes, h/in,
+      the relation between Bezier handles and segment geometry) awaits owner confirmation along [moho-mapping.md](moho-mapping.md) §5.2;
+- [ ] [derived] bitmap-mesh crossing points = nodes shared by warp and weft lines — whether to adopt;
+- [ ] [derived] transform = dragging the box line; interaction details decided during engineering;
+- [ ] The initial vocabulary of semantic tags (bone/skeleton/track/mesh-warp/…) to be decided during engineering.

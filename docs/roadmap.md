@@ -1,14 +1,14 @@
 ---
 type: Design Document
-title: "路线图:三阶段推进(2026-11-11 v4,舞台提前入 MVP)"
-description: Phase A=MVP 触手 v4(AI 编译引擎执行 + A6 最小舞台=生成的视图第一例);Phase B=性能与词表铺开(渲染与失效正式化/笔触/渐变/层群组/位图网格/模拟/格式正式化);Phase C=AI 生态(关系 IR/控件即线/导入/音频/协作/wasm);六部件→阶段映射与性能指标。
+title: "Roadmap: Three-Phase Advance (2026-11-11 v4, stage pulled forward into the MVP)"
+description: Phase A = MVP tentacle v4 (AI compiles, engine executes + A6 minimal stage = first example of a generatable view); Phase B = performance and vocabulary rollout (rendering & invalidation formalization / brush strokes / gradients / layers & groups / bitmap mesh / simulation / format formalization); Phase C = AI ecosystem (relation IR / controls-as-lines / import / audio / collaboration / wasm); six-components → phase mapping and performance metrics.
 tags: [roadmap, phases, mvp, long-term]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T14:41:31Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
 sources:
   - id: mvp-doc
     resource: /mvp.md
-    title: "本 bundle:MVP v3(无头触手)"
+    title: "本 bundle:MVP v5 定稿(触手+3D 场景)"
   - id: vision-doc
     resource: /vision.md
     title: "本 bundle:愿景(§2 六部件、§6 分工)"
@@ -20,79 +20,84 @@ sources:
     title: "本 bundle:文件格式(八条细则)"
 ---
 
-# 路线图:三阶段推进(v3)
+**English** | [简体中文](roadmap.zh-CN.md)
 
-原则:**每一步都有可视产出;每一步都用命令流验收**(一切操作皆命令,演示=命令流+输出,
-可自动复验);门不过不进下一步。v3 按 [vision.md](vision.md) §2 六部件引擎定义重排:
-**A 造语言与运行时,B 造视图与性能,C 长生态。**
+# Roadmap: Three-Phase Advance (v4)
 
-## 六部件 → 阶段映射
+Principle: **every step ships a visible deliverable; every step is accepted via the command stream**
+(all operations are commands, a demo = command stream + output, automatically re-verifiable);
+no passing the gate, no next step. v4 is resequenced per the six-components engine definition of
+[vision.md](vision.md) §2: **A builds the language and runtime, B builds the views and performance, C grows the ecosystem.**
 
-| 部件(vision §2) | 落地阶段 |
+## Six components → phase mapping
+
+| Component (vision §2) | Landing phase |
 |---|---|
-| 1 语义语言 | A(最小词表)→ B4–B7(词表铺开) |
-| 2 确定性运行时 | A(核心)→ B2(失效与并行化) |
-| 3 命令协议 | A(三命令+命令流)→ C(生态扩容) |
-| 4 校验器 | A(schema+确定性门)→ C1(关系 IR 的门) |
-| 5 性能机器 | B1(GPU 主力+损伤渲染) |
-| 6 可生成的视图 | **A6(MVP 最小舞台,owner 2026-11-11 决定提前)** → C2(控件即线) |
+| 1 Semantic language | A (minimal vocabulary) → B4–B7 (vocabulary rollout) |
+| 2 Deterministic runtime | A (core) → B2 (invalidation & parallelization) |
+| 3 Command protocol | A (three commands + command stream) → C (ecosystem scale-up) |
+| 4 Validator | A (schema + determinism gate) → C1 (gate for the relation IR) |
+| 5 Performance machine | B1 (GPU workhorse + damage rendering) |
+| 6 Generatable view | **A6 (MVP minimal stage, owner decided on 2026-11-11 to pull it forward)** → C2 (controls as lines) |
 
-## Phase A:MVP——触手("AI 编译,引擎执行"+ 生成的视图第一例)
+## Phase A: MVP — the tentacle ("AI compiles, engine executes" + first example of a generatable view)
 
-任务书与验收门见 [mvp.md](mvp.md) v4:A1 线内核(离屏)→ A2 骨架绑定 →
-A3 轨道/Tick/播放 → A4 命令协议+MCP+校验器 → A5 格式+导出+离线闭环 →
-**A6 最小舞台(原 Phase B1 提前:四操作,手搓与 AI 命令流同构)**。
-完成定义七条:AI 经 MCP 全程建动画、重放字节相等、**离线播放一致(能力即数据)**、
-round-trip 字节相等、求值吞吐、校验器在岗、**直接操纵等价**。
+For the task brief and acceptance gates see [mvp.md](mvp.md) v4: A1 line kernel (offscreen) →
+A2 skeleton binding → A3 tracks/Tick/playback → A4 command protocol + MCP + validator →
+A5 format + export + offline closed loop → **A6 minimal stage (formerly Phase B1, pulled forward:
+four operations, hand-built and AI command streams isomorphic)**.
+Definition of Done, seven items: the AI builds the animation end-to-end via MCP, replay byte-equality,
+**offline playback consistency (capability as data)**, round-trip byte-equality, evaluation throughput,
+validator on duty, **direct-manipulation equivalence**.
 
-## Phase B:性能与词表铺开
+## Phase B: Performance and vocabulary rollout
 
-| 项 | 内容 | 验收演示 |
+| Item | Content | Acceptance demo |
 |---|---|---|
-| B1 渲染与失效正式化(部件 5) | GPU 主力:实例化 uber-shader(段/节点补丁=instance)、损伤渲染(tile 64×32+脏矩形)、**DAG 反向依赖失效**(通道=信号)、CPU/GPU 像素奇偶校验门 | 十万节点级 60fps;编辑视口空闲 0% CPU |
-| B2 笔触样式库 | 线级 brush 15 参数族 + 节点级压力;样式=属性模板库 | 同一线切不同笔触;压感变宽 |
-| B3 渐变控制棒 | 控制棒线段 + 色标节点;绑到填充 | 会变色的触手(渐变可动画) |
-| B4 多层/群组 | 层/群组预定义关系 + 变换方框线 | 多角色同台;方框缩放旋转 |
-| B5 位图网格 | 经纬线+纹理锚点绑定=媒体载荷;按需解码+预算缓存(参照 BUI) | 位图角色随骨架变形 |
-| B6 模拟(动态关系) | 弹簧/力/碰撞/粒子;PBD/compute;确定性种子 | 触手尾巴物理拖尾+粒子 |
-| B7 格式正式化 | 尾部 BLOB 区(媒体内嵌)+ 工程目录形态(解包,与包等价)+ refs 外置 + JSON Schema/校验器 + FORMAT_VERSION 迁移;规范稿照 maop-spec 体例 | 带媒体工程单文件 .mo2d 交付;解包/打包往返无损;旧版照读 |
+| B1 Rendering & invalidation formalization (component 5) | GPU workhorse: instanced uber-shader (segment/node patches = instances), damage rendering (tile 64×32 + dirty rectangles), **DAG reverse-dependency invalidation** (channels = signals), CPU/GPU pixel parity gate | 100k-node class at 60fps; edit viewport idle at 0% CPU |
+| B2 Brush-stroke style library | Line-level brush 15-parameter family + node-level pressure; styles = attribute template library | The same line switching between brush strokes; pressure-sensitive width |
+| B3 Gradient control bars | Control-bar line segments + color-stop nodes; bound to fill | A color-changing tentacle (animatable gradient) |
+| B4 Multi-layer/groups | Layer/group predefined relations + transform-box lines | Multiple characters on one stage; box scaling and rotation |
+| B5 Bitmap mesh | Warp/weft lines + texture-anchor binding = media payload; decode-on-demand + budgeted cache (following BUI) | A bitmap character deforming with the skeleton |
+| B6 Simulation (dynamic relations) | Springs/forces/collisions/particles; PBD/compute; deterministic seeds | Physically trailing tentacle tail + particles |
+| B7 Format formalization | Tail BLOB area (embedded media) + project-directory layout (unpacked, equivalent to the package) + external refs + JSON Schema/validator + FORMAT_VERSION migration; the spec draft follows the maop-spec conventions | A media-bearing project delivered as a single .mo2d file; unpack/pack round-trip lossless; old versions still readable |
 
-依赖:B1 依赖 A 的 SoA 布局;B2–B6 相互独立可并行;B7(格式正式化)依赖 B5(位图网格,媒体载荷才有 BLOB 需求)。
+Dependencies: B1 depends on A's SoA layout; B2–B6 are mutually independent and can proceed in parallel; B7 (format formalization) depends on B5 (bitmap mesh — only media payloads create the BLOB need).
 
-## Phase C:AI 生态(能力即数据)
+## Phase C: AI ecosystem (capability as data)
 
-| 项 | 内容 | 验收演示 |
+| Item | Content | Acceptance demo |
 |---|---|---|
-| C1 **关系 IR + 自定义关系生成** | 自然语言 → 关系 IR(受限中间表示,沙箱);**生成 → 过确定性门 → 入库冻结**(architecture §2.1) | "让触手跟着光标"一句话成动画,入库后离线可播 |
-| C2 控件即线 | 临时控件系统(滑杆=轨道线+游标线;取色条=控制棒;变换框=方框) | AI 按需生成控件,用后即弃 |
-| C3 导入器/交换 | **SVG 双向**:帧级导出(展示编辑一体的自然产物)+ 几何导入([file-format.md](file-format.md) §4 三层格式);.moho 远期选项([moho-mapping.md](moho-mapping.md) 即现成映射表,84 教程语料验收) | 导出帧 SVG 任意工具可看;导入真实 SVG/教程工程 |
-| C4 音频 | 音轨层:媒体载荷+level/jump 轨道;Tick 整除 44.1k/48k 正为此 | 口型/节拍驱动动画 |
-| C5 协作与版本 | 命令流合并、变更记录、引用层 | 多会话协作无冲突 |
-| C6 WebAssembly | wasm 发布 + MCP over WebSocket | 网页里跑触手 demo,零安装 |
+| C1 **Relation IR + custom relation generation** | Natural language → relation IR (restricted intermediate representation, sandboxed); **generate → pass the determinism gate → freeze into the library** (architecture §2.1) | "Make the tentacle follow the cursor" — one sentence becomes an animation; playable offline once frozen into the library |
+| C2 Controls as lines | Ephemeral control system (slider = track line + cursor line; color picker strip = control bar; transform box = box) | The AI generates controls on demand, discarded after use |
+| C3 Importers/interchange | **Bidirectional SVG**: frame-level export (a natural byproduct of display-edit unification) + geometry import ([file-format.md](file-format.md) §4 three-layer format); .moho as a long-term option ([moho-mapping.md](moho-mapping.md) is a ready-made mapping table; acceptance via the 84-project tutorial corpus) | Exported frame SVG viewable in any tool; import real SVG/tutorial projects |
+| C4 Audio | Audio-track layer: media payload + level/jump tracks; Tick dividing 44.1k/48k evenly exists exactly for this | Lip-sync/beat-driven animation |
+| C5 Collaboration & versioning | Command-stream merging, change records, reference layers | Multi-session collaboration without conflicts |
+| C6 WebAssembly | wasm distribution + MCP over WebSocket | Run the tentacle demo in a browser, zero install |
 
-依赖:C1 依赖 A4 校验器与 B1(热路径退化);C3 的 .moho 依赖 B4(层/群组)+B5(位图网格);C4 依赖 B7(格式正式化)。
+Dependencies: C1 depends on the A4 validator and B1 (hot-path fallback); C3's .moho depends on B4 (layers/groups) + B5 (bitmap mesh); C4 depends on B7 (format formalization).
 
-## 里程碑与性能指标
+## Milestones and performance metrics
 
-| 阶段 | 指标 |
+| Phase | Metric |
 |---|---|
-| Phase A | 1 万节点 60fps(CPU);命令重放字节相等;离线播放一致 |
-| Phase A6 | 手搓与 AI 命令流同构(直接操纵等价) |
-| Phase B1 | 十万节点级 60fps(GPU);奇偶校验门通过;空闲 0% CPU |
-| Phase C | AI 端到端(自然语言 → 可导出动画)单次成功率 = 北极星指标(目标待定) |
+| Phase A | 10k nodes at 60fps (CPU); command replay byte-equality; offline playback consistency |
+| Phase A6 | Hand-built and AI command streams isomorphic (direct-manipulation equivalence) |
+| Phase B1 | 100k-node class at 60fps (GPU); parity gate passes; idle 0% CPU |
+| Phase C | AI end-to-end (natural language → exportable animation) single-shot success rate = north-star metric (target TBD) |
 
-## 节奏条款
+## Cadence clauses
 
-- 每阶段结束**回看本路线图**并修订(走 log);
-- 任何新特性先问:"这是**热路径**吗?"——是,进引擎;否,交给 AI(C1 承载);
-  语言本身的变更(新原语/新属性族)走 line-model/relations 的规范表述流程。
+- At the end of every phase, **look back at this roadmap** and revise it (via log);
+- For any new feature, ask first: "Is this a **hot path**?" — if yes, it goes into the engine; if no, hand it to the AI (carried by C1);
+  changes to the language itself (new primitives/new attribute families) go through the Normative Statements process of line-model/relations.
 
-## 暂不排期
+## Not yet scheduled
 
-技术栈最终决策(Rust+wgpu 倾向,[architecture.md](architecture.md) §5)、产品品牌、
-mo2d 与 maohou 的工程合并策略——待 owner 拍板后再入图。
+Final tech-stack decision (leaning Rust+wgpu, [architecture.md](architecture.md) §5), product branding,
+and the mo2d–maohou engineering merge strategy — they enter the map only after the owner makes the call.
 
-**Phase D(3D 深化,远期未立项)**:扩展路径见 [3d-extension.md](3d-extension.md)——
-**引擎侧基础 3D 已入 MVP v4.1**(渲染器即 3D/Vec3/三角形面/3D 场景门,AI 可命令式搭 z≠0 场景);
-Phase D 只剩深化项:3D 交互(导航/工作平面/深度拾取)、灯光/材质/阴影、glTF;
-触发条件待 2D 站稳后定。
+**Phase D (3D deepening, long-term, not yet chartered)**: for the extension path see [3d-extension.md](3d-extension.md) —
+**engine-side basic 3D has entered MVP v4.1** (renderer-is-3D/Vec3/triangular faces/3D scene gate; the AI can build z≠0 scenes command-style);
+what remains for Phase D are only the deepening items: 3D interaction (navigation/work planes/depth picking), lights/materials/shadows, glTF;
+trigger conditions to be set once 2D is on solid ground.

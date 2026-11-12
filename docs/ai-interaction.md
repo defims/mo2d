@@ -1,10 +1,10 @@
 ---
 type: Design Document
-title: "AI 原生交互:舞台即界面"
-description: mo2d 交互模型——无标准工具栏/菜单,展示编辑一体(同一渲染核心的多个客户端),双通道(直接操纵+自然语言),控件即线(临时控件由 AI 按需生成),一切操作皆命令(JSON 命令流+MCP),撤销/历史统一。
+title: "AI-Native Interaction: The Stage Is the Interface"
+description: The mo2d interaction model — no standard toolbar/menus; display equals edit (multiple clients of one rendering core); dual channels (direct manipulation + natural language); controls are lines (temporary controls generated on demand by AI); every operation is a command (JSON command stream + MCP); unified undo/history.
 tags: [ai-native, interaction, command-protocol, mcp, display-equals-edit]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T15:56:02Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
 sources:
   - id: vectorcraft-mcp
     resource: file:///Users/wei/vectorcraft/docs/mcp.md
@@ -17,77 +17,83 @@ sources:
     title: "本 bundle:关系即函数"
 ---
 
-# AI 原生交互:舞台即界面
+**English** | [简体中文](ai-interaction.zh-CN.md)
 
-owner 的出发点:**有了 AI,不仅 GUI 控件等几乎就不怎么需要了,可以交给用户自定义,
-也就不大需要标准的工具栏、菜单栏等控件,用户直接在舞台定义线及线间的联动关系即可。**
+# AI-Native Interaction: The Stage Is the Interface
 
-## 1. 立场
+The owner's starting point: **有了 AI,不仅 GUI 控件等几乎就不怎么需要了,可以交给用户自定义,也就不大需要标准的工具栏、菜单栏等控件,用户直接在舞台定义线及线间的联动关系即可。**
 
-- **不内置标准工具栏/菜单/属性面板**。界面 = 舞台(线的世界)+ 命令协议(智能体的接口);
-- GUI 从"产品"降级为"**可生成的视图**":任何控件都可以由 AI 按需生成、用后即弃;
-- 用户不学习控件,而是学习**领域本身**——画一条线、连一个关系,这比记住
-  哪个面板藏在哪个菜单下更接近动画的本意。
+*(With AI, GUI controls and the like become almost unnecessary — they can be left for users to customize — so there is little need for a standard toolbar, menu bar, or other such controls; users simply define lines and the linkage relations between them directly on the stage.)*
 
-## 1.5 展示编辑一体(2026-11-11,owner 确立)
+## 1. Position
 
-"GUI 不再重要"的技术含义:**没有编辑器与播放器之分**——
+- **No built-in standard toolbar/menu/properties panel**. The interface = the stage (the world of lines) + the command protocol (the agent's interface);
+- GUI is demoted from "product" to "**generatable view**": any control can be generated on demand by AI and discarded after use;
+- Users do not learn controls; they learn **the domain itself** — drawing a line, connecting a relation; this is closer
+  to the heart of animation than memorizing which panel hides under which menu.
 
-- 舞台、无头导出、AI 会话、将来的网页,全是**同一渲染核心的客户端**,
-  渲染的是同一份文档;
-- 编辑 = 命令改文档;展示 = 同一管线渲染同一文档——不存在"编辑态模型/播放态模型"两套表示;
-- **叠加物**(节点手柄、选中高亮、连线指示)不属于文档,属会话层,且**叠加物也是线**
-  (§3 控件即线的同族);
-- 由此推论:**任一帧的视图都是忠实的**——SVG 可作帧级视图/交换格式
-  (工程真值仍是 .mo2d,见 [file-format.md](file-format.md) §4 三层格式架构)。
+## 1.5 Display equals edit (established by the owner, 2026-11-11)
 
-## 2. 双通道交互
+The technical implication of "GUI no longer matters": **there is no editor/player distinction** —
 
-| 通道 | 操作 | 例子 |
+- The stage, headless export, AI sessions, and future web pages are all **clients of the same rendering core**,
+  rendering the same document;
+- Editing = commands change the document; display = the same pipeline renders the same document — there is no pair of
+  representations, "edit-mode model" vs "playback-mode model";
+- **Overlays** (node handles, selection highlights, connection indicators) do not belong to the document but to the
+  session layer, and **overlays are lines too** (the same family as the §3 controls-are-lines);
+- Corollary: **the view of any frame is faithful** — SVG can serve as a per-frame view/exchange format
+  (the engineering source of truth remains .mo2d; see [file-format.md](file-format.md) §4 Three-layer format architecture).
+
+## 2. Dual-channel interaction
+
+| Channel | Operations | Examples |
 |---|---|---|
-| **直接操纵** | 画线、拖节点、连线建关系、拖方框变换 | 在触手身体旁画一条折线,把身体节点拖到折线上完成绑定 |
-| **自然语言** | 说意图 → AI 翻译为命令序列 | "让触手跟着光标摆" → AI 建立传导/模拟关系并打关键帧 |
+| **Direct manipulation** | draw lines, drag nodes, connect lines to build relations, drag the box to transform | draw a polyline beside a tentacle's body, then drag the body's nodes onto the polyline to complete the binding |
+| **Natural language** | state intent → AI translates it into a command sequence | "make the tentacle sway following the cursor" → AI builds propagate/simulate relations and sets keyframes |
 
-两通道等价:手做的每个动作也是命令(见 §4),AI 说的每句话也落在同一命令流上。
+The two channels are equivalent: every action done by hand is also a command (see §4), and every sentence said to the AI also lands on the same command stream.
 
-## 3. 控件即线
+## 3. Controls are lines
 
-临时控件**本身也是线**,由 AI 按需生成、用后即弃——不需要控件框架:
+Temporary controls **are themselves lines**, generated on demand by AI and discarded after use — no control framework needed:
 
-| 控件 | 线的形态 |
+| Control | Line form |
 |---|---|
-| 滑杆 | 一条轨道线 + 一条游标短线(游标位置=值,就是轨道线上的一个节点) |
-| 取色渐变条 | 一条渐变控制棒(色标=节点) |
-| 变换框 | 4 节点闭合方框线 |
-| 播放控制 | 时间基准线 + 播放头短线 |
+| Slider | a track line + a short cursor line (the cursor's position = the value; the cursor is a node on the track line) |
+| Color-picker gradient bar | a gradient control bar (color stops = nodes) |
+| Transform box | a 4-node closed box line |
+| Playback controls | a time base line + a short playhead line |
 
-[推导] 控件与内容同构,是"万物皆线"在交互层的自然延伸:能画线就能做控件,
-AI 生成控件 = AI 画线。
+[Inference] Controls and content are isomorphic — the natural extension of "everything is lines" to the interaction layer:
+if you can draw a line, you can make a control; AI generating a control = AI drawing a line.
 
-## 4. 一切操作皆命令
+## 4. Every operation is a command
 
-- **命令协议**:引擎唯一入口是命令(JSON 命令流);建线/删线、改节点、建关系、
-  打关键帧、播放、导出——全部是命令;
-- **可回放**:命令流即历史——撤销=逆命令,协作=命令流合并,AI 上下文=命令流摘要;
-- **MCP server 模式**:引擎作为 MCP server 暴露命令(参照 vectorcraft/maohou 的
-  工程实践[^vectorcraft-mcp]),AI 宿主(zcode 等)经 MCP 完成全部操作;
-- **确定性**:同一文档 + 同一命令流 → 同一结果(CPU oracle 验证)。
+- **Command protocol**: the engine's single entry point is commands (a JSON command stream); create/delete lines,
+  modify nodes, build relations, set keyframes, play, export — all are commands;
+- **Replayable**: the command stream is the history — undo = inverse commands, collaboration = command-stream merging,
+  AI context = command-stream summaries;
+- **MCP server mode**: the engine exposes commands as an MCP server (following the engineering practice of
+  vectorcraft/maohou[^vectorcraft-mcp]); AI hosts (zcode etc.) perform all operations over MCP;
+- **Determinism**: same document + same command stream → same result (verified by the CPU oracle).
 
-## 5. 文档状态与会话状态的划界
+## 5. Drawing the boundary between document state and session state
 
-依据 [line-model.md](line-model.md) §4 非线边界第三类:
+Based on [line-model.md](line-model.md) §4, the third class of the non-line boundary:
 
-- **文档状态**(入库):线、关系、通道、载荷;
-- **会话状态**(不入库):视图相机、选择集、撤销栈、剪贴板、AI 对话上下文;
-- 命令流记录**文档变更**;会话状态由宿主自行管理,保存/载出不携带。
+- **Document state** (persisted): lines, relations, channels, payloads;
+- **Session state** (not persisted): view camera, selection set, undo stack, clipboard, AI conversation context;
+- The command stream records **document changes**; session state is managed by the host itself and is not carried by save/load.
 
-## 6. 安全与权限
+## 6. Security and permissions
 
-[推导,工程期细化] 自定义关系的函数体是逻辑载荷(代码)——执行须沙箱化
-(WASM 解释器等,参照既有工程实践);AI 生成的命令流在应用前应可预览(diff)。
+[Inference, to be refined during engineering] The function body of a custom relation is a logic payload (code) —
+execution must be sandboxed (a WASM interpreter etc., following existing engineering practice); AI-generated
+command streams should be previewable (diff) before being applied.
 
-## 7. 待确认事项
+## 7. Open Questions
 
-- [ ] 命令协议的首版命令表(以 [mvp.md](mvp.md) §范围五为最小集);
-- [ ] 控件即线的控件-命令绑定语法;
-- [ ] AI 宿主的首选形态(本地 MCP / 云端)。
+- [ ] The first-version command table of the command protocol (with [mvp.md](mvp.md) § Scope 5 as the minimal set);
+- [ ] The control-to-command binding syntax for controls-are-lines;
+- [ ] The preferred form of the AI host (local MCP / cloud).

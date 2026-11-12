@@ -1,10 +1,10 @@
 ---
 type: Design Document
-title: "3D 扩展路径:调整什么与现在就做什么"
-description: 3D 扩展的结论——原语全存活(3D 骨骼=线段/骨架=折线/曲面=线网),只调四条语义规则(闭合线填充推广为三角形面/曲面=线网/遮挡变深度测试/相机视锥线框)+三个新关系(投影/瞄准/极向量);五个预防决策(节点 position 存 Vec3 等)现在就做;3D 不入当前三阶段,记为 Phase D 远期。
+title: "3D Extension Path: What to Adjust and What to Do Now"
+description: Conclusions of the 3D extension — all primitives survive (3D bone = line segment / skeleton = polyline / surface = line net); only four semantic rules are adjusted (closed-line fill generalized to triangular faces / surface = line net / occlusion becomes depth testing / camera = frustum wireframe) plus three new relations (projection/aim/pole vector); six preemptive decisions (Vec3 from day one, rotation representation, etc.) are made now; 3D does not enter the current three phases and is recorded as long-term Phase D.
 tags: [3d, extension, vec3, line-net, roadmap-d]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T15:12:29Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -20,75 +20,79 @@ sources:
     title: "本 bundle:MVP v4"
 ---
 
-# 3D 扩展路径
+**English** | [简体中文](3d-extension.zh-CN.md)
 
-owner 问:后续扩展到 3D 需要怎么调整。结论:**范式不换——线在 3D 活得更好**
-(3D 骨骼本来就是线段,Maya/Blender 的骨就是线框;骨架=折线链;NURBS 控制网=线网)。
-2D 是 3D 的特例(z≡0),不是两套引擎。要动的是四条**语义规则**,不是原语。
+# 3D Extension Path
 
-## 1. 不用动的(万物皆线的 3D 红利)
+The owner asked: what needs adjusting to extend to 3D later. Conclusion: **the paradigm does not change — lines live even better in 3D**
+(3D bones are line segments to begin with, and Maya/Blender bones are wireframes; skeletons = polyline chains; NURBS control nets = line nets).
+2D is a special case of 3D (z≡0), not two engines. What changes is four **semantic rules**, not the primitives.
 
-| 原语/机制 | 3D 中的状态 |
+## 1. What stays unchanged (the 3D dividend of everything-is-lines)
+
+| Primitive/mechanism | Status in 3D |
 |---|---|
-| 线、节点、三级属性 | 原样存活 |
-| 关系即函数、DAG 求值 | 不动;bind/约束/传导/轨道直接升维 |
-| 命令协议、校验器、MCP、Tick | 不动 |
-| SoA/实例化/损伤渲染 | 红利更大(3D 三角量暴涨,同构数据更值钱) |
+| Lines, nodes, three-level attributes | Survive as-is |
+| Relations as functions, DAG evaluation | Unchanged; bind/constraint/propagate/track lift directly to higher dimensions |
+| Command protocol, validator, MCP, Tick | Unchanged |
+| SoA/instancing/damage rendering | The dividend is bigger (triangle counts explode in 3D; isomorphic data is worth more) |
 
-## 2. 四条语义规则调整(非新原语)
+## 2. Four semantic rule adjustments (not new primitives)
 
-1. **闭合线填充的推广**:2D=闭合线+填充规则(非零/奇偶);3D 中任意闭合线不唯一确定
-   曲面——推广为**3 节点闭合线=三角形面**(三点唯一共面,天然成立);n>3 闭合线
-   需共面约束或三角化(填充规则加"平面性");
-2. **曲面 = 线网**:2D 位图网格(经纬两组线)概念的推广——曲面=线网,
-   双线性/Coons 插值,NURBS 控制网同构;法线/光照=线网的派生属性;
-3. **遮挡**:从归属关系排序参数(zOrder)变为**深度测试**(渲染属性);
-4. **相机/变换框**:方框线→视锥线框/线框盒——仍是线。变换通道照 Moho 事实
-   (translation/scale 本为 ⟨ch:Vec3⟩、rotation 本为 xyz 三通道[^mohoproj-format])
-   ——**Moho 已验证此升级路径**。
+1. **Generalization of closed-line fill**: 2D = closed line + fill rule (non-zero/even-odd); in 3D an arbitrary closed line does not uniquely determine
+   a surface — generalized to **3-node closed line = triangular face** (three points are uniquely coplanar, so it holds naturally); n>3 closed lines
+   need a coplanarity constraint or triangulation (the fill rule gains "planarity");
+2. **Surface = line net**: a generalization of the 2D bitmap-mesh (two sets of warp/weft lines) concept — surface = line net,
+   bilinear/Coons interpolation, isomorphic to a NURBS control net; normals/lighting = derived attributes of the line net;
+3. **Occlusion**: from the ownership relation's ordering parameter (zOrder) to **depth testing** (a rendering attribute);
+4. **Camera/transform box**: box lines → frustum wireframes/wireframe boxes — still lines. Transform channels follow the Moho facts
+   (translation/scale were already ⟨ch:Vec3⟩, rotation was already three xyz channels [^mohoproj-format])
+   — **Moho has already validated this upgrade path**.
 
-**新关系类型(三个)**:投影(3D 线网→2D 图形的派生;Moho 3d_mode 先例[^mohoproj-format])、
-瞄准 aim、极向量 pole(3D IK 补充)。
+**New relation types (three)**: projection (deriving 2D graphics from a 3D line net; the Moho 3d_mode precedent [^mohoproj-format]),
+aim, and pole vector (a 3D IK supplement).
 
-### 2.1 位置与旋转的表示决议(2026-11-11,owner 问"点用四元数还是 Vec3")
+### 2.1 Representation resolution for position and rotation (2026-11-11, owner asked "quaternion or Vec3 for points")
 
-- **位置 = Vec3,无疑义**:四元数是旋转的表示,不编码位置;对偶四元数
-  (旋转+平移一体)仅作蒙皮混合的**运行时中间量**(bind 实现 LBS→DQS 升级时可内部用),
-  不进格式;
-- **旋转:格式存欧拉 xyz,运行时转四元数/矩阵**——存储表示为 AI 可读/逐分量轨道/
-  字节确定性服务(欧拉三通道,Moho rotation_x/y/z 先例[^mohoproj-format];角度写时
-  归一化到 (−π,π]);运行时表示为数学服务(变换链内部用四元数/矩阵,实现细节);
-  glTF 选四元数存储因其消费者是引擎,mo2d 消费者是 AI+通道模型,故与 Moho 同边;
-- **万向节锁兜底**:mo2d 骨骼朝向由两端节点位置**派生**而非存储,铰链式动画天然
-  躲开大部分问题;真出现自由翻滚需求(Phase D),加**可选四元数通道值类型**
-  (Vec4+单位约束+q/−q 规范化 w≥0)作为通道类型扩展,不推翻欧拉。
+- **Position = Vec3, no dispute**: quaternions are a representation of rotation and do not encode position; dual quaternions
+  (rotation + translation in one) serve only as a **runtime intermediate** for skinning blending (usable internally when the bind
+  implementation upgrades LBS→DQS) and do not enter the format;
+- **Rotation: the format stores Euler xyz, the runtime converts to quaternion/matrix** — the storage representation serves
+  AI readability / per-component tracks / byte determinism (three Euler channels, the Moho rotation_x/y/z precedent [^mohoproj-format]; angles
+  normalized to (−π,π] on write); the runtime representation serves the math (quaternions/matrices used inside the transform chain, an
+  implementation detail); glTF chose quaternion storage because its consumers are engines, while mo2d's consumers are the AI + the channel
+  model, hence it sides with Moho;
+- **Gimbal-lock fallback**: mo2d bone orientation is **derived** from the positions of the two end nodes rather than stored, so hinge-style
+  animation naturally dodges most of the problem; if a free-tumbling requirement truly appears (Phase D), add an **optional quaternion channel
+  value type** (Vec4 + unit constraint + q/−q canonicalization with w≥0) as a channel-type extension, without overturning Euler.
 
-## 3. 预防决策(现在就做,几乎零成本,日后免迁移)
+## 3. Preventive decisions (do them now, nearly zero cost, no migration later)
 
-| # | 决策 | 落点 |
+| # | Decision | Where it lands |
 |---|---|---|
-| 1 | **节点 position 从第一天存 Vec3**(z≡0) | [file-format.md](file-format.md) 信封、SoA、命令协议 |
-| 2 | 填充域规则写明"3 节点闭合线=三角形面"推广路径 | [line-model.md](line-model.md) §1 注记 |
-| 3 | 渲染器抽象留 **depth 开关**(CPU oracle 2D 期走平面路径) | architecture L3 |
-| 4 | 绑定权重公式=点到线段的**投影距离**(2D/3D 同式) | A2 实现选择 |
-| 5 | 相机线节点带 z(透视参数留位) | [line-model.md](line-model.md) §3.1 |
-| 6 | **旋转:格式=欧拉 xyz 逐分量通道(写时归一化);运行时=四元数/矩阵** | 本文档 §2.1 |
+| 1 | **Node position stored as Vec3 from day one** (z≡0) | [file-format.md](file-format.md) envelope, SoA, command protocol |
+| 2 | The fill-region rule states the "3-node closed line = triangular face" generalization path | [line-model.md](line-model.md) §1 note |
+| 3 | The renderer abstraction keeps a **depth switch** (the CPU oracle takes the planar path during the 2D period) | architecture L3 |
+| 4 | The bind weight formula = **projected distance** from point to segment (same formula in 2D/3D) | A2 implementation choice |
+| 5 | Camera-line nodes carry z (placeholders for perspective parameters) | [line-model.md](line-model.md) §3.1 |
+| 6 | **Rotation: format = Euler xyz per-component channels (normalized on write); runtime = quaternion/matrix** | This document §2.1 |
 
-## 4. 诚实的难点
+## 4. Honest difficulties
 
-- **3D 建模交互**(深度拾取/多视图)是传统重灾区——"AI 原生+命令协议"恰好是解:
-  AI 在 3D 做命令式建模比拖拽占优(mo2d 范式在 3D 的意外优势);
-- 光照/材质/阴影:按分工铁律拆——材质参数=通道;光照热路径留引擎;高级效果 AI 生成;
-- CPU oracle 与 GPU 的**深度精度一致性**比 2D 难,奇偶校验门需更细。
+- **3D modeling interaction** (depth picking/multiple views) is the traditional disaster area — "AI-native + command protocol" happens to be
+  the solution: the AI doing command-style modeling in 3D beats dragging (an unexpected advantage of the mo2d paradigm in 3D);
+- Lighting/materials/shadows: split per the division-of-labor iron rules — material parameters = channels; the lighting hot path stays in the
+  engine; advanced effects are AI-generated;
+- **Depth-precision consistency** between the CPU oracle and the GPU is harder than in 2D; the parity gate needs to be finer.
 
-## 5. 排期(v4.1 修订:基础 3D 已入 MVP)
+## 5. Scheduling (revised v4.1: basic 3D has entered the MVP)
 
-owner 决定"成本很低就直接支持基础 3D"后,3D 分两层入图:
+After the owner decided to "directly support basic 3D since the cost is low," 3D entered the map in two layers:
 
-| 层 | 状态 |
+| Layer | Status |
 |---|---|
-| **引擎侧基础 3D** | **已入 MVP(v4.1,[mvp.md](mvp.md) §2.1)**:渲染器即 3D(z-buffer/透视/背面剔除/平色无光照,2D 恒 z=0 同管线)、Vec3 节点、三角形面、透视/正交相机、3D 静态场景哈希门;AI 经命令流即可搭 z≠0 场景(headless) |
-| 3D 交互与深化 | **Phase D(远期,未立项)**:轨道导航、工作平面画线、深度拾取、灯光/材质/阴影、glTF——贵在交互不在数学,触发条件待 2D 站稳后定 |
+| **Engine-side basic 3D** | **In the MVP (v4.1, [mvp.md](mvp.md) §2.1)**: the renderer is 3D (z-buffer/perspective/back-face culling/flat color with no lighting, 2D always z=0 through the same pipeline), Vec3 nodes, triangular faces, perspective/orthographic cameras, the 3D static-scene hash gate; the AI can build z≠0 scenes via the command stream alone (headless) |
+| 3D interaction & deepening | **Phase D (long-term, not chartered)**: orbit navigation, drawing on work planes, depth picking, lights/materials/shadows, glTF — the cost is in the interaction, not the math; trigger conditions to be set once 2D is on solid ground |
 
-> 本文档的存在本身是一个信号:mo2d 的命名(2d)是当下的诚实,不是上限;
-> 若 Phase D 立项,更名议题随品牌决策一并处理。
+> The very existence of this document is a signal: the "2d" in mo2d's naming is honesty about the present, not a ceiling;
+> if Phase D is chartered, the renaming question will be handled together with the branding decision.

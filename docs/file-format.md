@@ -1,10 +1,10 @@
 ---
 type: Design Document
-title: "文件格式:设计建议与参照"
-description: mo2d 原生格式设计——三层格式架构(.mo2d 单文件交付包=交付即工程/可选工程目录形态/SVG 帧视图)、尾部 BLOB 区、Tick 整数时间、字节级确定性、扩展命名空间、JSON Schema 校验与版本迁移纪律;参照表覆盖 glTF 2.0/vectorcraft/maop/Moho/Lottie/OpenRaster/AniCraft/USD/Collada,各注明取什么与避什么。
+title: "File Format: Design Recommendations and References"
+description: Design of the mo2d native format — three-layer format architecture (.mo2d single-file deliverable package = delivery equals project / optional project-directory (unpacked) form / SVG frame view), trailing BLOB area, Tick integer time, byte-level determinism, extension namespaces, JSON Schema validation and version-migration discipline; the reference table covers glTF 2.0/vectorcraft/maop/Moho/Lottie/OpenRaster/AniCraft/USD/Collada, each annotated with what to take and what to avoid.
 tags: [file-format, storage, reference, gltf, ticks, svg-view]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T15:56:02Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
 sources:
   - id: gltf
     resource: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
@@ -35,127 +35,147 @@ sources:
     title: "本 bundle:架构草案(§4 存储格式原则)"
 ---
 
-# 文件格式:设计建议与参照
+**English** | [简体中文](file-format.zh-CN.md)
 
-owner 问:文件格式有什么推荐与建议,哪些项目和格式规范可以参考。
-本文给出推荐设计(信封草案)+ 参照表(每个参照注明**取什么、避什么**),
-并把 [architecture.md](architecture.md) §4 的五条原则落成可执行细则。
+# File Format: Design Recommendations and References
 
-## 1. 需求(由 mo2d 模型决定)
+The owner asked: any recommendations and suggestions for the file format, and which projects and format
+specifications are worth referencing.
+This document gives a recommended design (an envelope draft) + a reference table (each reference annotated
+with **what to take and what to avoid**),
+and turns the five principles of [architecture.md](architecture.md) §4 into executable details.
 
-格式要承载:线集合(节点/段/三级属性)、关系图(预定义+自定义,含函数体载荷)、
-通道与轨道、根参数、媒体/逻辑载荷、外部资产引用、命令历史。约束:
+## 1. Requirements (dictated by the mo2d model)
 
-1. **AI 可读可写**:AI 原生引擎——格式是智能体的"源代码",须语义命名、可 diff、可手改;
-2. **确定性**:同一文档 → 同一字节(便于 git diff、命令回放哈希、双渲染器对照);
-3. **版本演进**:加字段不改读端,升版本有迁移路;
-4. **大载荷**:十万节点级 SoA 数组与位图不能被 base64 撑爆;
-5. **git 友好**:文本优先,二进制后置或外置。
+The format must carry: a line collection (nodes/segments/three-level attributes), the relation graph
+(predefined + custom, including function-body payloads), channels and tracks, root parameters, media/logic
+payloads, external-asset references, and command history. Constraints:
 
-## 2. 推荐设计(mo2d 信封草案)
+1. **AI-readable and AI-writable**: an AI-native engine — the format is the agent's "source code"; it must be
+   semantically named, diffable, and hand-editable;
+2. **Determinism**: same document → same bytes (good for git diff, command-replay hashes, two-renderer comparison);
+3. **Version evolution**: adding fields does not change readers; upgrading versions has a migration path;
+4. **Large payloads**: SoA arrays on the order of a hundred thousand nodes and bitmaps must not be bloated by base64;
+5. **git-friendly**: text first; binary appended at the end or kept external.
 
-**主格式 = `.mo2d` 单文件交付包**(UTF-8 JSON 头 + 可选尾部 BLOB 区,媒体内嵌不走 base64)
-——**交付即工程**:一个文件既自包含可双击交付,JSON 头又可 git diff、AI 直读。
-**可选工程目录形态**("解包"):`project/` 目录 = `document.mo2d.json` + `assets/`(refs 外置),
-供重 git 协作/大体量工程;引擎打开两种形态**等价**(同一文档,两种容器)。
-对应通行惯例:主扩展名=交付包(Moho .moho=ZIP、.kra/.ora/.docx 同;
-mo2d 因尾部 BLOB 设计,包比 ZIP 更 git/AI 友好)[^mohoproj-format]。
-~~.mo2dz~~ 不设(多场景打包需求出现再议)。
+## 2. Recommended design (mo2d envelope draft)
+
+**Primary format = the `.mo2d` single-file deliverable package** (UTF-8 JSON header + optional trailing BLOB
+area; embedded media without base64) — **delivery equals project**: one file is both self-contained for
+double-click delivery, and its JSON header is git-diffable and directly AI-readable.
+**Optional project-directory (unpacked) form**: a `project/` directory = `document.mo2d.json` + `assets/`
+(refs kept external), for heavy git collaboration / large projects; the engine treats the two forms as
+**equivalent** (one document, two containers). Matching common practice: the primary extension = the
+deliverable package (Moho's .moho is a ZIP; likewise .kra/.ora/.docx; with its trailing-BLOB design, mo2d's
+package is more git/AI-friendly than a ZIP)[^mohoproj-format].
+~~.mo2dz~~ is not defined (revisit if a need for multi-scene packaging arises).
 
 ```jsonc
 {
   "format": "mo2d",
-  "version": 1,               // 文档格式版本(整数递增;语义化标签另议)
-  "minReader": 1,             // 低于此版本的读端应拒绝(glTF asset.minVersion 式)[^gltf]
+  "version": 1,               // Document format version (monotonically increasing integer; a semantic-version tag to be discussed separately)
+  "minReader": 1,             // Readers older than this version should refuse (glTF asset.minVersion style)[^gltf]
   "generator": "mo2d 0.1.0",
-  "root": {                   // 根关系参数(画布/ticksPerSecond/色彩/导出)
+  "root": {                   // Root-relation parameters (canvas/ticksPerSecond/color/export)
     "width": 1920, "height": 1080,
-    "ticksPerSecond": 254016000000,   // maop 实证值[^maop-spec]
-    "fps": 24.0                       // 仅显示/导出参数,时间真值是 Tick
+    "ticksPerSecond": 254016000000,   // empirically verified maop value[^maop-spec]
+    "fps": 24.0                       // display/export parameter only; the source of truth for time is Ticks
   },
   "lines":    [ { "id": "l1", "tags": ["bone"], "attrs": {...},
-                 "nodes": [ {"p": [x,y,z], "attrs": {...}} ],   // 2D 恒 z=0(Vec3 从第一天,3D 扩展决议)
+                 "nodes": [ {"p": [x,y,z], "attrs": {...}} ],   // in 2D z is always 0 (Vec3 from day one, per the 3D-extension decision)
                  "segAttrs": [ {...} ] } ],
   "relations":[ { "id": "r1", "kind": "predefined", "type": "bind",
                  "inputs": [...], "params": {...}, "body": {...}? } ],
   "payloads": { "media": {...}, "logic": {...} },
   "refs":     [ { "id": "img1", "path": "assets/a.png", "relativeTo": "file" } ],
-  "history":  [ /* 命令流,可选;可拆 sidecar */ ],
-  "extensions": { "vendor.feature": { ... } }   // glTF 式扩展命名空间[^gltf]
+  "history":  [ /* command stream, optional; can be split into a sidecar */ ],
+  "extensions": { "vendor.feature": { ... } }   // glTF-style extension namespace[^gltf]
 }
 ```
 
-八条细则:
+Eight rules:
 
-1. **时间 = Tick 裸整数**(每秒 254,016,000,000 = 504,000²,一 tick ≈ 3.9 皮秒;
-   ≈±105 天,越界钳制并记修复;键必须时间升序,读端对乱序排序并记修复)
-   ——全盘照 maop 实证[^maop-spec],避免浮点帧漂移;fps 只是根参数。
-   **选此数的理由**(2026-11-11 计算验证):24/25/30/48/50/60/120/240 fps、
-   毫秒/微秒、NTSC 30000/1001(=8,475,667,200 精确)、音频采样率 44.1k/48k/96k/192k
-   全部整除——帧↔tick↔音频采样换算皆为精确整数运算;值域钳在 i64/4(±105 天)
-   留 2 bit 余量,时间差/插值中间运算不溢出;
-2. **尾部 BLOB 区**(vectorcraft 式):JSON 头之后接魔数与字节区,载荷条目写
-   `"blob": [offset, length]` 而非 base64;小额(阈值 INLINE_MAX)仍内嵌——
-   vectorcraft 是 MIT/Apache,**连代码都可合法参照**[^vc-format];
-3. **媒体默认外置**(refs + 相对基准),内嵌可选;preview 缩略图可选、
-   保存时再生、**不计入规范哈希**(Moho 的 thumbnail/preview.jpg 同此)[^mohoproj-format];
-4. **字节级确定性**:稳定字段序(写入按规范序,不排序不压缩)、正文无时间戳
-   (modified_date 之类只进信封)、原子写(temp + rename)[^vc-format];
-5. **未知键透传 + 扩展命名空间**:读端不认识的键原样保留写回;
-   第三方扩展一律进 `extensions.{vendor.feature}`,并像 glTF 一样在
-   `extensionsUsed` 声明[^gltf]——吸取 Moho **保存时剥离外来键**的教训:
-   mo2d 明文承诺**不剥**[^mohoproj-format];
-6. **JSON Schema + 校验器**:格式规范先行(OKF 文档,照 maop-spec 的写法),
-   仓库带 schema 与校验命令(glTF validator 文化)[^gltf];
-7. **版本迁移读端**:FORMAT_VERSION 逐版升,旧版照读——AniCraft v4→v7 是
-   活样本(每升一版,旧读端保留)[^anicraft];
-8. **history 与 document 分离**:document 是**真值**,history 只是审计/回放;
-   两者分叉时以 document 为准(避免"回放 vs 状态"两套真相)。
+1. **Time = bare Tick integers** (254,016,000,000 per second = 504,000², one tick ≈ 3.9 picoseconds;
+   range ≈ ±105 days, out-of-range values clamped and the repair recorded; keys must be in ascending time
+   order, the reader sorts out-of-order keys and records the repair) — taken wholesale from maop's empirical
+   results[^maop-spec], avoiding floating-point frame drift; fps is only a root parameter.
+   **Why this number** (verified by calculation, 2026-11-11): 24/25/30/48/50/60/120/240 fps,
+   milliseconds/microseconds, NTSC 30000/1001 (= 8,475,667,200 exactly), and audio sample rates
+   44.1k/48k/96k/192k all divide it evenly — frame ↔ tick ↔ audio-sample conversions are all exact integer
+   arithmetic; the value range is clamped to i64/4 (±105 days), leaving 2 bits of headroom so time
+   differences / intermediate interpolation calculations do not overflow;
+2. **Trailing BLOB area** (vectorcraft-style): after the JSON header come a magic number and byte areas;
+   payload entries write `"blob": [offset, length]` instead of base64; small items (below the INLINE_MAX
+   threshold) stay inline — vectorcraft is MIT/Apache, so **even its code can legally be referenced**[^vc-format];
+3. **Media external by default** (refs + a relative base), embedding optional; preview thumbnails optional,
+   regenerated on save, and **excluded from the canonical hash** (the same as Moho's
+   thumbnail/preview.jpg)[^mohoproj-format];
+4. **Byte-level determinism**: stable field order (written in canonical order; no sorting, no compression),
+   no timestamps in the body (modified_date and the like go into the envelope only), atomic writes
+   (temp + rename)[^vc-format];
+5. **Unknown-key passthrough + extension namespaces**: keys the reader does not recognize are preserved and
+   written back as-is; third-party extensions always go into `extensions.{vendor.feature}` and, like glTF,
+   are declared in `extensionsUsed`[^gltf] — learning from Moho's lesson of **stripping foreign keys on
+   save**: mo2d explicitly promises **not to strip**[^mohoproj-format];
+6. **JSON Schema + validator**: the format specification comes first (an OKF document, written in the style
+   of maop-spec), and the repository carries the schema and a validation command (glTF validator culture)[^gltf];
+7. **Version migration on the reader**: FORMAT_VERSION rises one version at a time, and old versions are
+   still read — AniCraft v4→v7 is a living sample (with each version bump, the old readers are kept)[^anicraft];
+8. **history separated from document**: document is the **truth**; history is only for audit/replay;
+   when the two diverge, document wins (avoiding two competing truths, "replay vs state").
 
-## 3. 参照表:项目与规范
+## 3. Reference table: projects and specifications
 
-| 参照 | 许可 | 取什么 | 避什么/教训 |
+| Reference | License | What to take | What to avoid / lessons |
 |---|---|---|---|
-| **glTF 2.0**(Khronos)[^gltf] | 规范开放 | `asset.version/minVersion` 必填纪律;extensionsUsed/Required 机制;JSON 头 + BIN 数据分离;官方 JSON Schema + validator 文化 | 它的 3D 概念体系(accessor/bufferView 间接层)对 mo2d 过重——用简化的尾部 BLOB 区即可 |
-| **vectorcraft `.vectorcraft`**[^vc-format] | MIT/Apache(**代码可合法参照**) | 信封形状;尾部 BLOB 区(魔数+offset/length+INLINE_MAX 阈值);原子写;`document.unknown` 外来数据位;v1→v4 逐版演进 | — |
-| **maohou `.maop` 规范**[^maop-spec] | 本机知识库 | **Tick 时间模型**(裸整数/每秒 254,016,000,000/钳制修复);键时间升序;规范文档先行、逐字段必写/不写标注法 | 它的双写扩展键(标准+扩展)是为迁就 Moho 剥键——mo2d 无此包袱,直接单写 |
-| **Moho `.moho/.mohoproj`**[^mohoproj-format] | 事实参照(不引代码) | 双形态(ZIP 容器 + 单文件 JSON)并存;preview 外置/内嵌两可;读端宽松(未知键容忍) | ①保存**剥离外来键**;②编辑器状态(documentviewstate 48 键/洋葱皮)混进文档——mo2d 已划会话状态,格式只带文档;③空层列表被拒收之类的容器怪癖 |
-| **Lottie**(JSON 动画)[^lottie] | 规范开放 | 关键帧/插值/预合成的 JSON 编码工业对照;若将来要 Web 互通,是最现实的交换目标 | 无严格 schema、概念历史堆积;其"形状=图层树"与线模型不合,只借鉴编码不借鉴模型 |
-| **OpenRaster(ORA)**[^ora] | 规范开放 | ZIP 容器纪律:mimetype 为首条目且不压缩、mergedimage.png 预览、层文件分立——将来若设打包形态照此办 | — |
-| **AniCraft `.anicraft`**[^anicraft] | 本机(fork) | FORMAT_VERSION 逐版读端迁移 + 旁存(sidecar)承载兼容数据 | — |
-| **USD** | 规范开放 | 分层组合/引用(若远期做协作组合可再看) | 过重——mo2d 的引用需求用 refs 关系即可,现在不引入 |
-| **Collada / .blend DNA** | — | (.blend 的自描述版本化是好想法) | Collada=XML 过度工程的教训;.blend 二进制自描述与"AI 可读"冲突——都是反面参照 |
-| **BUI**(GPL)[^arch-doc] | **GPL-3.0** | (性能设计另见 architecture §3.1) | 格式上无参照价值;GPL 不可引代码 |
+| **glTF 2.0** (Khronos)[^gltf] | open specification | the `asset.version/minVersion` mandatory discipline; the extensionsUsed/Required mechanism; JSON header + BIN data separation; official JSON Schema + validator culture | its 3D concept system (accessor/bufferView indirection layers) is too heavy for mo2d — a simplified trailing BLOB area is enough |
+| **vectorcraft `.vectorcraft`**[^vc-format] | MIT/Apache (**code can legally be referenced**) | envelope shape; trailing BLOB area (magic number + offset/length + INLINE_MAX threshold); atomic writes; the `document.unknown` slot for foreign data; step-by-step v1→v4 evolution | — |
+| **maohou `.maop` spec**[^maop-spec] | local knowledge base | the **Tick time model** (bare integers / 254,016,000,000 per second / clamp-and-repair); keys in ascending time order; specification-first documents with a per-field must-write/never-write annotation style | its double-written extension keys (standard + extension) exist to accommodate Moho's key stripping — mo2d has no such baggage and writes once |
+| **Moho `.moho/.mohoproj`**[^mohoproj-format] | factual reference (no code referenced) | two forms coexisting (ZIP container + single-file JSON); preview either external or embedded; lenient readers (unknown-key tolerance) | ① **strips foreign keys** on save; ② editor state (documentviewstate 48 keys / onion skin) leaks into the document — mo2d already separates session state, the format carries document only; ③ container quirks such as empty layer lists being rejected |
+| **Lottie** (JSON animation)[^lottie] | open specification | an industrial comparison for the JSON encoding of keyframes/interpolation/precomps; the most realistic exchange target if Web interoperability is wanted later | no strict schema, accretion of historical concepts; its "shape = layer tree" does not fit the line model — borrow the encoding, not the model |
+| **OpenRaster (ORA)**[^ora] | open specification | ZIP container discipline: mimetype as the first, uncompressed entry; mergedimage.png preview; separate layer files — follow this if a packaged form is ever defined | — |
+| **AniCraft `.anicraft`**[^anicraft] | local (fork) | FORMAT_VERSION per-version reader migration + sidecar files carrying compatibility data | — |
+| **USD** | open specification | layered composition/references (worth another look if collaborative composition is done in the far future) | too heavy — mo2d's referencing needs are met by the refs relation; not introducing it now |
+| **Collada / .blend DNA** | — | (.blend's self-describing versioning is a good idea) | Collada = a lesson in XML over-engineering; .blend's binary self-description conflicts with "AI-readable" — both are negative references |
+| **BUI** (GPL)[^arch-doc] | **GPL-3.0** | (for the performance design see architecture §3.1) | no reference value for the format; GPL, code cannot be referenced |
 
-## 4. 三层格式架构(2026-11-11,owner 问"能否直接用 SVG 表示工程"后确立)
+## 4. Three-layer format architecture (established 2026-11-11 after the owner asked "can the project be represented directly in SVG")
 
-**展示编辑一体成立**(同一渲染管线的多个客户端:舞台/无头导出/AI 会话皆渲染同一文档,
-叠加物也是线),但**工程真值不能是 SVG**——SVG 是"某一帧的图像",工程是"全部帧的成因":
+**Display equals edit holds** (multiple clients of the same rendering pipeline: the stage / headless export /
+AI sessions all render the same document, and overlays are lines too), but **the engineering source of truth
+cannot be SVG** — SVG is "the image of one frame", while the project is "the cause of all frames":
 
 ```
-① 主格式(交付即工程) .mo2d           单文件:JSON 头+尾部 BLOB 区(媒体内嵌);日常保存/分享/交付
-② 工程目录形态(可选)  project/        document.mo2d.json + assets/(refs 外置);重 git 协作;两种容器等价
-③ 帧视图               SVG            任一帧的无损展示;模型即线 ⇒ 原则上可重导入为几何线(关系/轨道不随行)
+① Primary format (delivery equals project)  .mo2d       single file: JSON header + trailing BLOB area (media embedded); everyday save/share/delivery
+② Project-directory form (optional)         project/    document.mo2d.json + assets/ (refs external); heavy git collaboration; the two containers are equivalent
+③ Frame view                                SVG         lossless display of any single frame; the model is lines ⇒ in principle re-importable as geometric lines (relations/tracks do not come along)
 ```
 
-SVG 作工程格式的五个硬伤:①stroke-width 每 path 单值,**无逐节点宽度通道**(变宽线需
-展开为填充轮廓,结构丢失),更无逐点颜色/段级属性;②path `d` 是指令串非节点表——
-节点 ID/手柄/段边界不可往返,而绑定/轨道/命令靠**节点 ID 寻址**;③无骨骼/绑定/约束/
-轨道——文档模型三分之二无处安放;④无时间模型(SMIL 已废弃);⑤XML 无规范字节形态,
-字节级确定性做不到,大场景解析慢。
-**SVG 的正确定位**:帧级视图/交换格式(导出=展示一体的自然产物;LLM 极熟悉 SVG,
-亦可作 AI 的几何交换通道)——roadmap C3 的 SVG 导入即此角色,另加帧导出。
+Five hard flaws of SVG as a project format: ① stroke-width is a single value per path — **no per-node width
+channel** (variable-width lines must be expanded into filled outlines, losing the structure), let alone
+per-point colors / segment-level attributes; ② path `d` is an instruction string, not a node table — node
+IDs/handles/segment boundaries cannot round-trip, while binding/tracks/commands rely on **addressing by node
+ID**; ③ no bones/binding/constraints/tracks — two-thirds of the document model has nowhere to live; ④ no time
+model (SMIL is deprecated); ⑤ XML has no canonical byte form — byte-level determinism is impossible, and
+large scenes parse slowly.
+**SVG's correct role**: a per-frame view/exchange format (export = the natural byproduct of display equals
+edit; LLMs know SVG extremely well, so it can also serve as the AI's geometry exchange channel) — the
+roadmap C3 SVG import plays exactly this role, plus frame export.
 
-## 5. 与既有文档的关系
+## 5. Relation to the existing documents
 
-- [architecture.md](architecture.md) §4 的五条原则(信封/语义版本/未知键透传/命令历史内嵌/资产外置)本文落成八条细则,若有出入以本文为准并回改 §4;
-- 轨道/关键帧/段的编码语义见 [moho-mapping.md](moho-mapping.md) §5(通道对象与 interp 字段族);
-- 格式规范正式稿(逐字段"必写/默认/不写"标注,照 maop-spec 体例)在 roadmap Phase A5
-  动笔,MVP 只需实现本文信封的最小子集(lines/relations/root/refs,不带 BLOB 区)。
+- The five principles of [architecture.md](architecture.md) §4 (envelope / semantic versioning / unknown-key
+  passthrough / embedded command history / external assets) are turned into the eight rules in this document;
+  if they disagree, this document prevails and §4 will be amended accordingly;
+- The encoding semantics of tracks/keyframes/segments are in [moho-mapping.md](moho-mapping.md) §5 (channel
+  objects and the interp field family);
+- The formal format specification (per-field "must-write/default/never-write" annotations, in the maop-spec
+  style) starts in roadmap Phase A5; the MVP only needs the minimal subset of this document's envelope
+  (lines/relations/root/refs, without the BLOB area).
 
-## 6. 待确认事项
+## 6. Open Questions
 
-- [ ] `version` 用整数递增(AniCraft 式)还是语义化字符串(glTF 式)——倾向整数+变更日志;
-- [ ] BLOB 区魔数与 INLINE_MAX 阈值的具体值(可直接采纳 vectorcraft 常数);
-- [ ] ~~`.mo2dz` 是否首版就要~~(已决:**不设**,2026-11-12 owner 按通行惯例修正——主扩展名即交付包);
-- [ ] 自定义关系的函数体(logic 载荷)在格式中的位置:document 内 vs refs 外置脚本。
+- [ ] Whether `version` uses a monotonically increasing integer (AniCraft-style) or a semantic-version string (glTF-style) — leaning toward integer + changelog;
+- [ ] The concrete values of the BLOB-area magic number and the INLINE_MAX threshold (vectorcraft's constants can be adopted directly);
+- [ ] ~~Whether `.mo2dz` is needed in the first version~~ (decided: **not defined**; corrected by the owner per common practice, 2026-11-12 — the primary extension is itself the deliverable package);
+- [ ] Where the function body of custom relations (the logic payload) lives in the format: inside document vs. an external script in refs.

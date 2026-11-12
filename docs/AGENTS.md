@@ -1,10 +1,10 @@
 ---
 type: Playbook
-title: "docs/ 知识库维护规程(OKF v0.2)"
-description: 本目录按 Open Knowledge Format v0.2 组织;任何会话(人或代理)对 docs/ 下 .md 的增删改必须遵守本规程并以 check-okf.py 校验。
+title: "docs/ Knowledge Base Maintenance Playbook (OKF v0.2)"
+description: This directory is organized per Open Knowledge Format v0.2; any session (human or agent) that adds, deletes, or modifies .md files under docs/ must follow this playbook and validate with check-okf.py.
 tags: [okf, governance, workflow]
 status: stable
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T08:04:06Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
 sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/open-knowledge-format
@@ -14,43 +14,51 @@ sources:
     title: maohou 知识库 OKF 维护规程(本规程的范本)
 ---
 
-# 适用范围
+**English** | [简体中文](AGENTS.zh-CN.md)
 
-`docs/` 整个目录(项目正式文档库,git 建库后随仓库入库)。**任何新会话**在本目录
-新建或修改任何 `.md` 文件时,本规程**必须**遵守。mo2d 仓库若建立根 AGENTS.md 并与本文冲突,以根文件优先。
+# Scope
 
-> 上游 OKF 规范若发布比 v0.2 更新的版本,应复核本规程与 check-okf.py 后升级
-> `okf_version`(2026-11-11 建立 bundle 时网络窗口未开,以 maohou 知识库执行的 v0.2 为准[^maohou-okf])。
+The entire `docs/` directory (the project's official documentation library; committed to the repository once git is initialized). **Any new session** that creates or modifies any `.md` file in this directory **must** follow this playbook. If the mo2d repository later creates a root AGENTS.md that conflicts with this document, the root file takes precedence.
 
-# 硬性规则(OKF v0.2 符合性)
+> If the upstream OKF specification publishes a version newer than v0.2, review this playbook and check-okf.py before upgrading `okf_version` (when the bundle was created on 2026-11-11 the network window was not open, so v0.2 as practiced in the maohou knowledge base is authoritative[^maohou-okf]).
 
-1. **概念文档**(`index.md`/`log.md`/`AGENTS.md` 以外的一切 `.md`)**必须**有 YAML frontmatter
-   (文件首行 `---` 起始、配对 `---` 结束),且**必须**含非空 `type`。`type` 自选、描述性强;
-   现有取值:`Design Document`/`Reference`/`Task Brief`/`Playbook`。
-2. **推荐**字段:`title`、`description`(一句话,index 与检索用)、`tags`(YAML 列表)。
-3. **Provenance**:来源进 frontmatter `sources`(每条 `resource` 必填;bundle 内相对路径、
-   bundle 外给 `file://` 绝对路径或 URL;正文逐条事实断言用脚注 `[^id]` 对到 `sources[].id`)。
-   owner 口述给定的规范表述在正文以引用块逐字收录,并在文首"规范表述"一节集中列出。
-4. **Trust/lifecycle**:写/改内容的会话**必须**更新 `generated: { by, at }`;actor 惯例——
-   代理 `zcode-agent/<model>`、人 `human:<id>`、自动过程 `process:<id>`;`at` 为真实 UTC 时间
-   (`date -u +"%Y-%m-%dT%H:%M:%SZ"`,禁止编造)。owner 明确核验过的内容**应当**追加
-   `verified: { by: human:<id>, at: … }`;未核验就不写(缺省即 unverified,是诚实信号)。
-   草案用 `status: draft`,定稿 `stable`(缺省即 stable),被取代但留档 `deprecated`。
-5. **保留文件名**:`index.md`(目录清单;bundle 根仅可带 `okf_version`)与
-   `log.md`(更新历史,首行为 `# Directory Update Log`,ISO `YYYY-MM-DD` 日期分组、
-   最新在上、条目粗体动词开头)**禁止**用作概念文档。
+# Hard rules (OKF v0.2 compliance)
 
-# 变更流程(每次改 docs/ 的 .md 都走)
+1. **Concept documents** (every `.md` other than `index.md`/`log.md`/`AGENTS.md`) **must** carry YAML frontmatter
+   (starting with `---` on the file's first line, closed by a matching `---`), and **must** contain a non-empty `type`. `type` is self-chosen and descriptive;
+   current values: `Design Document`/`Reference`/`Task Brief`/`Playbook`.
+2. **Recommended** fields: `title`, `description` (one sentence, for the index and retrieval), `tags` (YAML list).
+3. **Provenance**: sources go into the frontmatter `sources` (`resource` is required on each entry; relative paths inside the bundle,
+   `file://` absolute paths or URLs outside it; each factual claim in the body is footnoted `[^id]` back to `sources[].id`).
+   Normative statements dictated by the owner are recorded verbatim in blockquotes in the body, and collected in a leading "Normative Statements" section.
+4. **Trust/lifecycle**: the session that writes/modifies content **must** update `generated: { by, at }`; actor conventions —
+   agent `zcode-agent/<model>`, human `human:<id>`, automated process `process:<id>`; `at` is the real UTC time
+   (`date -u +"%Y-%m-%dT%H:%M:%SZ"`, fabricating it is forbidden). Content explicitly verified by the owner **should** append
+   `verified: { by: human:<id>, at: … }`; if unverified, do not write it (absence means unverified — an honesty signal).
+   Drafts use `status: draft`, finalized ones `stable` (default is stable), superseded-but-kept ones `deprecated`.
+5. **Reserved filenames**: `index.md` (directory listing; the bundle root may only carry `okf_version`) and
+   `log.md` (update history, first line `# Directory Update Log`, grouped by ISO `YYYY-MM-DD` dates,
+   newest on top, entries starting with a bolded verb) are **forbidden** from use as concept documents.
 
-1. 改文档正文 → 更新其 frontmatter `generated`(实质性内容变更时;纯格式微调可不更新但要在 log 记录)。
-2. 新建/删除/更名文档 → 同步更新 `index.md`(描述取自该文档 `description`)。
-3. 在 `log.md` 追加当日条目(当日已有日期组就并入该组)。
-4. 跑 `python3 docs/check-okf.py` —— 必须 0 error 才算完成。
-5. owner 评审通过的文档把 `status: draft` 翻成 `stable` 并补 `verified`。
+## Bilingual documents (2026-11-12)
 
-# 结构约定
+- Every concept document exists as `X.md` (English, primary) and `X.zh-CN.md` (Chinese); both carry a language-switch line at the top of the body;
+- **English is primary/authoritative**; the Chinese twin is a faithful translation. Owner-given normative quotes (规范表述) stay verbatim in Chinese in BOTH versions, each followed by an English translation in the English version;
+- **Any substantive change must be applied to both language versions** (same edit, or the immediately following edit recorded in `log.md`);
+- `log.md` is a journal and is NOT translated (entries keep the language they were written in);
+- `check-okf.py` enforces twin completeness (every non-reserved .md must have its language twin).
 
-- Bundle 根 = `docs/`(根 `index.md` 声明 `okf_version: "0.2"`)。
-- 目录维持扁平;主题增多再开子目录并配该子目录 `index.md`。
-- 概念演进方式:owner 给出的新规范表述 → 更新对应概念文档的"规范表述"节并同步正文 → log 记录;
-  被推翻的旧表述不删除历史,以"已修订"注记保留。
+# Change workflow (run for every .md change in docs/)
+
+1. Modify a document body → update its frontmatter `generated` (for substantive content changes; pure formatting tweaks may skip it but must be recorded in the log).
+2. Create/delete/rename a document → update `index.md` in sync (the description is taken from that document's `description`).
+3. Append an entry for the day to `log.md` (merge into the day's existing date group if one already exists).
+4. Run `python3 docs/check-okf.py` — it must report 0 errors before the change counts as done.
+5. Documents that pass owner review flip `status: draft` to `stable` and gain `verified`.
+
+# Structure conventions
+
+- Bundle root = `docs/` (the root `index.md` declares `okf_version: "0.2"`).
+- The directory stays flat; open subdirectories only when topics grow, each with its own subdirectory `index.md`.
+- Concept evolution path: a new normative statement from the owner → update the "Normative Statements" section of the corresponding concept document and sync the body → record in the log;
+  superseded old statements are not deleted from history, but kept with a "revised" annotation.

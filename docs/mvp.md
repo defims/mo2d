@@ -1,10 +1,10 @@
 ---
 type: Task Brief
-title: "MVP 定稿(v5):触手 + 3D 场景,命令协议全程构建"
-description: MVP v5 整理稿——六件范围(线内核 3D 就绪/关系热路径/Tick 时间/命令协议+校验器/格式+导出/最小舞台),六步验收门(A1 含 3D 场景哈希门,A6 手搓与 AI 命令流同构),八条完成定义,九项已冻结决策清单,基础 3D 硬边界与防蔓延条款。
+title: "MVP Final (v5): Tentacle + 3D Scene, Built End-to-End via the Command Protocol"
+description: MVP v5 consolidated draft — six items in scope (3D-ready line kernel / hot-path relations / Tick time / command protocol + validator / format + export / minimal stage), six gated acceptance steps (A1 includes the 3D scene hash gate, A6 hand-built and AI command streams isomorphic), an eight-item Definition of Done, a nine-item frozen decision list, and the basic-3D hard boundary plus anti-scope-creep clauses.
 tags: [mvp, scope, stage, mcp, ticks, 3d]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T15:09:24Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -23,135 +23,137 @@ sources:
     title: "本 bundle:3D 扩展(预防决策/旋转表示决议)"
 ---
 
-# MVP 定稿(v5):触手 + 3D 场景,命令协议全程构建
+**English** | [简体中文](mvp.zh-CN.md)
 
-## 0. 版本沿革
+# MVP Final (v5): Tentacle + 3D Scene, Built End-to-End via the Command Protocol
 
-| 版 | 变更 |
+## 0. Version history
+
+| Version | Change |
 |---|---|
-| v2 | 初版:触手垂直切片,舞台内含 |
-| v3 | 按六部件引擎定义重定界:舞台移出、AI 通道升主轴、校验器显式化、无头演示 |
-| v4 | owner 决定 B1 提前:最小舞台以 A6 回归,完成定义加直接操纵等价 |
-| v4.1 | owner 决定"低成本直接支持基础 3D":渲染器即 3D、Vec3 节点、3D 场景门 |
-| **v5** | **整理稿**:合并三轮增量为自洽定稿——舞台入范围清单、3D 入完成定义、汇总九项已冻结决策 |
+| v2 | Initial version: tentacle vertical slice, stage included in scope |
+| v3 | Re-scoped per the six-components engine definition: stage moved out, AI channel promoted to a main axis, validator made explicit, headless demo |
+| v4 | Owner decided to pull B1 forward: the minimal stage returns as A6, and the Definition of Done gains direct-manipulation equivalence |
+| v4.1 | Owner decided to "directly support basic 3D at low cost": renderer-is-3D, Vec3 nodes, 3D scene gate |
+| **v5** | **Consolidated draft**: merges three rounds of increments into a self-consistent final — the stage enters the scope list, 3D enters the Definition of Done, the nine frozen decisions are summarized |
 
-**MVP 一句话**:一条会动的触手(2D)+ 一个 z≠0 静态场景(3D),全部经命令协议构建,
-AI 与手双通道同构,引擎确定性执行、离线可播。
+**MVP in one sentence**: one animated tentacle (2D) + one static z≠0 scene (3D), everything built via the command protocol,
+AI and hand as two isomorphic channels, deterministic engine execution, playable offline.
 
-## 1. 证明什么
+## 1. What it proves
 
-| 部件/铁律(vision §2/§6) | MVP 中的形态 |
+| Component / iron rule (vision §2/§6) | Form in the MVP |
 |---|---|
-| 语义语言 | 线/节点/段三级属性 + 三类热路径关系(最小词表) |
-| 确定性运行时 | 关系 DAG 求值 + Tick 采样;同输入同输出(字节级) |
-| 命令协议 | JSON 命令流(带协议版本)+ MCP 三命令 |
-| 校验器 | schema 校验 + 确定性门(重放字节相等) |
-| 可生成的视图(第一例) | A6 最小舞台:四操作,零标准控件 |
-| AI 编译,引擎执行 | AI 经 MCP 从零建触手;引擎离线播放导出 |
-| 能力即数据 | 关掉 AI 会话,文档照常播放/导出,逐帧一致 |
-| 2D = 3D 特例 | z≠0 静态场景经命令流构建并渲染(A1 门)——主张被测试钉死 |
+| Semantic language | Line/node/segment three-level attributes + three kinds of hot-path relations (minimal vocabulary) |
+| Deterministic runtime | Relation DAG evaluation + Tick sampling; same input, same output (byte-level) |
+| Command protocol | JSON command stream (with protocol version) + three MCP commands |
+| Validator | Schema validation + determinism gate (replay byte-equality) |
+| Generatable view (first example) | A6 minimal stage: four operations, zero standard controls |
+| AI compiles, engine executes | The AI builds the tentacle from scratch via MCP; the engine plays and exports offline |
+| Capability as data | With the AI session closed, the document still plays/exports as usual, frame-identical |
+| 2D = special case of 3D | A static z≠0 scene is built and rendered via the command stream (A1 gate) — the claim is nailed down by tests |
 
-(部件 5 性能机器=CPU 单轨起步,SoA 保路,后置 roadmap B1。)
+(Component 5, the performance machine, = CPU single-track to start, SoA keeps the path open, deferred to roadmap B1.)
 
-## 2. 范围:六件进
+## 2. Scope: six items in
 
-1. **线内核(3D 就绪,无头离屏)**:
-   - 结构:节点/段/闭合;三级属性最小子集([moho-mapping.md](moho-mapping.md) §7.1–7.3):
-     线级 `closed、width、color、strokeOn、fillOn`;节点级 `position(Vec3,2D 恒 z=0)、
-     width、color、handle{type, offsetIn, offsetOut}`;段级 `type(straight/curve)、visible`;
-   - 渲染:变宽线三角带;闭合填充非零(**3 节点闭合线=三角形面**);
-   - **渲染器即 3D**:z-buffer+透视除法+背面剔除+平色无光照;相机透视/正交;
-     2D 恒 z=0 同管线([3d-extension.md](3d-extension.md));
-2. **关系热路径内核**([architecture.md](architecture.md) §2.1):
-   - 节点共享(骨架折线);**绑定 bind**(线性权重,公式=点到线段**投影距离**,2D/3D 同式);
-   - **轨道引用 track**(轨道=线:节点 position=Tick、关键帧值=节点级属性、
-     插值 Linear/Bezier=im 0/9=段级属性;track 关系=把轨道线接到被动画属性;
-     决议见本文件 §8 D1);
-3. **时间**:关键帧时间位置=**Tick 裸整数**([file-format.md](file-format.md) §2 细则 1:
-   升序、fps 仅显示参数);演示物含**一个闭合线元素**(触手末端吸盘)——填充有验收物;
-4. **命令协议 + 校验器**:命令注册表、JSON 命令流(**协议版本字段**,旧流永可重放)、
-   撤销/回放、MCP 三命令(apply/list/screenshot);schema 校验+确定性门(过门才落盘);
-5. **格式 + 导出**:信封最小子集 `{format, version, minReader, generator,
-   root{width,height,ticksPerSecond,fps}, lines, relations}`(无 BLOB/refs/history);
-   字节级确定性(稳定字段序、原子写);**PNG 序列为主**(逐帧哈希可验),GIF 附赠;
-6. **最小舞台**(A6 交付物,生成的视图第一例):薄视口包无头内核——
-   画线/拖节点/连线建关系/播放**四操作**,零标准控件,每个交互=命令。
+1. **Line kernel (3D-ready, headless offscreen)**:
+   - Structure: nodes/segments/closure; minimal subset of the three-level attributes ([moho-mapping.md](moho-mapping.md) §7.1–7.3):
+     line-level `closed, width, color, strokeOn, fillOn`; node-level `position (Vec3, 2D always z=0),
+     width, color, handle{type, offsetIn, offsetOut}`; segment-level `type (straight/curve), visible`;
+   - Rendering: variable-width lines as triangle strips; closed fill non-zero (**3-node closed line = triangular face**);
+   - **The renderer is 3D**: z-buffer + perspective divide + back-face culling + flat color, no lighting; perspective/orthographic cameras;
+     2D always z=0 through the same pipeline ([3d-extension.md](3d-extension.md));
+2. **Relation hot-path kernel** ([architecture.md](architecture.md) §2.1):
+   - Node sharing (skeleton polylines); **bind** (linear weights, formula = **projected distance** from point to segment, same formula in 2D/3D);
+   - **track (track reference)** (a track = a line: node position = Tick, keyframe value = a node-level attribute,
+     interpolation Linear/Bezier = im 0/9 = a segment-level attribute; the track relation = wiring the track line to the animated attribute;
+     resolution in §8 D1 of this file);
+3. **Time**: keyframe time position = **raw Tick integers** ([file-format.md](file-format.md) §2 rule 1:
+   ascending, fps is a display-only parameter); the demo artifact includes **one closed-line element**
+   (the sucker at the tentacle's tip) — fill has an acceptance artifact;
+4. **Command protocol + validator**: command registry, JSON command stream (**protocol version field**, old streams remain forever replayable),
+   undo/replay, three MCP commands (apply/list/screenshot); schema validation + determinism gate (persist to disk only after passing the gate);
+5. **Format + export**: minimal envelope subset `{format, version, minReader, generator, root{width,height,ticksPerSecond,fps}, lines, relations}` (no BLOB/refs/history);
+   byte-level determinism (stable field order, atomic writes); **PNG sequence as primary** (verifiable frame-by-frame hashes), GIF as a bonus;
+6. **Minimal stage** (A6 deliverable, first example of a generatable view): a thin viewport wrapping the headless kernel —
+   draw lines / drag nodes / connect lines to build relations / play, **four operations**, zero standard controls, every interaction = a command.
 
-**全出**:位图网格、模拟、渐变、自定义关系、笔触样式库、导入器、多层/群组、
-BLOB 区、工程目录形态、协作;**3D 侧**:灯光、材质、3D 导航、工作平面、深度拾取、glTF
-(全在 Phase D——贵在交互不在数学)。
+**All out**: bitmap mesh, simulation, gradients, custom relations, brush-stroke style library, importers, multi-layer/groups,
+BLOB area, project-directory layout, collaboration; **3D side**: lights, materials, 3D navigation, work planes, depth picking, glTF
+(all in Phase D — the cost is in the interaction, not the math).
 
-## 3. 六步验收门(门不过不进;A1 起全程经命令流驱动)
+## 3. Six gated steps (no passing the gate, no moving on; driven by the command stream end-to-end from A1 on)
 
-| 步 | 内容 | 验收门 |
+| Step | Content | Acceptance gate |
 |---|---|---|
-| A1 | 线内核 + 离屏渲染(3D 就绪) | 命令流建变宽触手线;渲染对照样张(三角带/非零填充);**3D 静态场景门**:命令流建 z≠0 三角形面/线框,渲染哈希冻结 |
-| A2 | 节点共享 + 骨架 + 绑定 | 折线骨架驱动变形;未绑定阴性对照不变形 |
-| A3 | 轨道 + Tick + 播放 | 关键帧 Tick 升序;Linear/Bezier 可切换;循环播放逐帧可复现 |
-| A4 | 命令协议 + MCP + 校验器 | 录制 A1–A3 全程;重放复现;AI 经 MCP 三命令从零完成同一动画;schema 拒坏文档并报错 |
-| A5 | 格式 + 导出 + 离线闭环 | round-trip 字节相等;**关掉 AI 会话重开,播放/导出逐帧一致** |
-| A6 | 最小舞台 | 四操作零控件;每个交互=命令;**手搓触手与 AI 路径命令流同构** |
+| A1 | Line kernel + offscreen rendering (3D-ready) | The command stream builds the variable-width tentacle line; rendering compared against reference images (triangle strip/non-zero fill); **3D static scene gate**: the command stream builds z≠0 triangular faces/wireframes, render hash frozen |
+| A2 | Node sharing + skeleton + bind | Polyline skeletons drive deformation; the unbound negative control does not deform |
+| A3 | Tracks + Tick + playback | Keyframe Ticks ascending; Linear/Bezier switchable; loop playback reproducible frame by frame |
+| A4 | Command protocol + MCP + validator | Record the entire A1–A3 process; replay reproduces it; the AI completes the same animation from scratch via the three MCP commands; schema rejects bad documents with errors |
+| A5 | Format + export + offline closed loop | round-trip byte-equality; **close the AI session and reopen, playback/export frame-identical** |
+| A6 | Minimal stage | Four operations, zero controls; every interaction = a command; **the hand-built tentacle's command stream is isomorphic to the AI path's** |
 
-## 4. 完成定义(八条)
+## 4. Definition of Done (eight items)
 
-1. **AI 编译**:AI 经 MCP 从零搭出触手动画并导出;下限=预录命令流(伪 AI)必须通过,
-   真 AI 会话为上限加分;
-2. **字节级复现**:重放命令流 → 保存 → 与原路径文档逐字节一致(协议版本字段保证旧流永可重放);
-3. **离线一致**(能力即数据):无 AI 会话,打开/播放/导出与在线逐帧一致;
-4. **持久化**:round-trip 字节相等;未知键透传;
-5. **求值吞吐**:合成压力文档(命令流生成 1 万节点)单帧求值 < 16ms(CPU,参考硬件待定);
-6. **校验器在岗**:schema 拒坏文档;确定性门拦住非确定产出;
-7. **直接操纵等价**(A6):手搓触手命令流与 AI 路径同构;
-8. **3D 特例验证**(A1):z≠0 静态场景可建可渲,哈希冻结——"2D=3D 特例"成立。
+1. **AI compiles**: the AI builds and exports the tentacle animation from scratch via MCP; the floor = a prerecorded command stream (pseudo-AI) must pass,
+   a real AI session is a stretch bonus;
+2. **Byte-level reproduction**: replay command stream → save → byte-identical to the document from the original path (the protocol version field guarantees old streams remain forever replayable);
+3. **Offline consistency** (capability as data): with no AI session, open/playback/export is frame-identical to online;
+4. **Persistence**: round-trip byte-equality; unknown keys passed through;
+5. **Evaluation throughput**: synthetic stress document (command stream generates 10k nodes), single-frame evaluation < 16ms (CPU, reference hardware TBD);
+6. **Validator on duty**: schema rejects bad documents; the determinism gate blocks non-deterministic output;
+7. **Direct-manipulation equivalence** (A6): the hand-built tentacle's command stream is isomorphic to the AI path's;
+8. **3D special-case verification** (A1): a static z≠0 scene can be built and rendered, hash frozen — "2D = special case of 3D" holds.
 
-## 5. 关键取舍
+## 5. Key trade-offs
 
-- **无头先行,A6 包薄视口**:严守四操作;**缺什么让 AI 出命令,不往视口加控件**;
-- **GPU 不进 MVP**:CPU oracle 单轨;SoA 布局保路(roadmap B1);
-- **插值最小集**:Linear/Bezier(im 0/9);Smooth 等后置(moho-mapping §5.2);
-- **绑定线性最简**:单骨骼+投影距离权重;多骨骼混合/权重绘制后置;
-- **失效策略后置**:全量重算;损伤渲染/DAG 反向失效进 roadmap B1;
-- **殊途同归的命令重整不在 MVP**:仅验同路径重放(已知边界);
-- **基础 3D 硬边界**:平色无光照+透视相机+z≠0 可建可渲;灯光/材质/导航/工作平面/
-  深度拾取/glTF 全部 Phase D;
-- **MCP 三命令起步**:完成定义 1 通不过即补(补=加新版,不改旧版)。
+- **Headless first, A6 wraps a thin viewport**: strictly the four operations; **whatever is missing, have the AI emit commands — add no controls to the viewport**;
+- **No GPU in the MVP**: CPU oracle single-track; SoA layout keeps the path open (roadmap B1);
+- **Minimal interpolation set**: Linear/Bezier (im 0/9); Smooth and the rest deferred (moho-mapping §5.2);
+- **Simplest linear bind**: single bone + projected-distance weights; multi-bone blending / weight painting deferred;
+- **Invalidation strategy deferred**: full recomputation; damage rendering / DAG reverse invalidation goes into roadmap B1;
+- **Command normalization across different paths is not in the MVP**: only same-path replay is verified (known boundary);
+- **Basic-3D hard boundary**: flat color, no lighting + perspective camera + z≠0 buildable and renderable; lights/materials/navigation/work planes/
+  depth picking/glTF are all Phase D;
+- **Start with three MCP commands**: if Definition of Done item 1 fails, supplement (supplement = add a new version, never change an old one).
 
-## 6. 已知问题与对策(状态一览)
+## 6. Known Issues & Mitigations (status overview)
 
-| 级 | 问题 | 状态 |
+| Level | Issue | Status |
 |---|---|---|
-| P0-1 | 轨道表示空隙 | ✅ 已决议(§8 D1) |
-| P0-2 | 协议版本化 | ✅ 已修(§2.4) |
-| P0-3 | 填充无验收物 | ✅ 已修(闭合吸盘,§2.3) |
-| P1-4 | 殊途同归重整 | 边界声明(§5) |
-| P1-5 | 摆设指标 | ✅ 已修(求值吞吐) |
-| P1-6 | AI 验收外部依赖 | ✅ 已修(伪 AI 下限) |
-| P1-7 | 渲染样张自证 | 降级:哈希冻结+人工过目;真 oracle 门在 roadmap B1 |
-| P2-8 | 无头无可玩 | ✅ 已解决(A6,v4) |
-| P2-9 | GIF 色带 | ✅ 已修(PNG 主) |
+| P0-1 | Track representation gap | ✅ Resolved (§8 D1) |
+| P0-2 | Protocol versioning | ✅ Fixed (§2.4) |
+| P0-3 | Fill had no acceptance artifact | ✅ Fixed (closed sucker, §2.3) |
+| P1-4 | Different-paths-same-result normalization | Declared as a boundary (§5) |
+| P1-5 | Vanity metric | ✅ Fixed (evaluation throughput) |
+| P1-6 | AI acceptance external dependency | ✅ Fixed (pseudo-AI floor) |
+| P1-7 | Render reference images self-certifying | Downgraded: hash freeze + human eyeballing; a true oracle gate is in roadmap B1 |
+| P2-8 | Headless, nothing playable | ✅ Solved (A6, v4) |
+| P2-9 | GIF banding | ✅ Fixed (PNG primary) |
 
-## 7. 风险与应对
+## 7. Risks & mitigations
 
-| 风险 | 应对 |
+| Risk | Mitigation |
 |---|---|
-| 无 MCP 宿主环境 | A1–A3 本地命令流文件驱动(协议同一);A4 起接真宿主 |
-| Bezier 句柄语义 | 段形状=两端出入句柄(moho-mapping §5.2 实证);先 1D 角度通道再 Vec2 |
-| 字节确定性被时间戳/哈希破坏 | 信封无时间戳;preview 不进 MVP;原子写+规范字段序 |
-| A4(协议+校验器+MCP)最易拖 | 拆序:命令流文件 → schema → 确定性门 → MCP 壳最后 |
-| A6/3D 范围蔓延 | §5 两条硬边界(四操作/3D 清单);缺什么让 AI 出命令 |
+| No MCP host environment | A1–A3 driven by local command-stream files (same protocol); real host from A4 on |
+| Bezier handle semantics | Segment shape = in/out handles at both ends (empirically verified in moho-mapping §5.2); a 1D angle channel first, Vec2 later |
+| Byte determinism broken by timestamps/hashes | No timestamps in the envelope; preview not in the MVP; atomic writes + canonical field order |
+| A4 (protocol + validator + MCP) most likely to slip | Split into order: command-stream file → schema → determinism gate → MCP shell last |
+| A6/3D scope creep | Two hard boundaries in §5 (four operations / 3D list); whatever is missing, have the AI emit commands |
 
-## 8. 已冻结决策清单(A1 开工依据,九项)
+## 8. Frozen decision list (basis for starting A1, nine items)
 
-| # | 决策 | 出处 |
+| # | Decision | Source |
 |---|---|---|
-| D1 | **轨道=线**(节点=关键帧:position=Tick、值=节点级属性;interp=段级属性);track 关系=引用/采样导线 | owner 问"轨道线好还是关系好" |
-| D2 | 命令流带**协议版本字段**;补=加新版不改旧版 | P0-2 |
-| D3 | 节点 position=**Vec3**(2D 恒 z=0) | 3D 扩展决议 |
-| D4 | 旋转:**格式=欧拉 xyz 逐分量通道**(写时归一化 (−π,π]);运行时=四元数/矩阵 | owner 问"四元数还是 Vec3" |
-| D5 | **3 节点闭合线=三角形面**(填充推广) | 3D 扩展决议 |
-| D6 | 渲染器**即 3D**:z-buffer/透视/背面剔除/平色无光照,2D 同管线 | owner 决定基础 3D 直接支持 |
-| D7 | 时间=**Tick 裸整数**(254,016,000,000/s) | file-format §2 |
-| D8 | 最小舞台 A6 提前,四操作硬边界 | owner 决定 B1 提前 |
-| D9 | 演示物含闭合吸盘(填充验收物)+ z≠0 静态场景(3D 验收物) | P0-3 / D6 |
+| D1 | **Track = line** (nodes = keyframes: position = Tick, value = node-level attributes; interp = segment-level attributes); the track relation = a reference/sampling wire | Owner asked "track as line or as relation — which is better" |
+| D2 | The command stream carries a **protocol version field**; supplement = add a new version, never change an old one | P0-2 |
+| D3 | Node position = **Vec3** (2D always z=0) | 3D-extension resolution |
+| D4 | Rotation: **format = Euler xyz per-component channels** (normalized on write to (−π,π]); runtime = quaternion/matrix | Owner asked "quaternion or Vec3" |
+| D5 | **3-node closed line = triangular face** (fill generalization) | 3D-extension resolution |
+| D6 | The renderer **is 3D**: z-buffer/perspective/back-face culling/flat color with no lighting, 2D through the same pipeline | Owner decided to directly support basic 3D |
+| D7 | Time = **raw Tick integers** (254,016,000,000/s) | file-format §2 |
+| D8 | Minimal stage pulled forward as A6, four-operation hard boundary | Owner decided to pull B1 forward |
+| D9 | Demo artifact includes a closed sucker (fill acceptance artifact) + a static z≠0 scene (3D acceptance artifact) | P0-3 / D6 |
 
-**本文档冻结即可开工 A1。**
+**Once this document is frozen, A1 can start.**

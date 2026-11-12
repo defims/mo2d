@@ -1,6 +1,11 @@
 # Directory Update Log
 
+> 本文件是变更日志:条目按 OKF 规程以其书写语言保留,**不提供翻译**(与主流仓库惯例一致)。
+> This file is a change journal; entries stay in the language they were written in and are NOT translated.
+
 ## 2026-11-12
+
+* **双语化**: owner 要求全部文档多语言(英语主语言,每篇顶部语言切换链接,与主流多语言仓库一致)——①14 个中文文档 git mv 为 `*.zh-CN.md`(内容原样,即中文孪生);②新写英语主版本:根 README/根 AGENTS/docs index 本人执笔,13 篇概念文档由 3 个并行代理翻译并逐项程序化验证(标题/表格行/脚注计数、数字与哈希精确、sources 逐字、规范表述中文原文保留+英文对照、语言切换行置首);③全部 zh 孪生加语言行、互指链接改写为 .zh-CN.md;④check-okf 新增**规则 7 双语成对完整性**(log.md 豁免——日志不翻译,顶部加双语注记);⑤AGENTS(双语)新增"双语文档"条款:英语权威、实质变更必须同步双版本;⑥index.zh-CN 因改名失去根豁免,补全 frontmatter。**顺带修复翻译代理如实暴露的 5 处源文档不一致**(双语同修):roadmap 标题 v3→v4、其 sources 里 mvp v3→v5、3d-extension 决策数五→六(含 index)、legal-risks R8 表行改已解决、architecture §2.1"两条"→三条、moho-mapping §0"四问"→六问。校验 27 concept docs PASS。
 
 * **补强**: owner 问"MIT/Apache 需要署名吗"并要求强制署名——答复:**两者本就强制署名**(MIT 条款:分发全部/实质部分必须随附版权与许可声明;Apache §4 另要求标注修改+NOTICE 随附),只是强度为"保留声明"级而非"显著标注/传染"级。零成本强化:新增根 **NOTICE**(Apache §4.1(d) 使其成为**法定必须原样随附**的署名载体);README 许可证节与 AGENTS 署名政策同步( NOTICE 改动需 owner 批准、贡献者不得删改署名)。维持 MIT OR Apache-2.0 双许可不变;若日后要更强(显著署名=CC BY 文档/文件级开源=MPL/传染=GPL)另议并整体换装。
 

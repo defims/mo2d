@@ -1,10 +1,10 @@
 ---
 type: Reference
-title: "术语表(中英对照)"
-description: mo2d 全部术语的一句话定义——线/节点/段/三级属性(线级/节点级/段级)/笔触/通道/关系/函数/预定义与自定义关系/九类关系/轨道/关键帧/控制棒/变换方框/四类非线边界/GPU 相关/命令与会话状态。
+title: "Glossary (English–Chinese)"
+description: One-sentence definitions of every mo2d term — line/node/segment/three-level attributes (line-level/node-level/segment-level)/brush stroke/channel/relation/function/predefined & custom relations/nine kinds of relations/track/keyframe/control bar/transform box/four kinds of non-line boundaries/GPU-related/command & session state.
 tags: [glossary, terminology]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T09:53:55Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -14,93 +14,95 @@ sources:
     title: "本 bundle:关系即函数"
 ---
 
-# 术语表(中英对照)
+**English** | [简体中文](glossary.zh-CN.md)
 
-## 结构原语
+# Glossary (English–Chinese)
 
-| 术语 | 英文 | 一句话定义 |
+## Structural primitives
+
+| Term | 中文 | Definition |
 |---|---|---|
-| 线 | Line | 有序节点序列 + 线级属性;mo2d 唯一的结构原语 |
-| 节点 | Node | 线上的点:位置 + 节点级属性 + 语义标签;关节/关键帧/锚点/色标的统一抽象 |
-| 段 | Segment | 相邻节点之间的部分,可直可曲;自身持有段级属性 |
-| 线级属性 | Line Attribute | 整条线的默认属性(笔触/基准宽度/颜色/不透明度) |
-| 节点级属性 | Node Attribute | 与线级同名的局部覆盖,段间插值,缺省回落线级 |
-| 段级属性 | Segment Attribute | 每条线段的直接状态值(段类型/可见/插值/填充参与),不在段间插值 |
-| 笔触 | Brush Stroke | 线级样式 + 节点级压力/宽度变化 |
-| 回落 | Fallback | 节点属性缺省时取线级默认值的规则 |
-| 通道 | Channel | 可采样、可动画的标量参数序列 |
-| 语义标签 | Semantic Tag | 标在线上的角色标注(bone/skeleton/track/mesh-warp…) |
+| Line | 线 | An ordered sequence of nodes + line-level attributes; the only structural primitive of mo2d |
+| Node | 节点 | A point on a line: position + node-level attributes + semantic tag; the unified abstraction of joints/keyframes/anchors/color stops |
+| Segment | 段 | The portion between adjacent nodes, straight or curved; holds its own segment-level attributes |
+| Line Attribute | 线级属性 | Default attributes of the whole line (brush/base width/color/opacity) |
+| Node Attribute | 节点级属性 | A local override with the same name as its line-level counterpart; interpolated across segments; falls back to line level when absent |
+| Segment Attribute | 段级属性 | The direct state value held by each segment (segment type/visibility/interpolation/fill participation); not interpolated across segments |
+| Brush Stroke | 笔触 | Line-level style + node-level pressure/width variation |
+| Fallback | 回落 | The rule that a missing node attribute takes the line-level default value |
+| Channel | 通道 | A sequence of scalar parameters that can be sampled and animated |
+| Semantic Tag | 语义标签 | A role annotation attached to a line (bone/skeleton/track/mesh-warp…) |
 
-## 关系原语
+## Relation primitives
 
-| 术语 | 英文 | 一句话定义 |
+| Term | 中文 | Definition |
 |---|---|---|
-| 关系 | Relation | 线与线(含节点)之间的有向函数:输入线与参数 → 输出派生结构与值 |
-| 函数 | Function | 关系的本质(owner:关系就是函数) |
-| 预定义关系 | Predefined Relation | 标准函数库内的关系(层/群组/绑定/约束/…);集合即预定义关系 |
-| 标准关系库 | Standard Relation Library | 预定义关系的全集 |
-| 自定义关系 | Custom Relation | 用户/AI 定义的函数,函数体为逻辑载荷 |
-| 根关系 | Root Relation | 文档级根;帧率/色彩空间等文档参数挂在它上面 |
+| Relation | 关系 | A directed function between lines (nodes included): input lines and parameters → output derived structure and values |
+| Function | 函数 | The essence of a relation (owner: a relation is just a function) |
+| Predefined Relation | 预定义关系 | A relation from the standard function library (layer/group/bind/constraint/…); a set is itself a predefined relation |
+| Standard Relation Library | 标准关系库 | The full set of predefined relations |
+| Custom Relation | 自定义关系 | A function defined by the user/AI, with a logic payload as its body |
+| Root Relation | 根关系 | The document-level root; document parameters such as frame rate and color space hang on it |
 
-## 预定义关系(九类)
+## Predefined relations (nine kinds)
 
-| 术语 | 英文 | 一句话定义 |
+| Term | 中文 | Definition |
 |---|---|---|
-| 层 | Layer | 组织类关系:线集合 → 有序可渲染单元(参数=可见性/不透明度/混合模式/变换) |
-| 群组 | Group | 组织类关系:线集合 → 命名包;与层本质相同 |
-| 归属/层级映射 | Ownership | 父子嵌套=关系映射;深度/遮挡=其排序参数 |
-| 节点共享 | Node Sharing | 多条线共用同一节点(骨架折线、经纬网格交点) |
-| 绑定 | Bind | 节点随骨骼线/网格线/控制棒动(蒙皮/纹理锚定/渐变挂载) |
-| 约束 | Constraint | 角度/长度/相切等几何限制(静态关系) |
-| 传导 | Propagate | 一条控制线驱动多条目标线(智能骨骼的推广) |
-| 派生 | Derive | 输出线由输入线计算得出(中轴/包络/放样/文本→轮廓) |
-| 轨道 | Track | 时间类关系:一条直线 + 关键帧节点,承载一个通道的时间序列 |
-| 关键帧 | Keyframe | 轨道线上的节点:时间位置 + 动画值 |
-| 模拟 | Simulate | 动态类关系:弹簧/阻尼/重力/风/碰撞/粒子,由求解器逐帧积分 |
-| 弹簧 | Spring | 作用于两线之间的动态约束 |
-| 粒子 | Particle | 发射线发出的有向短线段(位置+速度向量) |
-| 求解器 | Solver | 执行动态关系积分的程序(逻辑载荷) |
-| 外部资产引用 | External Asset Reference | 引用类关系:端点为文档外实体(file:// 路径) |
+| Layer | 层 | Organizational relation: a set of lines → an ordered renderable unit (parameters = visibility/opacity/blend mode/transform) |
+| Group | 群组 | Organizational relation: a set of lines → a named package; essentially the same as a layer |
+| Ownership | 归属/层级映射 | Parent-child nesting = relation mapping; depth/occlusion = its ordering parameters |
+| Node Sharing | 节点共享 | Multiple lines share the same node (skeleton polylines, warp/weft mesh intersections) |
+| Bind | 绑定 | Nodes move with a bone line/mesh line/control bar (skinning/texture anchoring/gradient mounting) |
+| Constraint | 约束 | Geometric restrictions such as angle/length/tangency (a static relation) |
+| Propagate | 传导 | One control line drives multiple target lines (a generalization of smart bones) |
+| Derive | 派生 | The output line is computed from input lines (medial axis/envelope/loft/text→outline) |
+| Track | 轨道 | Temporal relation: a straight line + keyframe nodes, carrying the time series of one channel |
+| Keyframe | 关键帧 | A node on the track line: time position + animation value |
+| Simulate | 模拟 | Dynamic relation: springs/damping/gravity/wind/collisions/particles, integrated frame by frame by a solver |
+| Spring | 弹簧 | A dynamic constraint acting between two lines |
+| Particle | 粒子 | A directed short line segment emitted by an emitter line (position + velocity vector) |
+| Solver | 求解器 | The program that integrates dynamic relations (a logic payload) |
+| External Asset Reference | 外部资产引用 | Reference relation: an endpoint that is an entity outside the document (a file:// path) |
 
-## 领域投影(线模型映射)
+## Domain projections (line-model mapping)
 
-| 术语 | 英文 | 一句话定义 |
+| Term | 中文 | Definition |
 |---|---|---|
-| 骨骼 | Bone | 2 个节点的线段(owner 规范表述) |
-| 骨架 | Skeleton | 一条折线;分叉=多折线共享节点 |
-| 时间轴 | Timeline | 多条含多节点的直线(=轨道族) |
-| 位图网格 | Bitmap Mesh | 经纬两组交织的线,节点即纹理锚点 |
-| 渐变 | Gradient | 控制棒(2 节点线段)+ 色标节点 |
-| 控制棒 | Control Bar | 定义渐变方向与范围的线段 |
-| 色标 | Color Stop | 控制棒上的节点:位置通道=色标位置,颜色通道=色标颜色 |
-| 变换方框 | Transform Box | 层缩放旋转的操作框=4 节点闭合线 |
-| 填充域 | Fill Region | 闭合线围合的区域;解释规则(非零/奇偶)属逻辑载荷 |
-| 摄像机 | Camera | 一个方框线,推拉摇移=其节点动画 |
+| Bone | 骨骼 | A line segment of 2 nodes (owner normative statement) |
+| Skeleton | 骨架 | One polyline; branching = multiple polylines sharing nodes |
+| Timeline | 时间轴 | Multiple straight lines containing multiple nodes (= a family of tracks) |
+| Bitmap Mesh | 位图网格 | Two interwoven sets of warp/weft lines; the nodes are the texture anchors |
+| Gradient | 渐变 | A control bar (2-node line segment) + color-stop nodes |
+| Control Bar | 控制棒 | The line segment that defines a gradient's direction and extent |
+| Color Stop | 色标 | A node on the control bar: position channel = stop position, color channel = stop color |
+| Transform Box | 变换方框 | The operation box for layer scaling/rotation = a 4-node closed line |
+| Fill Region | 填充域 | The region enclosed by a closed line; interpretation rules (non-zero/even-odd) belong to the logic payload |
+| Camera | 摄像机 | A box line; push/pull/pan/truck = its node animation |
 
-## 非线边界(四类)
+## Non-line boundaries (four kinds)
 
-| 术语 | 英文 | 一句话定义 |
+| Term | 中文 | Definition |
 |---|---|---|
-| 载荷 | Payload | 挂在结构上的非几何内容(媒体/逻辑) |
-| 媒体场 | Media Field | 采样场数据本身(位图像素/音频采样/视频帧);线锚定、变形、驱动它 |
-| 逻辑 | Logic | 表达式/脚本/函数体/求解器/填充规则等符号与规则 |
-| 会话状态 | Session State | 文档之外的编辑器状态(视图/选择集/撤销栈/剪贴板) |
+| Payload | 载荷 | Non-geometric content attached to structure (media/logic) |
+| Media Field | 媒体场 | The sampled field data itself (bitmap pixels/audio samples/video frames); lines anchor, deform, and drive it |
+| Logic | 逻辑 | Symbols and rules such as expressions/scripts/function bodies/solvers/fill rules |
+| Session State | 会话状态 | Editor state outside the document (view/selection/undo stack/clipboard) |
 
-## 求值与渲染
+## Evaluation & rendering
 
-| 术语 | 英文 | 一句话定义 |
+| Term | 中文 | Definition |
 |---|---|---|
-| 关系图 | Relation Graph | 全部关系构成的有向无环图 |
-| 求值图 | Evaluation Graph | 关系图按拓扑序分层后的执行形态;层内可并行 |
-| CPU oracle | CPU Oracle Renderer/Evaluator | 确定性真值源;GPU 实现必须与其输出一致 |
-| SoA 布局 | Structure-of-Arrays | 每类属性一个数组的内存布局,GPU 友好 |
+| Relation Graph | 关系图 | The directed acyclic graph formed by all relations |
+| Evaluation Graph | 求值图 | The executable form of the relation graph after topological layering; parallelizable within each layer |
+| CPU Oracle Renderer/Evaluator | CPU oracle | The deterministic ground-truth source; GPU implementations must match its output |
+| Structure-of-Arrays | SoA 布局 | A memory layout with one array per attribute kind; GPU-friendly |
 
-## 交互与协议
+## Interaction & protocol
 
-| 术语 | 英文 | 一句话定义 |
+| Term | 中文 | Definition |
 |---|---|---|
-| 舞台 | Stage | 线的世界;唯一常驻界面 |
-| 命令 | Command | 引擎唯一入口的操作单元(JSON);一切操作皆命令 |
-| 命令流 | Command Stream | 命令的时序记录;可回放=撤销/协作/AI 上下文 |
-| 控件即线 | Controls-as-Lines | 临时控件(滑杆/渐变条/方框)由 AI 生成为线,用后即弃 |
-| MCP | Model Context Protocol | AI 宿主接入引擎的 server 模式协议 |
+| Stage | 舞台 | The world of lines; the only permanent interface |
+| Command | 命令 | The operation unit at the engine's single entry point (JSON); every operation is a command |
+| Command Stream | 命令流 | The time-ordered record of commands; replayability = undo/collaboration/AI context |
+| Controls-as-Lines | 控件即线 | Ephemeral controls (sliders/gradient bars/boxes) generated by the AI as lines, discarded after use |
+| Model Context Protocol | MCP | The server-mode protocol by which an AI host connects to the engine |

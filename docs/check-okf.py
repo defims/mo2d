@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""OKF v0.2 符合性校验器(docs/ bundle)。
+"""OKF v0.2 符合性校验器(docs/ bundle,双语版)。
 
 规则(OKF SPEC v0.2 + docs/AGENTS.md 本地规程):
 1. 除 index.md/log.md 外,每个 .md 必须有可解析的 frontmatter(首行 --- 起始,配对 --- 结束)。
@@ -8,6 +8,8 @@
 4. log.md 首行应为含 "Update Log" 的一级标题。
 5. generated(若存在)必须含 by 与 at(at 为 ISO 8601 带 UTC 偏移)。
 6. sources(若存在)每条必须含 resource。
+7. 双语成对完整性(2026-11-12):每个非保留 .md 必须有语言孪生
+   (X.md ↔ X.zh-CN.md;index.md ↔ index.zh-CN.md;log.md 豁免——日志不翻译)。
 
 用法:python3 docs/check-okf.py   (在仓库任意位置运行;退出码 0=通过)
 """
@@ -98,6 +100,18 @@ def main() -> int:
                     errors.append(f"{rel}: sources 条目缺 resource:{line.strip()[:60]}")
                     break
     reserved_seen = {p.name for p in BUNDLE.rglob("*.md") if p.name in ("index.md", "log.md")}
+    # 规则 7:双语成对完整性(X.md ↔ X.zh-CN.md;log.md 豁免)
+    for path in sorted(BUNDLE.rglob("*.md")):
+        rel = path.relative_to(BUNDLE)
+        if rel == Path("log.md"):
+            continue
+        name = path.name
+        if name.endswith(".zh-CN.md"):
+            twin = path.with_name(name[: -len(".zh-CN.md")] + ".md")
+        else:
+            twin = path.with_name(path.stem + ".zh-CN.md")
+        if not twin.exists():
+            errors.append(f"{rel}: 缺少语言孪生 {twin.name}(双语成对完整性)")
     print(f"OKF v0.2 check on {BUNDLE}: {concepts} concept docs, reserved files: {sorted(reserved_seen)}")
     if errors:
         print(f"FAIL ({len(errors)}):")

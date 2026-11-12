@@ -1,10 +1,10 @@
 ---
 type: Design Document
-title: "关系即函数:预定义关系库与自定义关系"
-description: mo2d 的行为模型——关系=函数(输入线与参数,输出派生结构与值);集合/层/群组=预定义关系,关系参数=集合参数;九类预定义关系标准库、自定义关系、DAG 求值与冲突处理。
+title: "Relations are Functions: The Predefined Relation Library and Custom Relations"
+description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the nine-category predefined relation standard library, custom relations, DAG evaluation and conflict handling.
 tags: [relation, function, linkage, evaluation]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T13:58:22Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -17,81 +17,86 @@ sources:
     title: "本 bundle:万物皆线"
 ---
 
-# 关系即函数
+**English** | [简体中文](relations.zh-CN.md)
 
-线是数据,关系是行为。**关系 = 函数**:输入若干线(与参数),输出派生的结构与值。
-文档 = 全部线 + 全部关系构成的关系图;动画 = 关系图随时间的逐帧求值。
+# Relations are Functions
 
-## 0. 规范表述(owner 给定,逐字收录)
+Lines are data; relations are behavior. **Relation = function**: takes several lines (and parameters) as input, and outputs derived structure and values.
+Document = the relation graph formed by all lines + all relations; animation = frame-by-frame evaluation of the relation graph over time.
+
+## 0. Normative Statements (owner-given, verbatim)
 
 > **集合本质是线和线的关系,只不过是预定义关系;关系就是函数;关系的参数就是集合的参数。**
+> *A set is, in essence, a relation between lines — merely a predefined one; a relation is a function; a relation's parameters are the set's parameters.*
 >
 > **模拟过程本质是线和线的关系。**
+> *A simulation process is, in essence, a relation between lines.*
 >
 > **嵌套层、父子层本质是线与线的关系映射。**
+> *Nested layers and parent-child layers are essentially relation mappings between lines.*
 
-由此:层/群组不是容器类型,而是**组织类预定义关系**;"层的不透明度/混合模式"
-是该关系函数的参数;"帧率/色彩空间"等文档级参数是**根关系**的参数。
+Hence: layers/groups are not container types but **organizational predefined relations**; "a layer's opacity/blend mode"
+is a parameter of that relation function; document-level parameters such as "frame rate/color space" are parameters of the **root relation**.
 
-## 1. 预定义关系(标准关系库)
+## 1. Predefined Relations (the Standard Relation Library)
 
-| 类 | 关系 | 语义(函数签名示意) | 参数(即"集合的属性")举例 |
+| Class | Relation | Semantics (function-signature sketch) | Parameters (i.e. "the set's properties") — examples |
 |---|---|---|---|
-| 组织 | **层 layer** | (线集合) → 有序可渲染单元 | 可见性、不透明度、混合模式、变换(方框线) |
-| 组织 | **群组 group** | (线集合) → 命名包 | 名称、展开态 |
-| 组织 | **归属/层级映射 ownership** | (父关系, 子线/子关系) → 嵌套 | 深度/遮挡排序参数 |
-| 连接 | **节点共享 node-sharing** | (线 A 的节点 ↔ 线 B 的节点) → 同一节点 | 共享模式(骨架折线、经纬网格交点) |
-| 绑定 | **绑定 bind** | (节点, 骨骼线/网格线/控制棒) → 节点随线动 | 权重、衰减 |
-| 约束 | **约束 constraint** | (线 A, 线 B) → 几何限制 | 角度上下限、等长、相切 |
-| 驱动 | **传导 propagate** | (控制线, 目标线集) → 目标随控制变 | 驱动映射、值域 |
-| 生成 | **派生 derive** | (输入线集) → 输出线 | 中轴/包络/放样/文本→轮廓的生成参数 |
-| 时间 | **轨道引用 track** | (轨道线, 目标属性) → 每帧采样写入;**轨道本身=线**(节点=关键帧:position=Tick、值=节点级属性)——轨道是数据,track 关系是导线(决议见 [mvp.md](mvp.md) §2.2) | 插值/缓动=轨道线的段级属性(每分量句柄) |
-| 动态 | **模拟 simulate** | (线集, 力场) → 逐帧积分后的线集 | 弹簧/阻尼/重力/风/碰撞/粒子发射率;随机种子 |
-| 引用 | **外部资产引用 external-ref** | (文档外实体) → 可锚定的载荷 | file:// 路径、相对基准 |
+| Organization | **layer** | (set of lines) → an ordered renderable unit | Visibility, opacity, blend mode, transform (box line) |
+| Organization | **group** | (set of lines) → a named package | Name, expanded state |
+| Organization | **ownership / hierarchy mapping** | (parent relation, child line/child relation) → nesting | Depth/occlusion ordering parameters |
+| Connection | **node sharing** | (node of line A ↔ node of line B) → the same node | Sharing mode (skeleton polylines, warp/weft mesh crossings) |
+| Binding | **bind** | (node, bone line/mesh line/control bar) → the node moves with the line | Weights, falloff |
+| Constraint | **constraint** | (line A, line B) → geometric restrictions | Angle min/max, equal length, tangency |
+| Drive | **propagate** | (control line, target line set) → targets follow the control | Drive mapping, value range |
+| Generate | **derive** | (input line set) → an output line | Generation parameters for medial axis/envelope/loft/text→outline |
+| Time | **track relation** | (track line, target attribute) → sampled and written every frame; **the track itself = a line** (nodes = keyframes: position = tick, value = node-level attribute) — the track is data, the track relation is the wiring (decision in [mvp.md](mvp.md) §2.2) | Interpolation/easing = the track line's segment-level attribute (per-component handles) |
+| Dynamic | **simulate** | (line set, force field) → the line set after frame-by-frame integration | Spring/damping/gravity/wind/collision/particle emission rate; random seed |
+| Reference | **external asset reference external-ref** | (out-of-document entity) → an anchorable payload | file:// path, relative base |
 
-对照 Moho 语义的映射依据:
-- 角约束:Bone `fConstraints`/`fMinConstraint`/`fMaxConstraint`[^m-bone];
-- 智能骨骼(Action 拨盘驱动多通道查找表[^m-bone])→ 传导关系的特例并推广;
-- 骨骼动力学(`fBoneDynamics` + 弹簧/阻尼/力参数族[^m-bone])→ 模拟关系的参数;
-- Point 的 `parent` 绑骨索引[^mohoproj-format] → 绑定关系;
-- `fileref{path,relativeTo}`[^mohoproj-format] → 外部资产引用。
+Grounding in Moho semantics:
+- Angle constraints: Bone `fConstraints`/`fMinConstraint`/`fMaxConstraint`[^m-bone];
+- Smart bones (Action dials driving multi-channel lookup tables[^m-bone]) → a special case of the propagate relation, generalized;
+- Bone dynamics (`fBoneDynamics` + the spring/damping/force parameter families[^m-bone]) → parameters of the simulate relation;
+- Point's `parent` bone index[^mohoproj-format] → the bind relation;
+- `fileref{path,relativeTo}`[^mohoproj-format] → the external asset reference.
 
-## 2. 动态关系(模拟)
+## 2. Dynamic Relations (Simulation)
 
-owner 规范表述:**模拟过程本质是线和线的关系**——不是线之外的概念,只是关系
-**由求解器逐帧算出**,而不是作者直接摆好:
+Owner normative statement: **a simulation process is, in essence, a relation between lines** — not a concept outside lines, just relations
+**computed frame by frame by a solver**, rather than laid out directly by the author:
 
-- **弹簧/阻尼**:作用于骨骼线与骨骼线之间——"动态的约束";
-- **重力/风**:场对线的作用,表达为线与(虚拟)线之间的关系;
-- **碰撞**:线与线的距离关系;
-- **粒子**:发射器是一条线;每个粒子是一小段**有向线段**(位置+速度向量);
-  吸引/排斥/附着也是线间关系。
+- **Springs/damping**: act between bone lines and bone lines — "dynamic constraints";
+- **Gravity/wind**: fields acting on lines, expressed as relations between lines and (virtual) lines;
+- **Collision**: distance relations between lines;
+- **Particles**: the emitter is a line; each particle is a short **directed segment** (position + velocity vector);
+  attraction/repulsion/attachment are also relations between lines.
 
-求解器代码本身是**逻辑载荷**(非线边界第二类,见 [line-model.md](line-model.md) §4),
-但模拟的**结构**完全在线与线的关系里。确定性要求:随机种子必须显式化为参数,
-同一文档同一输入 → 同一输出(CPU oracle 可验证)。
+The solver code itself is **logical payload** (non-line boundary category 2, see [line-model.md](line-model.md) §4),
+but the **structure** of the simulation lives entirely in relations between lines. Determinism requirement: the random seed must be made an explicit parameter;
+same document, same input → same output (verifiable by the CPU oracle).
 
-## 3. 自定义关系
+## 3. Custom Relations
 
-用户/AI 定义的函数:函数体为逻辑载荷(表达式/脚本),参数为通道。
-这是 mo2d 可扩展性的唯一出口——**不新增内核原语,只新增关系**。
+Functions defined by users/AI: the function body is logical payload (expressions/scripts), the parameters are channels.
+This is mo2d's single outlet for extensibility — **add no new kernel primitives, only new relations**.
 
-- AI 从自然语言生成:"让触手尖端跟随光标" → 生成一条自定义传导/模拟关系;
-- 反向解释:选中任意关系,AI 可将其参数与行为翻译回自然语言;
-- 自定义关系可被提升为预定义关系入库(标准库开放的扩展机制)。
+- AI generates from natural language: "make the tentacle tip follow the cursor" → generates a custom propagate/simulate relation;
+- Reverse explanation: with any relation selected, AI can translate its parameters and behavior back into natural language;
+- Custom relations can be promoted into the library as predefined relations (the extension mechanism the standard library opens).
 
-## 4. 求值模型
+## 4. Evaluation Model
 
-- 关系构成 **DAG**:拓扑排序后逐层求值;
-- **分层并行**:同层独立关系可并行;节点级通道采样是并行 map——
-  与 GPU 执行模型同构(owner:线与线关系最大化利用 GPU,概念契合);
-- **时间维度**:轨道关系先采样出本帧参数,再进入几何/动态求值;
-  动态关系的状态随时间积分(播放与 Scrub 的一致性策略工程期定);
-- **环与冲突**:关系图原则上禁止环(检测即报错);同一节点的多条写入关系
-  按关系优先级+确定性顺序合成(细则工程期定,先记录原则:**确定性、可解释、可并行**)。
+- Relations form a **DAG**: topologically sorted, then evaluated layer by layer;
+- **Layered parallelism**: independent relations within the same layer run in parallel; node-level channel sampling is a parallel map —
+  isomorphic to the GPU execution model (owner: lines and line relations maximize GPU utilization; the concepts fit);
+- **Time dimension**: track relations first sample the current frame's parameters, then geometric/dynamic evaluation proceeds;
+  dynamic-relation state integrates over time (the playback/scrub consistency strategy is decided during engineering);
+- **Cycles and conflicts**: cycles are in principle forbidden in the relation graph (detected → error); multiple writing relations on the same node
+  are composed by relation priority + a deterministic order (details during engineering; the principles recorded now: **determinism, explainability, parallelizability**).
 
-## 5. 待确认事项
+## 5. Open Questions
 
-- [ ] 各预定义关系的参数表细化(首版以 [mvp.md](mvp.md) 用到的最小集为准);
-- [ ] 传导关系是否首版即支持"查找表"形态(智能骨骼等价物),或推迟;
-- [ ] 动态关系的播放/回退(scrub)一致性策略。
+- [ ] Refining the parameter tables of each predefined relation (the first version takes the minimal set used by [mvp.md](mvp.md) as authoritative);
+- [ ] Whether the propagate relation supports a "lookup table" form (the smart-bone equivalent) in the first version, or is deferred;
+- [ ] The playback/scrub-back consistency strategy for dynamic relations.
