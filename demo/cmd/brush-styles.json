@@ -1,0 +1,31 @@
+{
+  "v": 1,
+  "cmds": [
+    {"op": "doc.setRoot", "width": 640, "height": 360, "fps": 24},
+    {"op": "line.create", "id": "strokeA", "width": 10, "color": [40, 90, 200, 255], "nodes": [
+      {"p": [60, 260, 0], "pr": 0.35},
+      {"p": [140, 180, 0], "pr": 0.8},
+      {"p": [220, 240, 0], "pr": 1.6},
+      {"p": [300, 160, 0], "pr": 2.2},
+      {"p": [380, 230, 0], "pr": 1.4},
+      {"p": [460, 170, 0], "pr": 0.6},
+      {"p": [560, 220, 0], "pr": 0.3}
+    ]},
+    {"op": "line.create", "id": "strokeB", "width": 10, "color": [40, 90, 200, 255], "nodes": [
+      {"p": [60, 120, 0], "pr": 0.35},
+      {"p": [140, 60, 0], "pr": 0.8},
+      {"p": [220, 110, 0], "pr": 1.6},
+      {"p": [300, 40, 0], "pr": 2.2},
+      {"p": [380, 100, 0], "pr": 1.4},
+      {"p": [460, 50, 0], "pr": 0.6},
+      {"p": [560, 100, 0], "pr": 0.3}
+    ]},
+    {"op": "style.create", "id": "marker", "width": 12, "color": [30, 80, 190, 255],
+     "brush": {"name": "flat-marker", "align": 0.5, "spacing": 0.38, "sizeAmp": 0.0, "sizeScale": 1.0}},
+    {"op": "style.create", "id": "ink", "width": 4, "color": [25, 25, 30, 255],
+     "brush": {"name": "pressure-ink", "spacing": 0.38, "sizeAmp": 1.5, "sizeScale": 1.4,
+               "tint": [60, 40, 80, 255], "jitter": 0.05, "hueDrift": 0.0}},
+    {"op": "style.apply", "id": "marker", "line": "strokeA"},
+    {"op": "style.apply", "id": "ink", "line": "strokeB"}
+  ]
+}

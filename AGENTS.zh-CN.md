@@ -25,7 +25,9 @@ mo2d——AI 原生的 2D 矢量动画引擎(万物皆线)。**文档库在 [`do
 2. 代码评审检查项:发现与 BUI/Blender 结构同构的非常规实现,必须溯源质询,
    无合理解释即重写;
 3. 依赖引入规则:第三方 crate/package 必须为 MIT/Apache-2.0/BSD/MPL 等宽松许可;
-   GPL/AGPL/LGPL 依赖一律禁止(引擎当前零第三方依赖,保持)。
+   GPL/AGPL/LGPL 依赖一律禁止(CPU oracle 与字节级确定性保持零第三方依赖;
+   owner 已于 2026-11-12 批准 GPU 加速路径引入 **wgpu**(Apache-2.0 OR MIT)与
+   **pollster**(Apache-2.0 OR MIT)——新增 GPU 相邻依赖仍需 owner 批准)。
 
 ## Moho 语料红线
 

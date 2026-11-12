@@ -4,7 +4,7 @@ title: "Relations are Functions: The Predefined Relation Library and Custom Rela
 description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the nine-category predefined relation standard library, custom relations, DAG evaluation and conflict handling.
 tags: [relation, function, linkage, evaluation]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T10:55:00Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -61,6 +61,24 @@ Grounding in Moho semantics:
 - Point's `parent` bone index[^mohoproj-format] → the bind relation;
 - `fileref{path,relativeTo}`[^mohoproj-format] → the external asset reference.
 
+### 1.1 Landed forms in the engine (Phase B, 2026-11-12)
+
+The first engine slice of the library is live (command `relation.create`):
+`bind {target, skeleton, falloff?, stretch?}`, `share {driver, driven}`,
+`track {trackLine, target{line, node?, attr: position|width|color}}` — plus
+the Phase B vocabulary:
+
+| Relation | Signature as implemented | Notes |
+|---|---|---|
+| **gradient** | (bar line, target line, role `fill`\|`stroke`) → per-node colors | The bar's nodes are the color stops (node color = stop color, projection on the bar chord = stop position); target nodes sample the ramp by the same projection. Stops animate through **color tracks** (track attr `color`) — this is the "color-changing tentacle" acceptance (roadmap B3) |
+| **group** | (box line, members[], `visible`) → transformed member lines | The box's rest→current similarity (anchor = first node, reference = last; 2D rotation + uniform scale, z scaled, widths scaled) applies to every member node; `visible` is the layer-visibility parameter; nested groups compose (an inner group's box may be an outer group's member) — roadmap B4 |
+| **sim** | (line, anchors[{node, driver}], gravity, damping, iterations, collideWith?, radius?, selfCollide?) → integrated line | Verlet + distance constraints at fixed 240 Hz substeps; anchors ride their driving position tracks exactly per substep; **replay-from-seed** determinism (§4); collisions: free nodes keep clearance from collider segments and (optionally) non-adjacent chain pairs keep separation — roadmap B6 |
+| **particles** | (emitter line/node, rate, speed, dir, spread, life, gravity, damping, size, color, len, **seed**, collideWith?, bounce?, radius?) → generated segment lines | Each particle = a short directed segment (`<emitter>#p<k>`); scatter angles hash through splitmix64 on the explicit seed — same doc + same seed → byte-identical output; collider segments reflect the inward velocity with restitution `bounce` — roadmap B6 |
+
+One writer per output still governs: gradient claims a recolor channel of a
+line (fill and stroke roles compose), group/sim claim their members'/line's
+positions; a second writer on the same claim is rejected by the validator.
+
 ## 2. Dynamic Relations (Simulation)
 
 Owner normative statement: **a simulation process is, in essence, a relation between lines** — not a concept outside lines, just relations
@@ -68,7 +86,7 @@ Owner normative statement: **a simulation process is, in essence, a relation bet
 
 - **Springs/damping**: act between bone lines and bone lines — "dynamic constraints";
 - **Gravity/wind**: fields acting on lines, expressed as relations between lines and (virtual) lines;
-- **Collision**: distance relations between lines;
+- **Collision** *(landed, B6)*: distance relations between lines — sim nodes keep a clearance radius from collider segments, chains can self-separate, and particles bounce off colliders with explicit restitution;
 - **Particles**: the emitter is a line; each particle is a short **directed segment** (position + velocity vector);
   attraction/repulsion/attachment are also relations between lines.
 
@@ -91,12 +109,17 @@ This is mo2d's single outlet for extensibility — **add no new kernel primitive
 - **Layered parallelism**: independent relations within the same layer run in parallel; node-level channel sampling is a parallel map —
   isomorphic to the GPU execution model (owner: lines and line relations maximize GPU utilization; the concepts fit);
 - **Time dimension**: track relations first sample the current frame's parameters, then geometric/dynamic evaluation proceeds;
-  dynamic-relation state integrates over time (the playback/scrub consistency strategy is decided during engineering);
+  dynamic-relation state integrates over time — **the playback/scrub consistency strategy is resolved (B6): replay-from-seed**.
+  Every evaluation re-integrates dynamic relations from tick 0 in fixed 240 Hz substeps (254,016,000,000 ticks / 240 = 1,058,400,000
+  exactly), with anchors sampled per substep from their driving position tracks. Cost is O(tick/240 × nodes) per evaluation — bounded,
+  and scrub-back/replay/offline export are byte-identical by construction;
 - **Cycles and conflicts**: cycles are in principle forbidden in the relation graph (detected → error); multiple writing relations on the same node
-  are composed by relation priority + a deterministic order (details during engineering; the principles recorded now: **determinism, explainability, parallelizability**).
+  are composed by relation priority + a deterministic order (details during engineering; the principles recorded now: **determinism, explainability, parallelizability**);
+- **Reverse-dependency invalidation (landed, B1)**: the DAG doubles as the change-propagation index — an edit to a line dirties exactly its
+  transitive downstream (channels = signals; `engine/src/inval.rs`).
 
 ## 5. Open Questions
 
-- [ ] Refining the parameter tables of each predefined relation (the first version takes the minimal set used by [mvp.md](mvp.md) as authoritative);
+- [ ] Refining the parameter tables of each predefined relation (the first version takes the minimal set used by [mvp.md](mvp.md) as authoritative); — the landed Phase B forms are recorded in §1.1, fuller tables still pending;
 - [ ] Whether the propagate relation supports a "lookup table" form (the smart-bone equivalent) in the first version, or is deferred;
-- [ ] The playback/scrub-back consistency strategy for dynamic relations.
+- [x] ~~The playback/scrub-back consistency strategy for dynamic relations~~ — **resolved 2026-11-12 (B6): replay-from-seed** (§4); if interactive cost ever demands incremental state, the replacement strategy must reproduce byte-identical results against this baseline.

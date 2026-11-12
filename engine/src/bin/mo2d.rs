@@ -9,7 +9,7 @@ use mo2d::json::{self, Value};
 use mo2d::mcp::{parse_camera, McpSession};
 use mo2d::model::{Document, TICKS_PER_SECOND};
 use mo2d::png::encode_png;
-use mo2d::render::{render, RenderOpts};
+use mo2d::render::{render_with_assets, RenderOpts};
 use mo2d::sha::sha256_hex;
 use mo2d::stage::{serve, StageState};
 use mo2d::validate;
@@ -36,6 +36,9 @@ fn main() {
         "serve-mcp" => cmd_serve_mcp(rest),
         "registry" => cmd_registry(),
         "hash" => cmd_hash(rest),
+        "pack" => cmd_pack(rest),
+        "unpack" => cmd_unpack(rest),
+        "schema" => cmd_schema(),
         "help" | "--help" | "-h" => {
             usage();
         }
@@ -48,6 +51,59 @@ fn main() {
         eprintln!("error: {}", e);
         exit(1);
     }
+}
+
+/// B7 pack: project directory (document.mo2d.json + assets/*) → package.
+fn cmd_pack(args: &[String]) -> Result<(), String> {
+    let dir = Path::new(require(args, "--dir"));
+    let out = require(args, "--out");
+    let json_path = dir.join("document.mo2d.json");
+    let text = std::fs::read_to_string(&json_path)
+        .map_err(|e| format!("read {}: {} (a project directory carries document.mo2d.json + assets/)", json_path.display(), e))?;
+    let doc = format::parse_doc(&text)?;
+    let mut blobs: Vec<(String, Vec<u8>)> = Vec::new();
+    let assets_dir = dir.join("assets");
+    if assets_dir.is_dir() {
+        let mut names: Vec<String> = std::fs::read_dir(&assets_dir)
+            .map_err(|e| format!("read {}: {}", assets_dir.display(), e))?
+            .filter_map(|e| e.ok())
+            .filter(|e| e.file_type().map(|t| t.is_file()).unwrap_or(false))
+            .map(|e| e.file_name().to_string_lossy().into_owned())
+            .collect();
+        names.sort();
+        for name in names {
+            let data = std::fs::read(assets_dir.join(&name)).map_err(|e| format!("read assets/{}: {}", name, e))?;
+            blobs.push((format!("assets/{}", name), data));
+        }
+    }
+    let bytes = format::doc_to_package_bytes(&doc, &blobs)?;
+    format::write_atomic(Path::new(out), &bytes)?;
+    println!("packed {} ({} blobs) -> {} (sha256 {})", dir.display(), blobs.len(), out, sha256_hex(&bytes));
+    Ok(())
+}
+
+/// B7 unpack: package → project directory (document.mo2d.json + assets/*).
+fn cmd_unpack(args: &[String]) -> Result<(), String> {
+    let file = Path::new(require(args, "--file"));
+    let dir = Path::new(require(args, "--dir"));
+    let loaded = format::load_doc_full(file)?;
+    std::fs::create_dir_all(dir).map_err(|e| format!("create {}: {}", dir.display(), e))?;
+    let header = format::doc_to_bytes(&loaded.doc)?;
+    std::fs::write(dir.join("document.mo2d.json"), &header).map_err(|e| format!("write document.mo2d.json: {}", e))?;
+    let assets_dir = dir.join("assets");
+    std::fs::create_dir_all(&assets_dir).map_err(|e| format!("create {}: {}", assets_dir.display(), e))?;
+    for (name, data) in &loaded.blobs {
+        let rel = name.strip_prefix("assets/").unwrap_or(name);
+        std::fs::write(assets_dir.join(rel), data).map_err(|e| format!("write assets/{}: {}", rel, e))?;
+    }
+    println!("unpacked {} -> {} ({} blobs)", file.display(), dir.display(), loaded.blobs.len());
+    Ok(())
+}
+
+/// B7 schema: print the v1 JSON Schema.
+fn cmd_schema() -> Result<(), String> {
+    println!("{}", mo2d::schema::schema_v1());
+    Ok(())
 }
 
 fn usage() -> ! {
@@ -66,6 +122,9 @@ USAGE:
   mo2d serve-mcp --doc FILE [--out-dir DIR]       MCP server (apply/list/screenshot) on stdio
   mo2d registry                                  print the command registry
   mo2d hash     FILE                              sha256 of a file
+  mo2d pack     --dir DIR --out FILE              project directory → single-file package (B7)
+  mo2d unpack   --file FILE --dir DIR             package → project directory (B7)
+  mo2d schema                                     print the v1 JSON Schema (B7)
 
 Ticks: 254,016,000,000 per second. Time truth is ticks; fps is display-only."
     );
@@ -137,19 +196,33 @@ fn cmd_replay(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+/// Load a document that may be a single-file package; texture blobs ride
+/// along in the store (B7: the package is self-contained).
+fn load_doc_and_assets(doc_path: &str) -> Result<(Document, mo2d::assets::AssetStore), String> {
+    let loaded = format::load_doc_full(Path::new(doc_path))?;
+    let mut assets = mo2d::assets::AssetStore::new();
+    assets.root = Path::new(doc_path).parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    assets.attach_blobs(&loaded.blobs);
+    Ok((loaded.doc, assets))
+}
+
 fn cmd_render(args: &[String]) -> Result<(), String> {
     let doc_path = require(args, "--doc");
     let tick: i64 = flag(args, "--tick").and_then(|v| v.parse().ok()).unwrap_or(0);
     let out = flag(args, "--out").unwrap_or("frame.png");
     let camera = parse_camera_arg(args)?;
-    let doc = format::load_doc(Path::new(doc_path))?;
+    let (doc, mut assets) = load_doc_and_assets(doc_path)?;
     let lines = eval::evaluate(&doc, tick)?;
-    let img = render(
+    let img = render_with_assets(
         &lines,
         doc.root.width as f64,
         doc.root.height as f64,
         &RenderOpts { width: doc.root.width, height: doc.root.height, camera, samples: 1 },
+        &mut assets,
     );
+    for e in &assets.errors {
+        eprintln!("warning: {}", e);
+    }
     let png = encode_png(&img);
     std::fs::write(out, &png).map_err(|e| format!("write {}: {}", out, e))?;
     println!("{} (tick {}, sha256 {})", out, tick, sha256_hex(&png));
@@ -159,7 +232,7 @@ fn cmd_render(args: &[String]) -> Result<(), String> {
 fn cmd_export(args: &[String]) -> Result<(), String> {
     let doc_path = require(args, "--doc");
     let dir = require(args, "--dir");
-    let doc = format::load_doc(Path::new(doc_path))?;
+    let (doc, _assets) = load_doc_and_assets(doc_path)?;
     let tps = doc.root.ticks_per_second;
     let seconds: i64 = flag(args, "--seconds").and_then(|v| v.parse().ok()).unwrap_or(1);
     let opts = ExportOpts {
@@ -169,6 +242,7 @@ fn cmd_export(args: &[String]) -> Result<(), String> {
         camera: parse_camera_arg(args)?,
         width: None,
         height: None,
+        asset_root: Path::new(doc_path).parent().map(|p| p.to_path_buf()).unwrap_or_default(),
     };
     let result = export_frames(&doc, &opts, Path::new(dir))?;
     println!("exported {} frames -> {}/manifest.json", result.frames.len(), dir);
@@ -181,8 +255,8 @@ fn cmd_export(args: &[String]) -> Result<(), String> {
 
 fn cmd_verify(args: &[String]) -> Result<(), String> {
     let doc_path = require(args, "--doc");
-    let text = std::fs::read_to_string(doc_path).map_err(|e| format!("read {}: {}", doc_path, e))?;
-    let doc = format::parse_doc(&text)?;
+    let loaded = format::load_doc_full(Path::new(doc_path))?;
+    let doc = loaded.doc;
 
     let problems = validate::validate(&doc);
     if !problems.is_empty() {
@@ -204,11 +278,15 @@ fn cmd_verify(args: &[String]) -> Result<(), String> {
         let mut hashes = Vec::new();
         for _ in 0..2 {
             let lines = eval::evaluate(&doc, frac)?;
-            let img = render(
+            let mut assets = mo2d::assets::AssetStore::new();
+            assets.root = Path::new(doc_path).parent().map(|p| p.to_path_buf()).unwrap_or_default();
+            assets.attach_blobs(&loaded.blobs);
+            let img = render_with_assets(
                 &lines,
                 doc.root.width as f64,
                 doc.root.height as f64,
                 &RenderOpts { width: doc.root.width, height: doc.root.height, camera: camera.clone(), samples: 1 },
+                &mut assets,
             );
             hashes.push(sha256_hex(&encode_png(&img)));
         }

@@ -32,7 +32,10 @@ any .md under docs/; after every edit run `python3 docs/check-okf.py`
    must be traced to its origin; without a clean explanation, rewrite it;
 3. Dependency rule: third-party crates/packages must be permissively licensed
    (MIT/Apache-2.0/BSD/MPL); GPL/AGPL/LGPL dependencies are forbidden
-   (the engine currently has zero third-party dependencies — keep it that way).
+   (the CPU oracle and byte-level determinism stay dependency-free; the
+   owner-approved GPU accelerator path added **wgpu** (Apache-2.0 OR MIT) and
+   **pollster** (Apache-2.0 OR MIT) on 2026-11-12 — new GPU-adjacent
+   dependencies still need owner sign-off).
 
 ## Moho corpus redlines
 

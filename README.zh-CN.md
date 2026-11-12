@@ -33,7 +33,7 @@
 `.mo2d` 格式 + PNG 序列导出/A6 最小舞台(四操作,零控件)。
 
 ```bash
-cd engine && cargo test                 # 47 tests: 单测 + 门 A1–A6 + 吞吐
+cd engine && cargo test                 # 113 tests: 单测 + 门 A1–A6 + 门 B1–B7 + 碰撞 + GPU 原型 + 演示物 + 吞吐
 cargo run --release -- stage --doc ../demo/out/tentacle.mo2d   # 打开最小舞台
 ```
 

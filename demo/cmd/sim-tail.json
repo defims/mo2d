@@ -1,0 +1,39 @@
+{
+  "v": 1,
+  "cmds": [
+    {"op": "doc.setRoot", "width": 640, "height": 360, "fps": 24},
+    {"op": "line.create", "id": "root", "width": 8, "color": [90, 40, 160, 255], "nodes": [
+      {"p": [80, 180, 0]},
+      {"p": [200, 180, 0]}
+    ]},
+    {"op": "line.create", "id": "trk_root", "tags": ["track"], "nodes": [
+      {"p": [0], "v": [200, 180, 0]},
+      {"p": [63504000000], "v": [260, 120, 0]},
+      {"p": [127008000000], "v": [320, 180, 0]},
+      {"p": [190512000000], "v": [260, 240, 0]},
+      {"p": [254016000000], "v": [200, 180, 0]},
+      {"p": [317520000000], "v": [260, 120, 0]},
+      {"p": [381024000000], "v": [320, 180, 0]},
+      {"p": [444528000000], "v": [260, 240, 0]},
+      {"p": [504032000000], "v": [200, 180, 0]}
+    ]},
+    {"op": "relation.create", "type": "track", "trackLine": "trk_root", "target": {"line": "root", "node": 1, "attr": "position"}},
+    {"op": "line.create", "id": "tail", "width": 6, "color": [40, 160, 120, 255], "nodes": [
+      {"p": [200, 180, 0]},
+      {"p": [180, 180, 0]},
+      {"p": [160, 180, 0]},
+      {"p": [140, 180, 0]},
+      {"p": [120, 180, 0]},
+      {"p": [100, 180, 0]},
+      {"p": [80, 180, 0]},
+      {"p": [60, 180, 0]},
+      {"p": [40, 180, 0]}
+    ]},
+    {"op": "relation.create", "type": "sim", "line": "tail",
+     "anchors": [{"node": 0, "driver": {"line": "root", "node": 1}}],
+     "gravity": [0, -400, 0], "damping": 0.985, "iterations": 4},
+    {"op": "relation.create", "type": "particles", "emitter": "root", "node": 1,
+     "rate": 24, "speed": 90, "dir": [1, 0, 0], "spread": 45, "life": 0.9,
+     "gravity": [0, -260, 0], "damping": 0.98, "size": 2, "color": [255, 140, 40, 255], "len": 7, "seed": 42}
+  ]
+}

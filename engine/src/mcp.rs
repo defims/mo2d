@@ -9,7 +9,8 @@ use crate::eval;
 use crate::json::{self, Value};
 use crate::model::Document;
 use crate::png::encode_png;
-use crate::render::{render, Camera, RenderOpts};
+use crate::assets::AssetStore;
+use crate::render::{render_with_assets, Camera, RenderOpts};
 use crate::sha::sha256_hex;
 use std::io::{BufRead, Write};
 use std::path::{Path, PathBuf};
@@ -110,11 +111,18 @@ impl McpSession {
         let height = args.get("height").and_then(|v| v.as_i64()).unwrap_or(self.doc.root.height as i64) as u32;
         let camera = parse_camera(args.get("camera"))?;
         let lines = eval::evaluate(&self.doc, tick)?;
-        let img = render(
+        let mut assets = AssetStore::new();
+        assets.root = self.doc_path.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+        // B7: packaged documents resolve textures from their blob area.
+        if let Ok(loaded) = crate::format::load_doc_full(&self.doc_path) {
+            assets.attach_blobs(&loaded.blobs);
+        }
+        let img = render_with_assets(
             &lines,
             self.doc.root.width as f64,
             self.doc.root.height as f64,
             &RenderOpts { width, height, camera, samples: 1 },
+            &mut assets,
         );
         let png = encode_png(&img);
         let name = format!("screenshot_{}.png", tick);

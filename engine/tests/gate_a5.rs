@@ -74,6 +74,7 @@ fn a5_export_manifest_matches_online() {
         camera: Camera::Ortho2d,
         width: None,
         height: None,
+        asset_root: std::path::PathBuf::from("."),
     };
     let online = mo2d::export::export_frames(&doc, &opts, &dir).unwrap();
 
@@ -124,6 +125,7 @@ fn a5_gif_export_deterministic() {
         camera: Camera::Ortho2d,
         width: None,
         height: None,
+        asset_root: std::path::PathBuf::from("."),
     };
     let a = dir.join("a.gif");
     let b = dir.join("b.gif");

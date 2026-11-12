@@ -52,3 +52,28 @@ fn throughput_10k_nodes_under_16ms() {
     eprintln!("throughput: 10k nodes, median single-frame eval = {:.3} ms", median);
     assert!(median < 16.0, "median single-frame evaluation must be < 16 ms, got {:.3} ms", median);
 }
+
+/// Roadmap B1 acceptance class: 100k nodes. The GPU workhorse owns the 60 fps
+/// render target (tech-stack decision pending); this gate pins the *engine*
+/// half — single-frame evaluation of the 100k-node class stays far inside the
+/// 16 ms frame budget even on the CPU.
+#[test]
+fn throughput_100k_eval_under_16ms() {
+    let doc = stress_doc(100_000);
+    assert_eq!(doc.line("stress").unwrap().nodes.len(), 100_000);
+
+    eval::evaluate(&doc, 0).unwrap();
+    let mut samples = Vec::new();
+    for run in 0..15 {
+        let tick = TICKS_PER_SECOND / 3 + run as i64;
+        let t = Instant::now();
+        let lines = eval::evaluate(&doc, tick).unwrap();
+        let ms = t.elapsed().as_secs_f64() * 1000.0;
+        std::hint::black_box(&lines);
+        samples.push(ms);
+    }
+    samples.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let median = samples[samples.len() / 2];
+    eprintln!("throughput: 100k nodes, median single-frame eval = {:.3} ms", median);
+    assert!(median < 16.0, "100k-node single-frame evaluation must be < 16 ms, got {:.3} ms", median);
+}

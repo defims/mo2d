@@ -25,7 +25,7 @@ users define lines and the relations between them directly on the stage.
   PNG export / minimal stage (four operations, zero widgets).
 
   ```bash
-  cd engine && cargo test                # 47 tests: unit + gates A1–A6 + throughput
+  cd engine && cargo test                # 113 tests: unit + gates A1–A6 + gates B1–B7 + collisions + GPU prototype + demos + throughput
   cargo run --release -- stage --doc ../demo/out/tentacle.mo2d   # open the minimal stage
   ```
 

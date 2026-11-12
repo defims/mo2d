@@ -1,0 +1,495 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "stagebox",
+      "closed": true,
+      "width": 2.0,
+      "color": [
+        150,
+        150,
+        160,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            80.0,
+            80.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            560.0,
+            80.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            560.0,
+            280.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            80.0,
+            280.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "charA_body",
+      "closed": false,
+      "width": 5.0,
+      "color": [
+        40,
+        120,
+        220,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            180.0,
+            120.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            180.0,
+            220.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            140.0,
+            270.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            180.0,
+            220.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            220.0,
+            270.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            160.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            200.0,
+            180.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "charA_head",
+      "closed": true,
+      "width": 4.0,
+      "color": [
+        40,
+        120,
+        220,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            180.0,
+            90.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            205.0,
+            115.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            180.0,
+            140.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            155.0,
+            115.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "charB_body",
+      "closed": false,
+      "width": 5.0,
+      "color": [
+        220,
+        90,
+        40,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            420.0,
+            130.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            420.0,
+            220.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            385.0,
+            265.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            420.0,
+            220.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            455.0,
+            265.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            402.0,
+            185.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            438.0,
+            185.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "charB_head",
+      "closed": true,
+      "width": 4.0,
+      "color": [
+        220,
+        90,
+        40,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            420.0,
+            100.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            443.0,
+            123.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            420.0,
+            146.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            397.0,
+            123.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "trk_box",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": [
+            80,
+            280,
+            0
+          ]
+        },
+        {
+          "p": [
+            252016000000
+          ],
+          "v": [
+            120,
+            320,
+            0
+          ]
+        },
+        {
+          "p": [
+            504032000000
+          ],
+          "v": [
+            80,
+            280,
+            0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "type": "group",
+      "box": "stagebox",
+      "members": [
+        "charA_body",
+        "charA_head",
+        "charB_body",
+        "charB_head"
+      ],
+      "visible": true
+    },
+    {
+      "id": "r2",
+      "type": "track",
+      "trackLine": "trk_box",
+      "target": {
+        "line": "stagebox",
+        "node": 3,
+        "attr": "position"
+      }
+    }
+  ]
+}

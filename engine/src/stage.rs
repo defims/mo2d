@@ -12,7 +12,7 @@ use crate::eval;
 use crate::json::{self, Value};
 use crate::mcp::McpSession;
 use crate::png::encode_png;
-use crate::render::{render, RenderOpts};
+use crate::render::{render_with_assets, RenderOpts};
 use crate::sha::sha256_hex;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -21,11 +21,25 @@ use std::sync::{Arc, Mutex};
 pub struct StageState {
     pub session: McpSession,
     pub tick: i64,
+    /// B5 texture store (rooted at the document's directory).
+    pub assets: crate::assets::AssetStore,
+    /// Bumped on every applied document batch (B1: change detection).
+    pub doc_epoch: u64,
+    /// Last rendered PNG keyed by (doc_epoch, tick) — repeated /frame polls
+    /// with nothing changed cost no evaluation, render, or encode (the
+    /// stage's "edit viewport idle at 0% CPU" story: work happens only on
+    /// real change).
+    frame_cache: Option<(u64, i64, Vec<u8>)>,
 }
 
 impl StageState {
     pub fn new(session: McpSession) -> StageState {
-        StageState { session, tick: 0 }
+        let mut assets = crate::assets::AssetStore::new();
+        // B7: a packaged document carries its textures in the blob area.
+        if let Ok(loaded) = crate::format::load_doc_full(&session.doc_path) {
+            assets.attach_blobs(&loaded.blobs);
+        }
+        StageState { session, tick: 0, doc_epoch: 0, frame_cache: None, assets }
     }
 
     /// Apply a batch of document commands; roll back if the result is invalid.
@@ -40,6 +54,7 @@ impl StageState {
         }
         self.session.log.extend(cmds.iter().cloned());
         self.session.save().map_err(|e| format!("save failed: {}", e))?;
+        self.doc_epoch += 1;
         let mut summaries = Vec::new();
         for e in &effects {
             summaries.push(Value::Str(e.summary.clone()));
@@ -109,6 +124,46 @@ impl StageState {
                     }
                     ro.set("target", t);
                 }
+                crate::model::RelationKind::Gradient => {
+                    ro.set("bar", Value::Str(r.gradient_bar.clone()));
+                    ro.set("target", Value::Str(r.gradient_target.clone()));
+                    ro.set("role", Value::Str(r.gradient_role.name().into()));
+                }
+                crate::model::RelationKind::Group => {
+                    ro.set("box", Value::Str(r.group_box.clone()));
+                    ro.set("members", Value::Arr(r.group_members.iter().map(|m| Value::Str(m.clone())).collect()));
+                    ro.set("visible", Value::Bool(r.group_visible));
+                }
+                crate::model::RelationKind::Sim => {
+                    ro.set("line", Value::Str(r.sim_line.clone()));
+                    let mut anchors = Vec::new();
+                    for (node, dl, dn) in &r.sim_anchors {
+                        let mut a = Value::obj();
+                        a.set("node", Value::Int(*node as i64));
+                        let mut d = Value::obj();
+                        d.set("line", Value::Str(dl.clone()));
+                        d.set("node", Value::Int(*dn as i64));
+                        a.set("driver", d);
+                        anchors.push(a);
+                    }
+                    ro.set("anchors", Value::Arr(anchors));
+                    if !r.sim_collide_with.is_empty() {
+                        ro.set("collideWith", Value::Arr(r.sim_collide_with.iter().map(|c| Value::Str(c.clone())).collect()));
+                        ro.set("radius", Value::Num(r.sim_radius));
+                        ro.set("selfCollide", Value::Bool(r.sim_self_collide));
+                    }
+                }
+                crate::model::RelationKind::Particles => {
+                    ro.set("emitter", Value::Str(r.part_emitter.clone()));
+                    ro.set("node", Value::Int(r.part_node as i64));
+                    ro.set("rate", Value::Num(r.part_rate));
+                    ro.set("seed", Value::Int(r.part_seed));
+                    if !r.part_collide_with.is_empty() {
+                        ro.set("collideWith", Value::Arr(r.part_collide_with.iter().map(|c| Value::Str(c.clone())).collect()));
+                        ro.set("bounce", Value::Num(r.part_bounce));
+                        ro.set("radius", Value::Num(r.part_radius));
+                    }
+                }
             }
             rels.push(ro);
         }
@@ -116,16 +171,26 @@ impl StageState {
         Ok(out)
     }
 
-    fn frame_png(&self) -> Result<Vec<u8>, String> {
+    fn frame_png(&mut self) -> Result<Vec<u8>, String> {
+        // Cache hit: same document epoch + same tick → the bytes are identical.
+        if let Some((epoch, tick, png)) = &self.frame_cache {
+            if *epoch == self.doc_epoch && *tick == self.tick {
+                return Ok(png.clone());
+            }
+        }
         let lines = eval::evaluate(&self.session.doc, self.tick)?;
+        self.assets.root = self.session.doc_path.parent().map(|p| p.to_path_buf()).unwrap_or_default();
         let doc = &self.session.doc;
-        let img = render(
+        let img = render_with_assets(
             &lines,
             doc.root.width as f64,
             doc.root.height as f64,
             &RenderOpts { width: doc.root.width, height: doc.root.height, camera: Default::default(), samples: 1 },
+            &mut self.assets,
         );
-        Ok(encode_png(&img))
+        let png = encode_png(&img);
+        self.frame_cache = Some((self.doc_epoch, self.tick, png.clone()));
+        Ok(png)
     }
 }
 

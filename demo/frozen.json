@@ -1,5 +1,5 @@
 {
-  "note": "Frozen acceptance references (mvp.md A1 3D scene gate / P1-7 hash freeze). Regenerate via demo/freeze.py.",
+  "note": "Frozen acceptance references (mvp.md A1 3D scene gate / P1-7 hash freeze; Phase B demos). Regenerate via demo/freeze.py.",
   "tentacle": {
     "docSha256": "7d2ace88f1029cc69712daf61f75fb9e483725eb270954fae7d7564394c4fee1",
     "frameCount": 48,
@@ -25,5 +25,31 @@
       ],
       "fovY": 42
     }
+  },
+  "brush": {
+    "docSha256": "1c14f2fc0900266afaf5a8857da8379b36c0ea1c68cd19412b4d1c0622c09855",
+    "frameSha256": "ec1274490ecf199652730fdc398d984af0149b3a846f53c7472cb0fae401a940",
+    "midTick": 127008000000
+  },
+  "gradient": {
+    "docSha256": "b58906253e2c0be20319634ae94c41b32e543014710438f4747a95e4ca2d1adb",
+    "frameSha256": "102bb1d07458b9083a6b7d026bf5618f2f49c354b10a26ca371fe7ea30524eb8",
+    "midTick": 127008000000
+  },
+  "groups": {
+    "docSha256": "f66f8a19a5c877893a55bf79b327ee6d1788bcda10852cb049ddbd73110055c5",
+    "frameSha256": "296ea7e97eb0cf24d9e3aa01dfc0a3a149e82f7bf7ad7d1760c686f0ab0d2bd5",
+    "midTick": 127008000000
+  },
+  "sim": {
+    "docSha256": "a4b2bb2ae7792648c79e2acbd7343b9d413665dfa930223832a864085875bed4",
+    "frameSha256": "c6c8ca801de0ea0a2348dbfb3cea8a0cac25fb7c636accd90f3f9f5d5fc468d6",
+    "midTick": 127008000000
+  },
+  "mesh": {
+    "docSha256": "854a36d8f0d2e4f7ec1028a9a3e02f32afff3397179f5406dbf21c9be319896c",
+    "frameSha256": "75728688803b754ac7cd4151d1fab9e08476208c462b26c9ae8b1c7df97e3650",
+    "packageSha256": "1402991471a1606844358184cc144e4f300d577d43eac247fcaaa4e50257ec4e",
+    "midTick": 127008000000
   }
 }

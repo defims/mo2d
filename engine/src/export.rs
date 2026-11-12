@@ -6,7 +6,8 @@ use crate::gif::{encode_gif, GifFrame};
 use crate::json::Value;
 use crate::model::Document;
 use crate::png::encode_png;
-use crate::render::{render, Camera, RenderOpts};
+use crate::assets::AssetStore;
+use crate::render::{render_with_assets, Camera, RenderOpts};
 use crate::sha::sha256_hex;
 use std::fs;
 use std::path::Path;
@@ -22,6 +23,8 @@ pub struct ExportOpts {
     /// Output pixel size (defaults to root size).
     pub width: Option<u32>,
     pub height: Option<u32>,
+    /// Base directory for B5 texture references (set to the doc's dir).
+    pub asset_root: std::path::PathBuf,
 }
 
 impl ExportOpts {
@@ -35,6 +38,7 @@ impl ExportOpts {
             camera: Camera::Ortho2d,
             width: None,
             height: None,
+            asset_root: std::path::PathBuf::from("."),
         }
     }
 }
@@ -55,11 +59,14 @@ pub fn export_frames(doc: &Document, opts: &ExportOpts, dir: &Path) -> Result<Ex
     let mut index = 0u64;
     while tick <= opts.to_tick {
         let lines = eval::evaluate(doc, tick)?;
-        let img = render(
+        let mut assets = AssetStore::new();
+        assets.root = opts.asset_root.clone();
+        let img = render_with_assets(
             &lines,
             doc.root.width as f64,
             doc.root.height as f64,
             &RenderOpts { width, height, camera: opts.camera.clone(), samples: 1 },
+            &mut assets,
         );
         let png = encode_png(&img);
         let name = format!("frame_{:06}.png", index);
@@ -115,11 +122,14 @@ pub fn export_gif(doc: &Document, opts: &ExportOpts, path: &Path) -> Result<(), 
     let mut tick = opts.from_tick;
     while tick <= opts.to_tick {
         let lines = eval::evaluate(doc, tick)?;
-        let img = render(
+        let mut assets = AssetStore::new();
+        assets.root = opts.asset_root.clone();
+        let img = render_with_assets(
             &lines,
             doc.root.width as f64,
             doc.root.height as f64,
             &RenderOpts { width, height, camera: opts.camera.clone(), samples: 1 },
+            &mut assets,
         );
         images.push(img);
         tick += opts.step;

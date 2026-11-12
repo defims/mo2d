@@ -1,0 +1,384 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "root",
+      "closed": false,
+      "width": 8.0,
+      "color": [
+        90,
+        40,
+        160,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            80.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            200.0,
+            180.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "trk_root",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": [
+            200,
+            180,
+            0
+          ]
+        },
+        {
+          "p": [
+            63504000000
+          ],
+          "v": [
+            260,
+            120,
+            0
+          ]
+        },
+        {
+          "p": [
+            127008000000
+          ],
+          "v": [
+            320,
+            180,
+            0
+          ]
+        },
+        {
+          "p": [
+            190512000000
+          ],
+          "v": [
+            260,
+            240,
+            0
+          ]
+        },
+        {
+          "p": [
+            254016000000
+          ],
+          "v": [
+            200,
+            180,
+            0
+          ]
+        },
+        {
+          "p": [
+            317520000000
+          ],
+          "v": [
+            260,
+            120,
+            0
+          ]
+        },
+        {
+          "p": [
+            381024000000
+          ],
+          "v": [
+            320,
+            180,
+            0
+          ]
+        },
+        {
+          "p": [
+            444528000000
+          ],
+          "v": [
+            260,
+            240,
+            0
+          ]
+        },
+        {
+          "p": [
+            504032000000
+          ],
+          "v": [
+            200,
+            180,
+            0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "tail",
+      "closed": false,
+      "width": 6.0,
+      "color": [
+        40,
+        160,
+        120,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            200.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            180.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            160.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            140.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            120.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            100.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            80.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            60.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            40.0,
+            180.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "type": "track",
+      "trackLine": "trk_root",
+      "target": {
+        "line": "root",
+        "node": 1,
+        "attr": "position"
+      }
+    },
+    {
+      "id": "r2",
+      "type": "sim",
+      "line": "tail",
+      "anchors": [
+        {
+          "node": 0,
+          "driver": {
+            "line": "root",
+            "node": 1
+          }
+        }
+      ],
+      "gravity": [
+        0.0,
+        -400.0,
+        0.0
+      ],
+      "damping": 0.985,
+      "iterations": 4
+    },
+    {
+      "id": "r3",
+      "type": "particles",
+      "emitter": "root",
+      "node": 1,
+      "rate": 24.0,
+      "speed": 90.0,
+      "dir": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "spread": 45.0,
+      "life": 0.9,
+      "gravity": [
+        0.0,
+        -260.0,
+        0.0
+      ],
+      "damping": 0.98,
+      "size": 2.0,
+      "color": [
+        255,
+        140,
+        40,
+        255
+      ],
+      "len": 7.0,
+      "seed": 42
+    }
+  ]
+}

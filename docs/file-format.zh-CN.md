@@ -4,7 +4,7 @@ title: "文件格式:设计建议与参照"
 description: mo2d 原生格式设计——三层格式架构(.mo2d 单文件交付包=交付即工程/可选工程目录形态/SVG 帧视图)、尾部 BLOB 区、Tick 整数时间、字节级确定性、扩展命名空间、JSON Schema 校验与版本迁移纪律;参照表覆盖 glTF 2.0/vectorcraft/maop/Moho/Lottie/OpenRaster/AniCraft/USD/Collada,各注明取什么与避什么。
 tags: [file-format, storage, reference, gltf, ticks, svg-view]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T15:56:02Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T10:34:00Z }
 sources:
   - id: gltf
     resource: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
@@ -113,6 +113,17 @@ mo2d 因尾部 BLOB 设计,包比 ZIP 更 git/AI 友好)[^mohoproj-format]。
    活样本(每升一版,旧读端保留)[^anicraft];
 8. **history 与 document 分离**:document 是**真值**,history 只是审计/回放;
    两者分叉时以 document 为准(避免"回放 vs 状态"两套真相)。
+
+**引擎现状对照本草案(2026-11-12,Phase B)**:MVP 信封 + **B7 包形态**均已上线。单文件 `.mo2d`
+包 = 规范 JSON 头 + `--BLOBS--` 标记行 + 按长度定界的 blob 记录(名字排序;JSON 字符串内不可能出现
+真实标记行——原始换行会被转义);`mo2d pack`/`mo2d unpack` 在包与工程目录(`document.mo2d.json` +
+`assets/`)间无损互转(pack ∘ unpack ∘ pack 逐字节一致),纹理引用先解析 blob 区、再解析文件系统——
+**两种容器,同一文档**(冻结的 mesh 演示物同时钉住两种形态且渲染逐字节一致)。Phase B 词表以版本 1
+增量加入:顶层 `styles` 数组(B2——**仅非空时写出**,旧字节不变)、线级 `brush{…}`、节点 `pr`/`uv`、
+线级 `texture`、关系类型 `gradient`/`group`/`sim`/`particles`、轨道属性 `color`——全部走按类型的
+未知键过滤(细则 5:任何名称的外来键仍透传)。读端已带按版本索引的空 **MIGRATIONS** 迁移链
+(细则 7 的机制,首次升版压入 v1→v2);更新的版本被拒绝、绝不猜测。`mo2d schema` 输出 v1 JSON
+Schema;history 入文件仍属后续。
 
 ## 3. 参照表:项目与规范
 

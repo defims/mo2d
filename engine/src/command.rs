@@ -81,16 +81,19 @@ pub struct CmdSpec {
 pub fn registry() -> Vec<CmdSpec> {
     vec![
         CmdSpec { name: "doc.setRoot", args: "{width?, height?, fps?, ticksPerSecond?}", doc: "Set root parameters (canvas size, fps is display-only)." },
-        CmdSpec { name: "line.create", args: "{id?, tags?, closed?, width?, color?, fillColor?, strokeOn?, fillOn?, nodes: [{p, w?, c?, hi?, ho?, v?}], segs?: [{type?, visible?, interp?}]}", doc: "Create a line. 'p' = [x,y,z] geometric or [tick] for track lines. Auto id l<N> when omitted." },
-        CmdSpec { name: "line.setAttrs", args: "{id, closed?, width?, color?, fillColor?, strokeOn?, fillOn?}", doc: "Merge line-level attributes." },
+        CmdSpec { name: "line.create", args: "{id?, tags?, closed?, width?, color?, fillColor?, strokeOn?, fillOn?, brush?, texture?, nodes: [{p, w?, pr?, uv?, c?, hi?, ho?, v?}], segs?: [{type?, visible?, interp?}]}", doc: "Create a line. 'p' = [x,y,z] geometric or [tick] for track lines; 'pr' = node pressure (B2); 'uv' = node texture anchor (B5); 'brush' = line-level brush object (B2); 'texture' = external image path (B5 textured fill). Auto id l<N> when omitted." },
+        CmdSpec { name: "line.setAttrs", args: "{id, closed?, width?, color?, fillColor?, strokeOn?, fillOn?, brush?, texture?}", doc: "Merge line-level attributes. brush: object sets/replaces the line brush; null clears it. texture: path or null." },
         CmdSpec { name: "line.delete", args: "{id}", doc: "Delete a line (relations referencing it are deleted too)." },
-        CmdSpec { name: "node.set", args: "{line, index, p?, w?, c?, hi?, ho?, atTick?}", doc: "Set node fields. With atTick and an existing track on this node+attr, upserts a keyframe instead (auto-key)." },
-        CmdSpec { name: "node.append", args: "{line, p, w?, c?, hi?, ho?, v?}", doc: "Append a node to a line." },
+        CmdSpec { name: "node.set", args: "{line, index, p?, w?, pr?, c?, hi?, ho?, atTick?}", doc: "Set node fields ('pr' = pressure, B2). With atTick and an existing track on this node+attr, upserts a keyframe instead (auto-key)." },
+        CmdSpec { name: "node.append", args: "{line, p, w?, pr?, c?, hi?, ho?, v?}", doc: "Append a node to a line." },
         CmdSpec { name: "node.delete", args: "{line, index}", doc: "Delete a node (and its keyframe if it lives on a track line)." },
         CmdSpec { name: "seg.set", args: "{line, index, type?, visible?, interp?}", doc: "Merge segment attributes (straight/curve, visibility, interp for track segments)." },
-        CmdSpec { name: "relation.create", args: "{id?, type: bind|share|track, ...}", doc: "bind: {target, skeleton, falloff?, stretch?}; share: {driver: {line,node}, driven: {line,node}}; track: {trackLine, target: {line, node?, attr: position|width}}. Auto id r<N>." },
+        CmdSpec { name: "relation.create", args: "{id?, type: bind|share|track|gradient|group|sim|particles, ...}", doc: "bind: {target, skeleton, falloff?, stretch?}; share: {driver: {line,node}, driven: {line,node}}; track: {trackLine, target: {line, node?, attr: position|width|color}}; gradient (B3): {bar, target, role?: fill|stroke}; group (B4): {box, members, visible?} — transform-box line; sim (B6): {line, anchors: [{node, driver: {line,node}}], gravity?, damping?, iterations?, collideWith?, radius?, selfCollide?} — deterministic trailing rope with optional collisions; particles (B6): {emitter, node?, rate?, speed?, dir?, spread?, life?, gravity?, damping?, size?, color?, len?, seed?, collideWith?, bounce?, radius?}. Auto id r<N>." },
         CmdSpec { name: "relation.delete", args: "{id}", doc: "Delete a relation." },
         CmdSpec { name: "track.create", args: "{line, node, attr?: position|width, tick?, value?}", doc: "Create a track line (auto id trk_<line>_<node>_<attr>) + its track relation + the first keyframe (defaults: tick 0, value = the node's current value). This is the gesture command for node→timeline connect; AI uses it too, so both channels produce identical documents." },
+        CmdSpec { name: "style.create", args: "{id?, width?, color?, fillColor?, strokeOn?, fillOn?, brush?}", doc: "Define a named line-attribute template (B2 styles). Auto id st<N>." },
+        CmdSpec { name: "style.delete", args: "{id}", doc: "Delete a style template." },
+        CmdSpec { name: "style.apply", args: "{id, line}", doc: "Copy the style's defined attributes onto a line (undefined fields leave the line untouched). Switching a line between brush strokes = applying different styles." },
     ]
 }
 
@@ -158,6 +161,19 @@ fn parse_node_spec(cmd: &Command, v: &Value, ctx: &str) -> Result<Node, String> 
     if let Some(w) = v.get("w") {
         n.width = Some(w.as_f64().ok_or_else(|| format!("{}: 'w' must be a number", ctx))?);
     }
+    if let Some(pr) = v.get("pr") {
+        n.pressure = Some(pr.as_f64().ok_or_else(|| format!("{}: 'pr' must be a number", ctx))?);
+    }
+    if let Some(uv) = v.get("uv") {
+        let arr = uv.as_arr().ok_or_else(|| format!("{}: 'uv' must be [u,v]", ctx))?;
+        if arr.len() != 2 {
+            return Err(format!("{}: 'uv' must have 2 components", ctx));
+        }
+        n.uv = Some([
+            arr[0].as_f64().ok_or_else(|| format!("{}: uv[0] must be a number", ctx))?,
+            arr[1].as_f64().ok_or_else(|| format!("{}: uv[1] must be a number", ctx))?,
+        ]);
+    }
     if let Some(c) = v.get("c") {
         n.color = Some(parse_json_color(c, ctx)?);
     }
@@ -169,6 +185,13 @@ fn parse_node_spec(cmd: &Command, v: &Value, ctx: &str) -> Result<Node, String> 
     }
     let _ = cmd;
     Ok(n)
+}
+
+fn parse_brush_arg(v: &Value, ctx: &str) -> Result<Brush, String> {
+    if matches!(v, Value::Null) {
+        return Ok(Brush::default());
+    }
+    format::brush_from_value(v, ctx)
 }
 
 fn parse_json_color(v: &Value, ctx: &str) -> Result<[u8; 4], String> {
@@ -222,10 +245,11 @@ fn value_of_pos(p: &NodePos) -> Value {
 }
 
 /// Value triple for a track keyframe (position) or scalar (width).
+/// Color keyframes are built at the call site (from the node's color).
 fn track_value_for_attr(attr: TrackAttr, p: Vec3) -> Value {
     match attr {
         TrackAttr::Position => Value::Arr(vec![Value::Num(p.x), Value::Num(p.y), Value::Num(p.z)]),
-        TrackAttr::Width => Value::Num(p.x),
+        TrackAttr::Width | TrackAttr::Color => Value::Num(p.x),
     }
 }
 
@@ -347,6 +371,12 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
             if let Some(c) = cmd.arg("fillColor") {
                 l.fill_color = parse_json_color(c, "line.create fillColor")?;
             }
+            if let Some(bv) = cmd.arg("brush") {
+                l.brush = Some(parse_brush_arg(bv, "line.create brush")?);
+            }
+            if let Some(t) = cmd.arg("texture").and_then(|v| v.as_str()) {
+                l.texture = Some(t.to_string());
+            }
             if let Some(b) = cmd.arg("strokeOn").and_then(|v| v.as_bool()) {
                 l.stroke_on = b;
             }
@@ -438,6 +468,22 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                         inv.set("fillOn", Value::Bool(l.fill_on));
                         l.fill_on = v.as_bool().ok_or("fillOn must be a bool")?;
                     }
+                    "brush" => {
+                        inv.set("brush", l.brush.as_ref().map(|b| format::brush_to_value(b)).unwrap_or(Value::Null));
+                        if matches!(v, Value::Null) {
+                            l.brush = None;
+                        } else {
+                            l.brush = Some(parse_brush_arg(v, "line.setAttrs brush")?);
+                        }
+                    }
+                    "texture" => {
+                        inv.set("texture", l.texture.clone().map(Value::Str).unwrap_or(Value::Null));
+                        if matches!(v, Value::Null) {
+                            l.texture = None;
+                        } else {
+                            l.texture = Some(v.as_str().ok_or("texture must be a string")?.to_string());
+                        }
+                    }
                     "tags" => {
                         inv.set("tags", Value::Arr(l.tags.iter().map(|t| Value::Str(t.clone())).collect()));
                         let mut tags = Vec::new();
@@ -464,6 +510,14 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                     RelationKind::Bind => r.bind_target == id || r.bind_skeleton == id,
                     RelationKind::Share => r.share_driver.0 == id || r.share_driven.0 == id,
                     RelationKind::Track => r.track_line == id || r.track_target_line == id,
+                    RelationKind::Gradient => r.gradient_bar == id || r.gradient_target == id,
+                    RelationKind::Group => r.group_box == id || r.group_members.iter().any(|m| m == &id),
+                    RelationKind::Sim => {
+                        r.sim_line == id
+                            || r.sim_anchors.iter().any(|(_, l, _)| l == &id)
+                            || r.sim_collide_with.iter().any(|l| l == &id)
+                    }
+                    RelationKind::Particles => r.part_emitter == id || r.part_collide_with.iter().any(|l| l == &id),
                 };
                 if touches {
                     doc.relations.remove(i);
@@ -490,16 +544,31 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                 if tick.abs() > TICK_LIMIT {
                     return Err(format!("node.set: atTick {} beyond ±{} limit", tick, TICK_LIMIT));
                 }
-                let attr = if cmd.arg("p").is_some() { TrackAttr::Position } else { TrackAttr::Width };
+                let attr = if cmd.arg("p").is_some() {
+                    TrackAttr::Position
+                } else if cmd.arg("w").is_some() {
+                    TrackAttr::Width
+                } else {
+                    TrackAttr::Color
+                };
                 if let Some(rel) = track_relation_for(doc, &line_id, index, &attr) {
-                    let val = match (attr.clone(), cmd.arg("p"), cmd.arg("w")) {
-                        (TrackAttr::Position, Some(pv), _) => {
+                    let val = match (attr.clone(), cmd.arg("p"), cmd.arg("w"), cmd.arg("c")) {
+                        (TrackAttr::Position, Some(pv), _, _) => {
                             let pos = parse_pos_arg(pv, "node.set p")?;
                             let v = pos.geom().map_err(|e| format!("node.set: auto-key needs a Vec3 position ({})", e))?;
                             track_value_for_attr(attr, v)
                         }
-                        (TrackAttr::Width, _, Some(wv)) => Value::Num(wv.as_f64().ok_or("node.set: 'w' must be a number")?),
-                        _ => return Err("node.set: auto-key needs 'p' or 'w' alongside atTick".into()),
+                        (TrackAttr::Width, _, Some(wv), _) => Value::Num(wv.as_f64().ok_or("node.set: 'w' must be a number")?),
+                        (TrackAttr::Color, _, _, Some(cv)) => {
+                            let c = parse_json_color(cv, "node.set c")?;
+                            Value::Arr(vec![
+                                Value::Num(c[0] as f64),
+                                Value::Num(c[1] as f64),
+                                Value::Num(c[2] as f64),
+                                Value::Num(c[3] as f64),
+                            ])
+                        }
+                        _ => return Err("node.set: auto-key needs 'p', 'w' or 'c' alongside atTick".into()),
                     };
                     upsert_keyframe(doc, &rel, tick, val, false)?;
                     // Inverse: remove the keyframe again. (Documented limitation:
@@ -541,6 +610,31 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                 }
                 any = true;
             }
+            if let Some(prv) = cmd.arg("pr") {
+                inv.set("pr", old.pressure.map(Value::Num).unwrap_or(Value::Null));
+                if matches!(prv, Value::Null) {
+                    l.nodes[index].pressure = None;
+                } else {
+                    l.nodes[index].pressure = Some(prv.as_f64().ok_or("node.set: 'pr' must be a number")?);
+                }
+                any = true;
+            }
+            if let Some(uvv) = cmd.arg("uv") {
+                inv.set("uv", old.uv.map(|uv| Value::Arr(vec![Value::Num(uv[0]), Value::Num(uv[1])])).unwrap_or(Value::Null));
+                if matches!(uvv, Value::Null) {
+                    l.nodes[index].uv = None;
+                } else {
+                    let arr = uvv.as_arr().ok_or("node.set: 'uv' must be [u,v]")?;
+                    if arr.len() != 2 {
+                        return Err("node.set: 'uv' must have 2 components".into());
+                    }
+                    l.nodes[index].uv = Some([
+                        arr[0].as_f64().ok_or("node.set: uv[0] must be a number")?,
+                        arr[1].as_f64().ok_or("node.set: uv[1] must be a number")?,
+                    ]);
+                }
+                any = true;
+            }
             if let Some(cv) = cmd.arg("c") {
                 inv.set("c", old.color.map(color_arr).unwrap_or(Value::Null));
                 if matches!(cv, Value::Null) {
@@ -572,7 +666,7 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                 // atTick given but no track matched: plain set above (static value).
             }
             if !any {
-                return Err("node.set: nothing to set (p/w/c/hi/ho)".into());
+                return Err("node.set: nothing to set (p/w/pr/uv/c/hi/ho)".into());
             }
             let inv = value_to_command(&inv)?;
             Ok(Effect { inverse: inv, summary: format!("set node {}#{}", line_id, index) })
@@ -736,9 +830,122 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                     let attr = match t.get("attr").and_then(|x| x.as_str()) {
                         Some("position") => TrackAttr::Position,
                         Some("width") => TrackAttr::Width,
-                        o => return Err(format!("relation.create: target.attr must be position|width, got {:?}", o)),
+                        Some("color") => TrackAttr::Color,
+                        o => return Err(format!("relation.create: target.attr must be position|width|color, got {:?}", o)),
                     };
                     Relation::new_track("", &tl, line, node, attr)
+                }
+                "gradient" => {
+                    let bar = need_str(cmd, "bar")?.to_string();
+                    let target = need_str(cmd, "target")?.to_string();
+                    let role = match cmd.arg("role").and_then(|x| x.as_str()) {
+                        Some("fill") | None => GradientRole::Fill,
+                        Some("stroke") => GradientRole::Stroke,
+                        o => return Err(format!("relation.create: role must be fill|stroke, got {:?}", o)),
+                    };
+                    Relation::new_gradient("", &bar, &target, role)
+                }
+                "group" => {
+                    let box_id = need_str(cmd, "box")?.to_string();
+                    let mut members = Vec::new();
+                    if let Some(ms) = cmd.arg("members").and_then(|x| x.as_arr()) {
+                        for m in ms {
+                            members.push(m.as_str().ok_or("relation.create: members must be strings")?.to_string());
+                        }
+                    }
+                    if members.is_empty() {
+                        return Err("relation.create: group needs at least one member".into());
+                    }
+                    let visible = cmd.arg("visible").and_then(|x| x.as_bool()).unwrap_or(true);
+                    Relation::new_group("", &box_id, &members.iter().map(|s| s.as_str()).collect::<Vec<_>>(), visible)
+                }
+                "sim" => {
+                    let line_id = need_str(cmd, "line")?.to_string();
+                    let mut r = Relation::new_sim("", &line_id);
+                    if let Some(av) = cmd.arg("anchors").and_then(|x| x.as_arr()) {
+                        for a in av {
+                            let node = a.get("node").and_then(|x| x.as_i64()).ok_or("relation.create: sim anchors[].node must be an integer")?;
+                            let d = a.get("driver").ok_or("relation.create: sim anchors[].driver {line,node} required")?;
+                            let dl = d.get("line").and_then(|x| x.as_str()).ok_or("driver.line missing")?;
+                            let dn = d.get("node").and_then(|x| x.as_i64()).ok_or("driver.node missing")?;
+                            r.sim_anchors.push((node as usize, dl.to_string(), dn as usize));
+                        }
+                    }
+                    if let Some(gv) = cmd.arg("gravity") {
+                        r.sim_gravity = parse_json_vec3(gv, "relation.create: sim gravity")?;
+                    }
+                    if let Some(x) = cmd.arg("damping").and_then(|x| x.as_f64()) {
+                        r.sim_damping = x;
+                    }
+                    if let Some(x) = cmd.arg("iterations").and_then(|x| x.as_i64()) {
+                        r.sim_iterations = x.max(0) as usize;
+                    }
+                    if let Some(cv) = cmd.arg("collideWith").and_then(|x| x.as_arr()) {
+                        for c in cv {
+                            r.sim_collide_with.push(c.as_str().ok_or("relation.create: sim collideWith must be strings")?.to_string());
+                        }
+                    }
+                    if let Some(x) = cmd.arg("radius").and_then(|x| x.as_f64()) {
+                        r.sim_radius = x;
+                    }
+                    if let Some(x) = cmd.arg("selfCollide").and_then(|x| x.as_bool()) {
+                        r.sim_self_collide = x;
+                    }
+                    r
+                }
+                "particles" => {
+                    let emitter = need_str(cmd, "emitter")?.to_string();
+                    // node defaults to the emitter's LAST node (tail-tip emission).
+                    let node = match cmd.arg("node").and_then(|x| x.as_i64()) {
+                        Some(n) => n as usize,
+                        None => doc.line(&emitter).map(|l| l.nodes.len().saturating_sub(1)).unwrap_or(0),
+                    };
+                    let mut r = Relation::new_particles("", &emitter, node);
+                    if let Some(x) = cmd.arg("rate").and_then(|x| x.as_f64()) {
+                        r.part_rate = x;
+                    }
+                    if let Some(x) = cmd.arg("speed").and_then(|x| x.as_f64()) {
+                        r.part_speed = x;
+                    }
+                    if let Some(dv) = cmd.arg("dir") {
+                        r.part_dir = parse_json_vec3(dv, "relation.create: particles dir")?;
+                    }
+                    if let Some(x) = cmd.arg("spread").and_then(|x| x.as_f64()) {
+                        r.part_spread_deg = x;
+                    }
+                    if let Some(x) = cmd.arg("life").and_then(|x| x.as_f64()) {
+                        r.part_life_s = x;
+                    }
+                    if let Some(gv) = cmd.arg("gravity") {
+                        r.part_gravity = parse_json_vec3(gv, "relation.create: particles gravity")?;
+                    }
+                    if let Some(x) = cmd.arg("damping").and_then(|x| x.as_f64()) {
+                        r.part_damping = x;
+                    }
+                    if let Some(x) = cmd.arg("size").and_then(|x| x.as_f64()) {
+                        r.part_size = x;
+                    }
+                    if let Some(cv) = cmd.arg("color") {
+                        r.part_color = parse_json_color(cv, "relation.create: particles color")?;
+                    }
+                    if let Some(x) = cmd.arg("len").and_then(|x| x.as_f64()) {
+                        r.part_len = x;
+                    }
+                    if let Some(x) = cmd.arg("seed").and_then(|x| x.as_i64()) {
+                        r.part_seed = x;
+                    }
+                    if let Some(cv) = cmd.arg("collideWith").and_then(|x| x.as_arr()) {
+                        for c in cv {
+                            r.part_collide_with.push(c.as_str().ok_or("relation.create: particles collideWith must be strings")?.to_string());
+                        }
+                    }
+                    if let Some(x) = cmd.arg("bounce").and_then(|x| x.as_f64()) {
+                        r.part_bounce = x;
+                    }
+                    if let Some(x) = cmd.arg("radius").and_then(|x| x.as_f64()) {
+                        r.part_radius = x;
+                    }
+                    r
                 }
                 o => return Err(format!("relation.create: unknown type '{}'", o)),
             };
@@ -786,6 +993,107 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                         return Err("relation.create track: track line and target line must differ".into());
                     }
                 }
+                RelationKind::Gradient => {
+                    doc.line(&r.gradient_bar).map_err(|e| format!("relation.create gradient: {}", e))?;
+                    doc.line(&r.gradient_target).map_err(|e| format!("relation.create gradient: {}", e))?;
+                    let b = doc.line(&r.gradient_bar)?;
+                    if b.is_track() {
+                        return Err("relation.create gradient: bar must be a geometric line".into());
+                    }
+                    if b.nodes.len() < 2 {
+                        return Err("relation.create gradient: bar needs ≥ 2 nodes (color stops)".into());
+                    }
+                    if doc.line(&r.gradient_target)?.is_track() {
+                        return Err("relation.create gradient: cannot target a track line".into());
+                    }
+                    if r.gradient_bar == r.gradient_target {
+                        return Err("relation.create gradient: bar and target must differ".into());
+                    }
+                }
+                RelationKind::Group => {
+                    let b = doc.line(&r.group_box).map_err(|e| format!("relation.create group: {}", e))?;
+                    if b.is_track() {
+                        return Err("relation.create group: box must be a geometric line".into());
+                    }
+                    if b.nodes.len() < 2 {
+                        return Err("relation.create group: box needs ≥ 2 nodes".into());
+                    }
+                    for m in &r.group_members {
+                        let l = doc.line(m).map_err(|e| format!("relation.create group: {}", e))?;
+                        if l.is_track() {
+                            return Err(format!("relation.create group: member '{}' must be a geometric line", m));
+                        }
+                        if m == &r.group_box {
+                            return Err("relation.create group: the box cannot be its own member".into());
+                        }
+                    }
+                }
+                RelationKind::Sim => {
+                    let l = doc.line(&r.sim_line).map_err(|e| format!("relation.create sim: {}", e))?;
+                    if l.is_track() {
+                        return Err("relation.create sim: the sim line must be a geometric line".into());
+                    }
+                    if l.nodes.len() < 2 {
+                        return Err("relation.create sim: the sim line needs ≥ 2 nodes".into());
+                    }
+                    for (node, dl, dn) in &r.sim_anchors {
+                        if *node >= l.nodes.len() {
+                            return Err(format!("relation.create sim: anchor node {} out of range", node));
+                        }
+                        let al = doc.line(dl).map_err(|e| format!("relation.create sim: {}", e))?;
+                        if al.is_track() {
+                            return Err(format!("relation.create sim: anchor driver '{}' must be a geometric line", dl));
+                        }
+                        if *dn >= al.nodes.len() {
+                            return Err(format!("relation.create sim: anchor driver node {} out of range", dn));
+                        }
+                    }
+                    if r.sim_iterations > 100 {
+                        return Err("relation.create sim: iterations cap at 100".into());
+                    }
+                    for c in &r.sim_collide_with {
+                        let cl = doc.line(c).map_err(|e| format!("relation.create sim: {}", e))?;
+                        if cl.is_track() {
+                            return Err(format!("relation.create sim: collider '{}' must be a geometric line", c));
+                        }
+                        if c == &r.sim_line {
+                            return Err("relation.create sim: the sim line cannot collide with itself here (use selfCollide)".into());
+                        }
+                    }
+                    if r.sim_radius < 0.0 {
+                        return Err("relation.create sim: radius must be >= 0".into());
+                    }
+                }
+                RelationKind::Particles => {
+                    let l = doc.line(&r.part_emitter).map_err(|e| format!("relation.create particles: {}", e))?;
+                    if l.is_track() {
+                        return Err("relation.create particles: emitter must be a geometric line".into());
+                    }
+                    if r.part_node >= l.nodes.len() {
+                        return Err(format!("relation.create particles: emitter node {} out of range", r.part_node));
+                    }
+                    if r.part_rate <= 0.0 {
+                        return Err("relation.create particles: rate must be > 0".into());
+                    }
+                    if r.part_life_s <= 0.0 {
+                        return Err("relation.create particles: life must be > 0".into());
+                    }
+                    if !(0.0..=360.0).contains(&r.part_spread_deg) {
+                        return Err("relation.create particles: spread must be in 0..360 degrees".into());
+                    }
+                    for c in &r.part_collide_with {
+                        let cl = doc.line(c).map_err(|e| format!("relation.create particles: {}", e))?;
+                        if cl.is_track() {
+                            return Err(format!("relation.create particles: collider '{}' must be a geometric line", c));
+                        }
+                    }
+                    if !(0.0..=1.0).contains(&r.part_bounce) {
+                        return Err("relation.create particles: bounce must be in 0..1".into());
+                    }
+                    if r.part_radius < 0.0 {
+                        return Err("relation.create particles: radius must be >= 0".into());
+                    }
+                }
             }
             doc.relations.push(r.clone());
             let inv = obj_command("relation.delete", &[("id", Value::Str(r.id.clone()))]);
@@ -798,7 +1106,8 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
             let attr = match cmd.arg("attr").and_then(|v| v.as_str()) {
                 Some("position") | None => TrackAttr::Position,
                 Some("width") => TrackAttr::Width,
-                Some(o) => return Err(format!("track.create: attr must be position|width, got '{}'", o)),
+                Some("color") => TrackAttr::Color,
+                Some(o) => return Err(format!("track.create: attr must be position|width|color, got '{}'", o)),
             };
             let tick = cmd.arg("tick").and_then(|v| v.as_i64()).unwrap_or(0);
             if tick.abs() > TICK_LIMIT {
@@ -824,6 +1133,15 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                         NodePos::Tick(_) => unreachable!("checked above"),
                     },
                     (TrackAttr::Width, n) => Value::Num(n.eff_width(l.width)),
+                    (TrackAttr::Color, n) => {
+                        let c = n.color.unwrap_or(l.color);
+                        Value::Arr(vec![
+                            Value::Num(c[0] as f64),
+                            Value::Num(c[1] as f64),
+                            Value::Num(c[2] as f64),
+                            Value::Num(c[3] as f64),
+                        ])
+                    }
                 },
             };
             let track_id = auto_track_id(&line_id, node, &attr);
@@ -893,14 +1211,157 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                     tl.nodes.retain(|n| !matches!(n.pos, NodePos::Tick(t) if t == tick));
                     tl.sync_segs();
                 }
+            } else if let Some(rel) = track_relation_for(doc, &line_id, index, &TrackAttr::Color) {
+                if let Ok(tl) = doc.line_mut(&rel.track_line) {
+                    tl.nodes.retain(|n| !matches!(n.pos, NodePos::Tick(t) if t == tick));
+                    tl.sync_segs();
+                }
             }
             Ok(Effect { inverse: obj_command("noop", &[]), summary: format!("drop key {}#{} @{}", line_id, index, tick) })
         }
 
         "noop" => Ok(Effect { inverse: obj_command("noop", &[]), summary: "noop".into() }),
 
+        // -------------------------------------------------------------------
+        // B2 styles: named line-attribute templates
+        // -------------------------------------------------------------------
+        "style.create" => {
+            let id = match cmd.arg("id").and_then(|v| v.as_str()) {
+                Some(s) => s.to_string(),
+                None => next_auto_id(doc, "st"),
+            };
+            if doc.style(&id).is_ok() {
+                return Err(format!("style '{}' already exists", id));
+            }
+            let mut s = Style::new(&id);
+            if let Some(x) = cmd.arg("width").and_then(|v| v.as_f64()) {
+                s.width = Some(x);
+            }
+            if let Some(cv) = cmd.arg("color") {
+                s.color = Some(parse_json_color(cv, "style.create color")?);
+            }
+            if let Some(cv) = cmd.arg("fillColor") {
+                s.fill_color = Some(parse_json_color(cv, "style.create fillColor")?);
+            }
+            if let Some(b) = cmd.arg("strokeOn").and_then(|v| v.as_bool()) {
+                s.stroke_on = Some(b);
+            }
+            if let Some(b) = cmd.arg("fillOn").and_then(|v| v.as_bool()) {
+                s.fill_on = Some(b);
+            }
+            if let Some(bv) = cmd.arg("brush") {
+                s.brush = Some(parse_brush_arg(bv, "style.create brush")?);
+            }
+            let defined = s.width.is_some()
+                || s.color.is_some()
+                || s.fill_color.is_some()
+                || s.stroke_on.is_some()
+                || s.fill_on.is_some()
+                || s.brush.is_some();
+            if !defined {
+                return Err("style.create: nothing defined (width/color/fillColor/strokeOn/fillOn/brush)".into());
+            }
+            let inv = obj_command("style.delete@restore", &[("restore", style_restore_value(&s))]);
+            doc.styles.push(s);
+            Ok(Effect { inverse: inv, summary: format!("create style {}", id) })
+        }
+
+        "style.delete" => {
+            let id = need_str(cmd, "id")?.to_string();
+            let idx = doc.styles.iter().position(|s| s.id == id).ok_or_else(|| format!("style '{}' not found", id))?;
+            let removed = doc.styles.remove(idx);
+            let inv = obj_command("style.create@restore", &[("restore", style_restore_value(&removed))]);
+            Ok(Effect { inverse: inv, summary: format!("delete style {}", id) })
+        }
+
+        "style.apply" => {
+            let sid = need_str(cmd, "id")?.to_string();
+            let line_id = need_str(cmd, "line")?.to_string();
+            let s = doc.style(&sid)?.clone();
+            doc.line(&line_id)?;
+            // Undo carries the complete pre-apply line-level state.
+            let mut inv = Value::obj();
+            inv.set("op", Value::Str("style.apply@undo".into()));
+            inv.set("line", Value::Str(line_id.clone()));
+            {
+                let l = doc.line(&line_id)?;
+                inv.set("width", Value::Num(l.width));
+                inv.set("color", color_arr(l.color));
+                inv.set("fillColor", color_arr(l.fill_color));
+                inv.set("strokeOn", Value::Bool(l.stroke_on));
+                inv.set("fillOn", Value::Bool(l.fill_on));
+                inv.set("brush", l.brush.as_ref().map(|b| format::brush_to_value(b)).unwrap_or(Value::Null));
+            }
+            // Defined template fields copy over; undefined fields leave the line alone.
+            let l = doc.line_mut(&line_id)?;
+            if let Some(x) = s.width {
+                l.width = x;
+            }
+            if let Some(x) = s.color {
+                l.color = x;
+            }
+            if let Some(x) = s.fill_color {
+                l.fill_color = x;
+            }
+            if let Some(x) = s.stroke_on {
+                l.stroke_on = x;
+            }
+            if let Some(x) = s.fill_on {
+                l.fill_on = x;
+            }
+            if s.brush.is_some() {
+                l.brush = s.brush.clone();
+            }
+            Ok(Effect { inverse: value_to_command(&inv)?, summary: format!("apply style {} to {}", sid, line_id) })
+        }
+
+        "style.apply@undo" => {
+            let line_id = need_str(cmd, "line")?.to_string();
+            let l = doc.line_mut(&line_id)?;
+            for (k, v) in &cmd.args {
+                match k.as_str() {
+                    "line" => {}
+                    "width" => l.width = v.as_f64().ok_or("bad undo width")?,
+                    "color" => l.color = parse_json_color(v, "undo color")?,
+                    "fillColor" => l.fill_color = parse_json_color(v, "undo fillColor")?,
+                    "strokeOn" => l.stroke_on = v.as_bool().ok_or("bad undo strokeOn")?,
+                    "fillOn" => l.fill_on = v.as_bool().ok_or("bad undo fillOn")?,
+                    "brush" => {
+                        l.brush = if matches!(v, Value::Null) {
+                            None
+                        } else {
+                            Some(parse_brush_arg(v, "undo brush")?)
+                        };
+                    }
+                    other => return Err(format!("style.apply@undo: unknown field '{}'", other)),
+                }
+            }
+            Ok(Effect { inverse: obj_command("noop", &[]), summary: format!("undo style apply on {}", line_id) })
+        }
+
+        "style.create@restore" => {
+            let rv = cmd.arg("restore").ok_or("restore payload missing")?;
+            let s = format::style_from_value(rv)?;
+            doc.styles.push(s.clone());
+            Ok(Effect { inverse: obj_command("style.delete", &[("id", Value::Str(s.id.clone()))]), summary: format!("restore style {}", s.id) })
+        }
+
+        "style.delete@restore" => {
+            let rv = cmd.arg("restore").ok_or("restore payload missing")?;
+            let s = format::style_from_value(rv)?;
+            doc.styles.push(s);
+            Ok(Effect { inverse: obj_command("noop", &[]), summary: "undo style delete".into() })
+        }
+
         other => Err(format!("unknown command '{}' (protocol v{}; see registry)", other, PROTOCOL_VERSION)),
     }
+}
+
+fn style_restore_value(s: &Style) -> Value {
+    let mut doc = Document::default();
+    doc.styles.push(s.clone());
+    let v = format::doc_to_value(&doc);
+    v.get("styles").and_then(|x| x.as_arr()).and_then(|a| a.first()).cloned().unwrap_or(Value::obj())
 }
 
 fn color_arr(c: [u8; 4]) -> Value {
@@ -936,6 +1397,12 @@ fn node_value(n: &Node) -> Value {
     o.set("p", value_of_pos(&n.pos));
     if let Some(w) = n.width {
         o.set("w", Value::Num(w));
+    }
+    if let Some(pr) = n.pressure {
+        o.set("pr", Value::Num(pr));
+    }
+    if let Some(uv) = n.uv {
+        o.set("uv", Value::Arr(vec![Value::Num(uv[0]), Value::Num(uv[1])]));
     }
     if let Some(c) = n.color {
         o.set("c", color_arr(c));

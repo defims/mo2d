@@ -4,7 +4,7 @@ title: "路线图:三阶段推进(2026-11-11 v4,舞台提前入 MVP)"
 description: Phase A=MVP 触手 v4(AI 编译引擎执行 + A6 最小舞台=生成的视图第一例);Phase B=性能与词表铺开(渲染与失效正式化/笔触/渐变/层群组/位图网格/模拟/格式正式化);Phase C=AI 生态(关系 IR/控件即线/导入/音频/协作/wasm);六部件→阶段映射与性能指标。
 tags: [roadmap, phases, mvp, long-term]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T14:41:31Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T12:09:02Z }
 sources:
   - id: mvp-doc
     resource: /mvp.md
@@ -49,6 +49,17 @@ round-trip 字节相等、求值吞吐、校验器在岗、**直接操纵等价*
 
 ## Phase B:性能与词表铺开
 
+> **状态(2026-11-12)**:Phase B 除一项外全部落地。B1 CPU 侧——反向依赖失效(`inval.rs`)、
+> 损伤渲染(64×32 瓦片,与整帧重绘逐字节一致)、舞台渲染缓存、十万节点求值门;B2 笔刷+压力+样式;
+> B3 渐变+颜色轨道;B4 群组/变换框;B5 位图网格(零依赖 PNG 解码、纹理引用+uv 锚点、预算缓存、
+> 纹理化填充);B6 模拟(种子重放)+ 显式种子粒子 + 碰撞(间隙、自分离、粒子恢复系数);B7 格式正式化(尾部 BLOB 区单文件包、
+> pack/unpack 工程目录、schema 输出、版本迁移链)——全部带门测试与冻结演示物实现(见 log)。
+> **B1 的 GPU 半已在 owner 批准的 wgpu 路径落地**(`gpuwgpu.rs`:WGSL 实例化 uber-shader——
+> 单条 draw call 覆盖全部描边四边形与填充三角形——离屏渲染 + blit 回读)。**CPU/GPU 像素奇偶门已激活:
+> 99.9% 一致**(p50/p90=0),十万节点帧 **release 实测中位 4.17ms**(60fps 预算 16ms)✓。
+> 此前的零依赖 Metal FFI 原型及其 Metal 4 方言发现(sRGB 存储像素格式、Line 模式轮廓、
+> `baseInstance` 被忽略、已移除的访问器)录于 log.md,可迁移至未来任何裸 Metal 工作。
+
 | 项 | 内容 | 验收演示 |
 |---|---|---|
 | B1 渲染与失效正式化(部件 5) | GPU 主力:实例化 uber-shader(段/节点补丁=instance)、损伤渲染(tile 64×32+脏矩形)、**DAG 反向依赖失效**(通道=信号)、CPU/GPU 像素奇偶校验门 | 十万节点级 60fps;编辑视口空闲 0% CPU |
@@ -70,7 +81,7 @@ round-trip 字节相等、求值吞吐、校验器在岗、**直接操纵等价*
 | C3 导入器/交换 | **SVG 双向**:帧级导出(展示编辑一体的自然产物)+ 几何导入([file-format.md](file-format.zh-CN.md) §4 三层格式);.moho 远期选项([moho-mapping.md](moho-mapping.zh-CN.md) 即现成映射表,84 教程语料验收) | 导出帧 SVG 任意工具可看;导入真实 SVG/教程工程 |
 | C4 音频 | 音轨层:媒体载荷+level/jump 轨道;Tick 整除 44.1k/48k 正为此 | 口型/节拍驱动动画 |
 | C5 协作与版本 | 命令流合并、变更记录、引用层 | 多会话协作无冲突 |
-| C6 WebAssembly | wasm 发布 + MCP over WebSocket | 网页里跑触手 demo,零安装 |
+| C6 WebAssembly + 帧流 | wasm 发布 + MCP over WebSocket + **流式渲染**(architecture §3.2:帧流协议,像素流导出/显示列表流远端舞台) | 网页里跑触手 demo,零安装;远端舞台渐进呈现 |
 
 依赖:C1 依赖 A4 校验器与 B1(热路径退化);C3 的 .moho 依赖 B4(层/群组)+B5(位图网格);C4 依赖 B7(格式正式化)。
 

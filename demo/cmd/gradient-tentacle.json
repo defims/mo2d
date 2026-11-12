@@ -1,0 +1,41 @@
+{
+  "v": 1,
+  "cmds": [
+    {"op": "doc.setRoot", "width": 640, "height": 360, "fps": 24},
+    {"op": "line.create", "id": "skel", "tags": ["skeleton"], "width": 2, "strokeOn": false, "nodes": [
+      {"p": [120, 180, 0]},
+      {"p": [220, 180, 0]},
+      {"p": [320, 180, 0]},
+      {"p": [420, 180, 0]},
+      {"p": [520, 180, 0]}
+    ]},
+    {"op": "line.create", "id": "trk_tip", "tags": ["track"], "nodes": [
+      {"p": [0], "v": [520, 180, 0]},
+      {"p": [127008000000], "v": [560, 120, 0]},
+      {"p": [254016000000], "v": [520, 180, 0]},
+      {"p": [381024000000], "v": [560, 240, 0]},
+      {"p": [504032000000], "v": [520, 180, 0]}
+    ]},
+    {"op": "seg.set", "line": "trk_tip", "index": 0, "interp": {"im": 9, "b": [
+      {"ao": 0.0, "ai": 0.0, "po": 0.33, "pi": 0.33},
+      {"ao": 0.0, "ai": 0.0, "po": 0.33, "pi": 0.33},
+      {"ao": 0.0, "ai": 0.0, "po": 0.33, "pi": 0.33}
+    ]}},
+    {"op": "relation.create", "type": "track", "trackLine": "trk_tip", "target": {"line": "skel", "node": 4, "attr": "position"}},
+    {"op": "line.create", "id": "body", "width": 14, "strokeOn": true, "nodes": [
+      {"p": [120, 172, 0], "w": 22},
+      {"p": [220, 176, 0], "w": 18},
+      {"p": [320, 180, 0], "w": 14},
+      {"p": [420, 180, 0], "w": 10},
+      {"p": [520, 180, 0], "w": 6}
+    ]},
+    {"op": "relation.create", "type": "bind", "target": "body", "skeleton": "skel", "falloff": 120},
+    {"op": "line.create", "id": "gradbar", "width": 1, "nodes": [
+      {"p": [60, 40, 0], "c": [220, 40, 60, 255]},
+      {"p": [580, 40, 0], "c": [40, 60, 220, 255]}
+    ]},
+    {"op": "relation.create", "type": "gradient", "bar": "gradbar", "target": "body", "role": "stroke"},
+    {"op": "track.create", "line": "gradbar", "node": 1, "attr": "color", "tick": 0, "value": [40, 60, 220, 255]},
+    {"op": "node.set", "line": "gradbar", "index": 1, "c": [30, 190, 90, 255], "atTick": 504032000000}
+  ]
+}

@@ -152,6 +152,47 @@ fn validate_lines(doc: &Document, p: &mut Vec<Problem>) {
         if l.width < 0.0 {
             p.push(Problem::new(&format!("{}.width", base), "negative width"));
         }
+        // B2: brush + pressure sanity.
+        for (ni, n) in l.nodes.iter().enumerate() {
+            if let Some(pr) = n.pressure {
+                if !(0.0..=10.0).contains(&pr) {
+                    p.push(Problem::new(&format!("{}.nodes[{}].pr", base, ni), format!("pressure {} out of range 0..10", pr)));
+                }
+            }
+            if let Some(uv) = n.uv {
+                if !(0.0..=1.0).contains(&uv[0]) || !(0.0..=1.0).contains(&uv[1]) {
+                    p.push(Problem::new(&format!("{}.nodes[{}].uv", base, ni), format!("uv ({}, {}) out of range 0..1", uv[0], uv[1])));
+                }
+            }
+        }
+        // B5: a textured line must be closed with fill on.
+        if l.texture.is_some() {
+            if !l.closed || !l.fill_on {
+                p.push(Problem::new(&format!("{}.texture", base), "textured fill requires closed + fillOn"));
+            }
+        }
+        if let Some(b) = &l.brush {
+            let bpath = format!("{}.brush", base);
+            if let Some(s) = b.spacing {
+                if !(0.0..=1.0).contains(&s) {
+                    p.push(Problem::new(&bpath, format!("spacing {} out of range 0..1", s)));
+                }
+            }
+            for (key, v) in [("sizeScale", b.size_scale), ("sizeAmp", b.size_amp), ("align", b.align)] {
+                if let Some(x) = v {
+                    if !(0.0..=100.0).contains(&x) {
+                        p.push(Problem::new(&bpath, format!("{} {} out of range 0..100", key, x)));
+                    }
+                }
+            }
+        }
+    }
+    // B2: style ids unique.
+    let mut seen_styles = std::collections::BTreeSet::new();
+    for (si, s) in doc.styles.iter().enumerate() {
+        if !seen_styles.insert(s.id.clone()) {
+            p.push(Problem::new(&format!("styles[{}] ('{}')", si, s.id), "duplicate style id"));
+        }
     }
 }
 
@@ -233,14 +274,137 @@ fn validate_relations(doc: &Document, p: &mut Vec<Problem>) {
                             Some(Value::Arr(a)) => a.len(),
                             _ => 0,
                         };
-                        let want = match r.track_attr {
-                            TrackAttr::Position => 3,
-                            TrackAttr::Width => 1,
+                        let want: &[usize] = match r.track_attr {
+                            TrackAttr::Position => &[3],
+                            TrackAttr::Width => &[1],
+                            TrackAttr::Color => &[3, 4],
                         };
-                        if arity != 0 && arity != want {
-                            p.push(Problem::new(&format!("{}.trackLine", base), format!("track value arity {} does not match attr '{}' (needs {})", arity, r.track_attr.name(), want)));
+                        if arity != 0 && !want.contains(&arity) {
+                            p.push(Problem::new(
+                                &format!("{}.trackLine", base),
+                                format!("track value arity {} does not match attr '{}' (needs {})", arity, r.track_attr.name(), want.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(" or ")),
+                            ));
                         }
                     }
+                }
+            }
+            RelationKind::Gradient => {
+                check_line(doc, &r.gradient_bar, &format!("{}.bar", base), p);
+                check_line(doc, &r.gradient_target, &format!("{}.target", base), p);
+                if let (Ok(b), Ok(t)) = (doc.line(&r.gradient_bar), doc.line(&r.gradient_target)) {
+                    if b.is_track() {
+                        p.push(Problem::new(&format!("{}.bar", base), "bar must be a geometric line"));
+                    }
+                    if b.nodes.len() < 2 {
+                        p.push(Problem::new(&format!("{}.bar", base), "bar needs ≥ 2 nodes (color stops)"));
+                    }
+                    if t.is_track() {
+                        p.push(Problem::new(&format!("{}.target", base), "cannot target a track line"));
+                    }
+                    if r.gradient_bar == r.gradient_target {
+                        p.push(Problem::new(&base, "bar and target must differ"));
+                    }
+                }
+            }
+            RelationKind::Group => {
+                check_line(doc, &r.group_box, &format!("{}.box", base), p);
+                if r.group_members.is_empty() {
+                    p.push(Problem::new(&base, "group needs at least one member"));
+                }
+                if let Ok(b) = doc.line(&r.group_box) {
+                    if b.is_track() {
+                        p.push(Problem::new(&format!("{}.box", base), "box must be a geometric line"));
+                    }
+                    if b.nodes.len() < 2 {
+                        p.push(Problem::new(&format!("{}.box", base), "box needs ≥ 2 nodes"));
+                    }
+                }
+                for m in &r.group_members {
+                    check_line(doc, m, &format!("{}.members", base), p);
+                    if let Ok(l) = doc.line(m) {
+                        if l.is_track() {
+                            p.push(Problem::new(&format!("{}.members", base), format!("member '{}' must be a geometric line", m)));
+                        }
+                    }
+                    if m == &r.group_box {
+                        p.push(Problem::new(&base, "the box cannot be its own member"));
+                    }
+                }
+            }
+            RelationKind::Sim => {
+                check_line(doc, &r.sim_line, &format!("{}.line", base), p);
+                if let Ok(l) = doc.line(&r.sim_line) {
+                    if l.is_track() {
+                        p.push(Problem::new(&format!("{}.line", base), "the sim line must be a geometric line"));
+                    }
+                    if l.nodes.len() < 2 {
+                        p.push(Problem::new(&format!("{}.line", base), "the sim line needs ≥ 2 nodes"));
+                    }
+                }
+                for (node, dl, dn) in &r.sim_anchors {
+                    check_line(doc, dl, &format!("{}.anchors", base), p);
+                    if let (Ok(sl), Ok(al)) = (doc.line(&r.sim_line), doc.line(dl)) {
+                        if *node >= sl.nodes.len() {
+                            p.push(Problem::new(&format!("{}.anchors", base), format!("anchor node {} out of range", node)));
+                        }
+                        if al.is_track() {
+                            p.push(Problem::new(&format!("{}.anchors", base), "anchor driver must be a geometric line"));
+                        }
+                        if *dn >= al.nodes.len() {
+                            p.push(Problem::new(&format!("{}.anchors", base), format!("anchor driver node {} out of range", dn)));
+                        }
+                    }
+                }
+                if r.sim_damping < 0.0 || r.sim_damping > 1.0 {
+                    p.push(Problem::new(&format!("{}.damping", base), "damping must be in 0..1"));
+                }
+                for c in &r.sim_collide_with {
+                    check_line(doc, c, &format!("{}.collideWith", base), p);
+                    if let Ok(cl) = doc.line(c) {
+                        if cl.is_track() {
+                            p.push(Problem::new(&format!("{}.collideWith", base), "collider must be a geometric line"));
+                        }
+                    }
+                    if c == &r.sim_line {
+                        p.push(Problem::new(&format!("{}.collideWith", base), "the sim line cannot list itself (use selfCollide)"));
+                    }
+                }
+                if r.sim_radius < 0.0 {
+                    p.push(Problem::new(&format!("{}.radius", base), "radius must be >= 0"));
+                }
+            }
+            RelationKind::Particles => {
+                check_line(doc, &r.part_emitter, &format!("{}.emitter", base), p);
+                if let Ok(l) = doc.line(&r.part_emitter) {
+                    if l.is_track() {
+                        p.push(Problem::new(&format!("{}.emitter", base), "emitter must be a geometric line"));
+                    }
+                    if r.part_node >= l.nodes.len() {
+                        p.push(Problem::new(&format!("{}.node", base), format!("emitter node {} out of range", r.part_node)));
+                    }
+                }
+                if r.part_rate <= 0.0 {
+                    p.push(Problem::new(&format!("{}.rate", base), "rate must be > 0"));
+                }
+                if r.part_life_s <= 0.0 {
+                    p.push(Problem::new(&format!("{}.life", base), "life must be > 0"));
+                }
+                if !(0.0..=360.0).contains(&r.part_spread_deg) {
+                    p.push(Problem::new(&format!("{}.spread", base), "spread must be in 0..360 degrees"));
+                }
+                for c in &r.part_collide_with {
+                    check_line(doc, c, &format!("{}.collideWith", base), p);
+                    if let Ok(cl) = doc.line(c) {
+                        if cl.is_track() {
+                            p.push(Problem::new(&format!("{}.collideWith", base), "collider must be a geometric line"));
+                        }
+                    }
+                }
+                if !(0.0..=1.0).contains(&r.part_bounce) {
+                    p.push(Problem::new(&format!("{}.bounce", base), "bounce must be in 0..1"));
+                }
+                if r.part_radius < 0.0 {
+                    p.push(Problem::new(&format!("{}.radius", base), "radius must be >= 0"));
                 }
             }
         }
@@ -265,17 +429,28 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
         Bind(String),
         ShareNode(String, usize),
         TrackNode(String, Option<usize>, TrackAttr),
+        /// Gradient claims one recolor channel of a whole line (B3).
+        Gradient(String, GradientRole),
+        /// Group claims every member's positions (B4).
+        GroupMember(String),
+        /// Sim claims the whole simulated line's positions (B6).
+        SimLine(String),
     }
     let claims: Vec<(&Relation, Claim)> = doc
         .relations
         .iter()
-        .map(|r| {
-            let c = match r.kind {
-                RelationKind::Bind => Claim::Bind(r.bind_target.clone()),
-                RelationKind::Share => Claim::ShareNode(r.share_driven.0.clone(), r.share_driven.1),
-                RelationKind::Track => Claim::TrackNode(r.track_target_line.clone(), r.track_target_node, r.track_attr),
+        .flat_map(|r| {
+            let base = match r.kind {
+                RelationKind::Bind => vec![Claim::Bind(r.bind_target.clone())],
+                RelationKind::Share => vec![Claim::ShareNode(r.share_driven.0.clone(), r.share_driven.1)],
+                RelationKind::Track => vec![Claim::TrackNode(r.track_target_line.clone(), r.track_target_node, r.track_attr)],
+                RelationKind::Gradient => vec![Claim::Gradient(r.gradient_target.clone(), r.gradient_role)],
+                RelationKind::Group => r.group_members.iter().map(|m| Claim::GroupMember(m.clone())).collect(),
+                RelationKind::Sim => vec![Claim::SimLine(r.sim_line.clone())],
+                // Particles claim no document line (B6).
+                RelationKind::Particles => vec![],
             };
-            (r, c)
+            base.into_iter().map(move |c| (r, c))
         })
         .collect();
 
@@ -288,12 +463,26 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
                 (Claim::Bind(la), Claim::Bind(lb)) => la == lb,
                 (Claim::Bind(la), Claim::ShareNode(lb, _)) | (Claim::ShareNode(lb, _), Claim::Bind(la)) => la == lb,
                 (Claim::Bind(la), Claim::TrackNode(lb, _, TrackAttr::Position)) | (Claim::TrackNode(lb, _, TrackAttr::Position), Claim::Bind(la)) => la == lb,
+                (Claim::Bind(la), Claim::GroupMember(lb)) | (Claim::GroupMember(lb), Claim::Bind(la)) => la == lb,
+                (Claim::Bind(la), Claim::SimLine(lb)) | (Claim::SimLine(lb), Claim::Bind(la)) => la == lb,
                 (Claim::ShareNode(la, na), Claim::ShareNode(lb, nb)) => la == lb && na == nb,
                 (Claim::ShareNode(la, na), Claim::TrackNode(lb, Some(nb), TrackAttr::Position))
                 | (Claim::TrackNode(lb, Some(nb), TrackAttr::Position), Claim::ShareNode(la, na)) => la == lb && na == nb,
+                (Claim::ShareNode(la, _), Claim::GroupMember(lb)) | (Claim::GroupMember(lb), Claim::ShareNode(la, _)) => la == lb,
+                (Claim::ShareNode(la, _), Claim::SimLine(lb)) | (Claim::SimLine(lb), Claim::ShareNode(la, _)) => la == lb,
+                (Claim::TrackNode(la, _, TrackAttr::Position), Claim::GroupMember(lb))
+                | (Claim::GroupMember(lb), Claim::TrackNode(la, _, TrackAttr::Position)) => la == lb,
+                (Claim::TrackNode(la, _, TrackAttr::Position), Claim::SimLine(lb))
+                | (Claim::SimLine(lb), Claim::TrackNode(la, _, TrackAttr::Position)) => la == lb,
+                (Claim::GroupMember(la), Claim::GroupMember(lb)) => la == lb,
+                (Claim::GroupMember(la), Claim::SimLine(lb)) | (Claim::SimLine(lb), Claim::GroupMember(la)) => la == lb,
+                (Claim::SimLine(la), Claim::SimLine(lb)) => la == lb,
                 (Claim::TrackNode(la, na, attr_a), Claim::TrackNode(lb, nb, attr_b)) => {
                     la == lb && attr_a == attr_b && (na == nb || na.is_none() || nb.is_none())
                 }
+                // Gradients write one color channel of a line — two gradients on
+                // the same line+role conflict (different roles compose: fill+stroke).
+                (Claim::Gradient(la, ra_), Claim::Gradient(lb, rb_)) => la == lb && ra_ == rb_,
                 _ => false,
             };
             if overlaps {

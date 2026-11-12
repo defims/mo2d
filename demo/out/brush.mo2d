@@ -1,0 +1,285 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "strokeA",
+      "closed": false,
+      "width": 12.0,
+      "color": [
+        30,
+        80,
+        190,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "brush": {
+        "name": "flat-marker",
+        "align": 0.5,
+        "spacing": 0.38,
+        "sizeAmp": 0.0,
+        "sizeScale": 1.0
+      },
+      "nodes": [
+        {
+          "p": [
+            60.0,
+            260.0,
+            0.0
+          ],
+          "pr": 0.35
+        },
+        {
+          "p": [
+            140.0,
+            180.0,
+            0.0
+          ],
+          "pr": 0.8
+        },
+        {
+          "p": [
+            220.0,
+            240.0,
+            0.0
+          ],
+          "pr": 1.6
+        },
+        {
+          "p": [
+            300.0,
+            160.0,
+            0.0
+          ],
+          "pr": 2.2
+        },
+        {
+          "p": [
+            380.0,
+            230.0,
+            0.0
+          ],
+          "pr": 1.4
+        },
+        {
+          "p": [
+            460.0,
+            170.0,
+            0.0
+          ],
+          "pr": 0.6
+        },
+        {
+          "p": [
+            560.0,
+            220.0,
+            0.0
+          ],
+          "pr": 0.3
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "strokeB",
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        25,
+        25,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "brush": {
+        "name": "pressure-ink",
+        "jitter": 0.05,
+        "spacing": 0.38,
+        "tint": [
+          60,
+          40,
+          80,
+          255
+        ],
+        "sizeAmp": 1.5,
+        "sizeScale": 1.4,
+        "hueDrift": 0.0
+      },
+      "nodes": [
+        {
+          "p": [
+            60.0,
+            120.0,
+            0.0
+          ],
+          "pr": 0.35
+        },
+        {
+          "p": [
+            140.0,
+            60.0,
+            0.0
+          ],
+          "pr": 0.8
+        },
+        {
+          "p": [
+            220.0,
+            110.0,
+            0.0
+          ],
+          "pr": 1.6
+        },
+        {
+          "p": [
+            300.0,
+            40.0,
+            0.0
+          ],
+          "pr": 2.2
+        },
+        {
+          "p": [
+            380.0,
+            100.0,
+            0.0
+          ],
+          "pr": 1.4
+        },
+        {
+          "p": [
+            460.0,
+            50.0,
+            0.0
+          ],
+          "pr": 0.6
+        },
+        {
+          "p": [
+            560.0,
+            100.0,
+            0.0
+          ],
+          "pr": 0.3
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    }
+  ],
+  "relations": [],
+  "styles": [
+    {
+      "id": "marker",
+      "width": 12.0,
+      "color": [
+        30,
+        80,
+        190,
+        255
+      ],
+      "brush": {
+        "name": "flat-marker",
+        "align": 0.5,
+        "spacing": 0.38,
+        "sizeAmp": 0.0,
+        "sizeScale": 1.0
+      }
+    },
+    {
+      "id": "ink",
+      "width": 4.0,
+      "color": [
+        25,
+        25,
+        30,
+        255
+      ],
+      "brush": {
+        "name": "pressure-ink",
+        "jitter": 0.05,
+        "spacing": 0.38,
+        "tint": [
+          60,
+          40,
+          80,
+          255
+        ],
+        "sizeAmp": 1.5,
+        "sizeScale": 1.4,
+        "hueDrift": 0.0
+      }
+    }
+  ]
+}

@@ -4,7 +4,7 @@ title: "Roadmap: Three-Phase Advance (2026-11-11 v4, stage pulled forward into t
 description: Phase A = MVP tentacle v4 (AI compiles, engine executes + A6 minimal stage = first example of a generatable view); Phase B = performance and vocabulary rollout (rendering & invalidation formalization / brush strokes / gradients / layers & groups / bitmap mesh / simulation / format formalization); Phase C = AI ecosystem (relation IR / controls-as-lines / import / audio / collaboration / wasm); six-components → phase mapping and performance metrics.
 tags: [roadmap, phases, mvp, long-term]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T12:09:02Z }
 sources:
   - id: mvp-doc
     resource: /mvp.md
@@ -52,6 +52,20 @@ validator on duty, **direct-manipulation equivalence**.
 
 ## Phase B: Performance and vocabulary rollout
 
+> **Status (2026-11-12)**: Phase B is landed with one exception. B1's CPU
+> side — reverse-dependency invalidation (`inval.rs`), damage rendering
+> (64×32 tiles, byte-parity with the full render), stage render cache,
+> 100k-node eval gate; B2 brush + pressure + styles; B3 gradient + color
+> tracks; B4 group/transform-box; B5 bitmap mesh (zero-dep PNG decode,
+> texture refs + uv anchors, budgeted cache, textured fills); B6 sim
+> (replay-from-seed) + seeded particles + collisions (clearance, self-separation,
+> particle restitution); B7 format formalization (single-file
+> packages with a tail BLOB area, pack/unpack project directories, schema
+> emission, the version-migration chain) — all implemented with gate tests
+> and frozen demos (see log). **The one remaining item is B1's GPU half**
+> (instanced uber-shader, 100k@60fps render, CPU/GPU pixel parity), which
+> waits on the tech-stack decision in "Not yet scheduled".
+
 | Item | Content | Acceptance demo |
 |---|---|---|
 | B1 Rendering & invalidation formalization (component 5) | GPU workhorse: instanced uber-shader (segment/node patches = instances), damage rendering (tile 64×32 + dirty rectangles), **DAG reverse-dependency invalidation** (channels = signals), CPU/GPU pixel parity gate | 100k-node class at 60fps; edit viewport idle at 0% CPU |
@@ -73,7 +87,7 @@ Dependencies: B1 depends on A's SoA layout; B2–B6 are mutually independent and
 | C3 Importers/interchange | **Bidirectional SVG**: frame-level export (a natural byproduct of display-edit unification) + geometry import ([file-format.md](file-format.md) §4 three-layer format); .moho as a long-term option ([moho-mapping.md](moho-mapping.md) is a ready-made mapping table; acceptance via the 84-project tutorial corpus) | Exported frame SVG viewable in any tool; import real SVG/tutorial projects |
 | C4 Audio | Audio-track layer: media payload + level/jump tracks; Tick dividing 44.1k/48k evenly exists exactly for this | Lip-sync/beat-driven animation |
 | C5 Collaboration & versioning | Command-stream merging, change records, reference layers | Multi-session collaboration without conflicts |
-| C6 WebAssembly | wasm distribution + MCP over WebSocket | Run the tentacle demo in a browser, zero install |
+| C6 WebAssembly + frame streaming | wasm release + MCP over WebSocket + **streaming rendering** (architecture §3.2: frame-stream protocol; pixel streams for export, display-list streams for remote stages) | tentacle demo in the browser, zero install; remote stage renders progressively |
 
 Dependencies: C1 depends on the A4 validator and B1 (hot-path fallback); C3's .moho depends on B4 (layers/groups) + B5 (bitmap mesh); C4 depends on B7 (format formalization).
 

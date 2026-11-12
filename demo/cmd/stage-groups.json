@@ -1,0 +1,49 @@
+{
+  "v": 1,
+  "cmds": [
+    {"op": "doc.setRoot", "width": 640, "height": 360, "fps": 24},
+    {"op": "line.create", "id": "stagebox", "closed": true, "width": 2, "strokeOn": true, "color": [150, 150, 160, 255], "nodes": [
+      {"p": [80, 80, 0]},
+      {"p": [560, 80, 0]},
+      {"p": [560, 280, 0]},
+      {"p": [80, 280, 0]}
+    ]},
+    {"op": "line.create", "id": "charA_body", "width": 5, "color": [40, 120, 220, 255], "nodes": [
+      {"p": [180, 120, 0]},
+      {"p": [180, 220, 0]},
+      {"p": [140, 270, 0]},
+      {"p": [180, 220, 0]},
+      {"p": [220, 270, 0]},
+      {"p": [160, 180, 0]},
+      {"p": [200, 180, 0]}
+    ]},
+    {"op": "line.create", "id": "charA_head", "closed": true, "width": 4, "color": [40, 120, 220, 255], "nodes": [
+      {"p": [180, 90, 0]},
+      {"p": [205, 115, 0]},
+      {"p": [180, 140, 0]},
+      {"p": [155, 115, 0]}
+    ]},
+    {"op": "line.create", "id": "charB_body", "width": 5, "color": [220, 90, 40, 255], "nodes": [
+      {"p": [420, 130, 0]},
+      {"p": [420, 220, 0]},
+      {"p": [385, 265, 0]},
+      {"p": [420, 220, 0]},
+      {"p": [455, 265, 0]},
+      {"p": [402, 185, 0]},
+      {"p": [438, 185, 0]}
+    ]},
+    {"op": "line.create", "id": "charB_head", "closed": true, "width": 4, "color": [220, 90, 40, 255], "nodes": [
+      {"p": [420, 100, 0]},
+      {"p": [443, 123, 0]},
+      {"p": [420, 146, 0]},
+      {"p": [397, 123, 0]}
+    ]},
+    {"op": "relation.create", "type": "group", "box": "stagebox", "members": ["charA_body", "charA_head", "charB_body", "charB_head"]},
+    {"op": "line.create", "id": "trk_box", "tags": ["track"], "nodes": [
+      {"p": [0], "v": [80, 280, 0]},
+      {"p": [252016000000], "v": [120, 320, 0]},
+      {"p": [504032000000], "v": [80, 280, 0]}
+    ]},
+    {"op": "relation.create", "type": "track", "trackLine": "trk_box", "target": {"line": "stagebox", "node": 3, "attr": "position"}}
+  ]
+}

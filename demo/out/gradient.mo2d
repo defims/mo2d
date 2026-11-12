@@ -1,0 +1,427 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "skel",
+      "tags": [
+        "skeleton"
+      ],
+      "closed": false,
+      "width": 2.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": false,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            120.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            220.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            320.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            420.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            520.0,
+            180.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "trk_tip",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": [
+            520,
+            180,
+            0
+          ]
+        },
+        {
+          "p": [
+            127008000000
+          ],
+          "v": [
+            560,
+            120,
+            0
+          ]
+        },
+        {
+          "p": [
+            254016000000
+          ],
+          "v": [
+            520,
+            180,
+            0
+          ]
+        },
+        {
+          "p": [
+            381024000000
+          ],
+          "v": [
+            560,
+            240,
+            0
+          ]
+        },
+        {
+          "p": [
+            504032000000
+          ],
+          "v": [
+            520,
+            180,
+            0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 9,
+            "b": [
+              {
+                "ao": 0.0,
+                "ai": 0.0,
+                "po": 0.33,
+                "pi": 0.33
+              },
+              {
+                "ao": 0.0,
+                "ai": 0.0,
+                "po": 0.33,
+                "pi": 0.33
+              },
+              {
+                "ao": 0.0,
+                "ai": 0.0,
+                "po": 0.33,
+                "pi": 0.33
+              }
+            ]
+          }
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "closed": false,
+      "width": 14.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            120.0,
+            172.0,
+            0.0
+          ],
+          "w": 22.0
+        },
+        {
+          "p": [
+            220.0,
+            176.0,
+            0.0
+          ],
+          "w": 18.0
+        },
+        {
+          "p": [
+            320.0,
+            180.0,
+            0.0
+          ],
+          "w": 14.0
+        },
+        {
+          "p": [
+            420.0,
+            180.0,
+            0.0
+          ],
+          "w": 10.0
+        },
+        {
+          "p": [
+            520.0,
+            180.0,
+            0.0
+          ],
+          "w": 6.0
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "gradbar",
+      "closed": false,
+      "width": 1.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            60.0,
+            40.0,
+            0.0
+          ],
+          "c": [
+            220,
+            40,
+            60,
+            255
+          ]
+        },
+        {
+          "p": [
+            580.0,
+            40.0,
+            0.0
+          ],
+          "c": [
+            40,
+            60,
+            220,
+            255
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "trk_gradbar_1_color",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": [
+            40,
+            60,
+            220,
+            255
+          ]
+        },
+        {
+          "p": [
+            504032000000
+          ],
+          "v": [
+            30.0,
+            190.0,
+            90.0,
+            255.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "type": "track",
+      "trackLine": "trk_tip",
+      "target": {
+        "line": "skel",
+        "node": 4,
+        "attr": "position"
+      }
+    },
+    {
+      "id": "r2",
+      "type": "bind",
+      "target": "body",
+      "skeleton": "skel",
+      "falloff": 120.0,
+      "stretch": true
+    },
+    {
+      "id": "r3",
+      "type": "gradient",
+      "bar": "gradbar",
+      "target": "body",
+      "role": "stroke"
+    },
+    {
+      "id": "r4",
+      "type": "track",
+      "trackLine": "trk_gradbar_1_color",
+      "target": {
+        "line": "gradbar",
+        "node": 1,
+        "attr": "color"
+      }
+    }
+  ]
+}

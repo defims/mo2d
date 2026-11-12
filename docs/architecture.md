@@ -4,7 +4,7 @@ title: "Architecture Draft: Layering, Document Model, GPU Strategy, and Format P
 description: The mo2d architecture draft — document model = a flat line collection + relation graph (no rigid tree); L0-L4 layering; a dedicated GPU-strategy section (SoA / unified vertex format / DAG parallelism / PBD-compute / CPU oracle + damage rendering / instancing, referencing BUI); storage-format principles; tech stack leaning toward Rust + wgpu/wasm (to be decided).
 tags: [architecture, gpu, damage-rendering, storage-format, layering]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T12:09:02Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -124,6 +124,34 @@ UI, GPL-3.0) is highly isomorphic to mo2d's; five points of **clean-room borrowi
 implementation** (avoiding license contagion, keeping the MIT/Apache lean); GPU backends are only D3D11/GL3.3
 (no Metal/WebGPU) — the instancing pattern can be carried over to wgpu/WebGPU but the code cannot; BUI is a
 widget-level UI toolkit, and mo2d's "stage as interface" has no use for its widget tree/layout/CSS bulk.
+
+### 3.2 Streaming rendering (2026-11-12, owner question: what would it buy us)
+
+Streaming rendering is not a new feature — it **monetizes a property the engine already has**:
+evaluation is a pure function `tick → frame`, i.e. a sequence that can be exposed as a **lazy
+frame stream** (pull-based iterator). Benefits:
+
+1. **Experience**: first frame without waiting (open huge projects progressively); **AI iteration
+   loop gets cheaper verification** (stream back a coarse frame of the affected region first —
+   generation-expensive / verification-cheap, exactly the division-of-labor iron law); export as a
+   background stream (progress = frames emitted; pausable/resumable — determinism guarantees the
+   resume point);
+2. **Architecture fit**: complements damage rendering orthogonally — damage = **spatial** increment
+   (dirty regions only), streaming = **temporal** increment (next frame only) ⇒ space-time
+   incremental rendering; playback / scrub / export share **one frame stream**, consumed at
+   different rates — the same stream replayed is the same output (determinism reinforced);
+3. **Remote clients of "display = edit" (§1.5)**: a frame stream over WebSocket lets the stage run
+   in a browser while the engine stays local (or vice versa) — the natural precursor of C6 (wasm
+   stage); MCP `screenshot` generalizes into "pull a frame from the stream";
+4. **Engineering**: O(1) memory for export (14,400-frame 4K jobs don't accumulate); pure-function
+   frames allow partitioned parallel rendering across tick ranges **without locks — except dynamic
+   relations (simulation) whose integrated state makes their segment order-dependent (sequential,
+   or checkpointed)**; two stream kinds, each in its place — **pixel streams** for export/recording,
+   **display-list streams** (vector draw commands — lines again! an order of magnitude lighter,
+   client-side scalable) for remote stages.
+
+Placement: Phase A untouched; it lands at the B2 × C6 junction (B2 supplies spatial increment,
+C6 the transport; streaming is the third, temporal piece).
 
 ## 4. Storage-format principles
 

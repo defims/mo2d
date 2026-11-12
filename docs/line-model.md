@@ -4,7 +4,7 @@ title: "Everything is Lines: The Unified Model of Lines, Nodes, and Relations"
 description: mo2d core concept document — a line = an ordered sequence of nodes, with three-level attributes (line-level defaults / node-level overrides with interpolation / segment-level direct storage); bones/skeletons/timelines/gradients/layers/meshes/simulation are all projections of lines; four categories of non-line boundary with criteria; plus a Moho concept mapping and absorption table.
 tags: [line-model, node, segment, attribute, core-concepts]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T10:41:04Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -77,6 +77,9 @@ bitmap meshes, gradients, layers — concepts that are mutually heterogeneous in
 - Resolution order: **segment-level → node-level (interpolated between both ends) → line-level**; lower levels fall back upward when absent.
 - Attributes are themselves **channels (Channel)**: samplable, animatable over time (see [relations.md](relations.md) § Track).
 - Brush = line-level style + node-level pressure/width variation — a line of uniform brush is pressed into a thick-thin rhythm at its nodes.
+  **Landed (B2, 2026-11-12)**: the 15-parameter brush family lives on the line (`brush{…}`, moho-mapping §7.1); node `pressure` multiplies
+  the line width (explicit node width wins); the CPU oracle consumes `sizeAmp`/`sizeScale`/`tint` deterministically, the texture-stamp
+  params are stored faithfully for the GPU phase; named **style templates** (`style.apply`) switch a line between brush strokes.
 - Corroboration: Moho's Shape-level Style (fill_color/line_color) and Point-level color/width/color_strength
   channel overrides = precedent for the line/node two levels; `segments_on` (segment visibility) and interpolation settings "one per key, acting on the outgoing segment"
   ([moho-mapping.md](moho-mapping.md) §5.2) = engineering precedent for segment-level attributes.
@@ -102,11 +105,11 @@ Each traditional concept = a projection of lines (or relations). The first four 
 | 2 | Bone | **A segment of 2 nodes**; joints are nodes | Normative statement |
 | 3 | Skeleton | **A polyline**; bone chains connect end to end; branching (e.g. two arms) = multiple polylines **sharing nodes** | Normative statement |
 | 4 | Timeline | **Multiple straight lines containing multiple nodes**; each straight line = a track, **node = keyframe** (position = tick, value = node-level attribute); **interpolation/easing = segment-level attribute** (per-component handles); the track predefined relation = wiring the track line to the attribute being animated for reference/sampling; the (t,v) easing curve = a derived view of the track | Normative statement + resolved ([mvp.md](mvp.md) §2.2 P0-1) |
-| 5 | Bitmap mesh | **Two interwoven sets of warp and weft lines**; nodes are texture anchors; [derived] crossing points are nodes shared by the warp and weft lines; deformation = the lines move and the texture follows | Derived |
-| 6 | Gradient | **Control bar = segment** (2 nodes); color stops = nodes on the bar (position channel = stop position, color channel = stop color); [derived] nodes are animatable ⇒ gradients are naturally animatable | Normative statement + derived |
-| 7 | Layer/group | **A set of lines** (predefined relation); nesting/parent-child = relation mapping; depth/occlusion = ordering parameters on the relation | Normative statement |
+| 5 | Bitmap mesh | **Two interwoven sets of warp and weft lines**; nodes are texture anchors; [derived] crossing points are nodes shared by the warp and weft lines; deformation = the lines move and the texture follows | Derived; **landed (B5)**: line `texture` ref (blob area or document-relative) + node `uv` anchors; textured patches bound to a skeleton deform with it — the mesh demo freezes both container forms |
+| 6 | Gradient | **Control bar = segment** (2 nodes); color stops = nodes on the bar (position channel = stop position, color channel = stop color); [derived] nodes are animatable ⇒ gradients are naturally animatable | Normative statement + derived; **landed (B3)**: `gradient` relation + color tracks |
+| 7 | Layer/group | **A set of lines** (predefined relation); nesting/parent-child = relation mapping; depth/occlusion = ordering parameters on the relation | Normative statement; **landed (B4)**: `group` relation with transform-box line + visibility |
 | 8 | Layer transform | **Box = a 4-node closed line**; [derived] dragging the box's nodes/edges applies scaling and rotation — the transform is an operation on the box line | Normative statement + derived |
-| 9 | Simulation | **Dynamic relations between lines** (springs/forces/collisions/particles); a particle = a short directed segment emitted by an emitter line (position + velocity vector) | Normative statement |
+| 9 | Simulation | **Dynamic relations between lines** (springs/forces/collisions/particles); a particle = a short directed segment emitted by an emitter line (position + velocity vector) | Normative statement; **landed (B6)**: `sim` (Verlet chain, 240 Hz substeps, replay-from-seed) + seeded `particles` |
 
 ### 3.1 Things That Don't Look Like Lines but Reduce Naturally
 

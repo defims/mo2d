@@ -4,7 +4,7 @@ title: "File Format: Design Recommendations and References"
 description: Design of the mo2d native format — three-layer format architecture (.mo2d single-file deliverable package = delivery equals project / optional project-directory (unpacked) form / SVG frame view), trailing BLOB area, Tick integer time, byte-level determinism, extension namespaces, JSON Schema validation and version-migration discipline; the reference table covers glTF 2.0/vectorcraft/maop/Moho/Lottie/OpenRaster/AniCraft/USD/Collada, each annotated with what to take and what to avoid.
 tags: [file-format, storage, reference, gltf, ticks, svg-view]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T10:34:00Z }
 sources:
   - id: gltf
     resource: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
@@ -123,6 +123,20 @@ Eight rules:
    still read — AniCraft v4→v7 is a living sample (with each version bump, the old readers are kept)[^anicraft];
 8. **history separated from document**: document is the **truth**; history is only for audit/replay;
    when the two diverge, document wins (avoiding two competing truths, "replay vs state").
+
+**Engine status vs this draft (2026-11-12, Phase B)**: the MVP envelope plus the B7 package form are
+live. Single-file `.mo2d` packages = canonical JSON header + `--BLOBS--` marker line + length-delimited
+blob records (sorted names; a real marker line cannot occur inside a JSON string — raw newlines are
+escaped); `mo2d pack`/`mo2d unpack` convert between the package and the project directory
+(`document.mo2d.json` + `assets/`), losslessly (pack ∘ unpack ∘ pack is byte-identical), and texture
+references resolve against the blob area first, then the filesystem — **two containers, one document**
+(the frozen mesh demo is pinned in both forms and renders byte-identically). Phase B vocabulary rides
+version 1 additively: top-level `styles` array (B2 — **emitted only when non-empty** so legacy bytes
+are unchanged), line `brush{…}`, node `pr`/`uv`, line `texture`, relation types
+`gradient`/`group`/`sim`/`particles`, track attr `color` — all consumed by the per-type unknown-key
+filter (rule 5: foreign keys of any name pass through). The reader carries an empty **MIGRATIONS**
+chain indexed by version (rule 7's mechanism, first bump will push v1→v2); newer versions are refused,
+never guessed. `mo2d schema` emits the v1 JSON Schema; history-in-file remains future scope.
 
 ## 3. Reference table: projects and specifications
 
