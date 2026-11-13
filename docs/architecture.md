@@ -4,7 +4,7 @@ title: "Architecture Draft: Layering, Document Model, GPU Strategy, and Format P
 description: The mo2d architecture draft — document model = a flat line collection + relation graph (no rigid tree); L0-L4 layering; a dedicated GPU-strategy section (SoA / unified vertex format / DAG parallelism / PBD-compute / CPU oracle + damage rendering / instancing, referencing BUI); storage-format principles; tech stack leaning toward Rust + wgpu/wasm (to be decided).
 tags: [architecture, gpu, damage-rendering, storage-format, layering]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T12:09:02Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T06:03:44Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -149,6 +149,18 @@ frame stream** (pull-based iterator). Benefits:
    or checkpointed)**; two stream kinds, each in its place — **pixel streams** for export/recording,
    **display-list streams** (vector draw commands — lines again! an order of magnitude lighter,
    client-side scalable) for remote stages.
+
+**Format impact: zero (asked by the owner, 2026-11-13) — three existing choices have already
+paid for it**: integer Ticks (any frame re-evaluates independently; scrub/seek without drift),
+byte-level determinism (resuming a stream = replaying it), and the JSON-head + tail-BLOB
+offset/length layout (a static server + HTTP Range requests fetch the head first and BLOBs on
+demand — progressive open); the project-directory form (B7) adds file-granularity lazy loading.
+The one reserved point: **simulation checkpoints** — dynamic relations carry inter-frame state,
+so seeking in a long simulation re-integrates from tick 0; if that ever measures slow, add an
+**optional cache section** (per-tick state snapshots): derived data, regenerable, ignorable by
+readers, **excluded from the canonical hash** (same class as preview) — an envelope attachment,
+not a document-model change, delivered via versioning + unknown-key passthrough. Not added now;
+wait for real performance data.
 
 Placement: Phase A untouched; it lands at the B2 × C6 junction (B2 supplies spatial increment,
 C6 the transport; streaming is the third, temporal piece).

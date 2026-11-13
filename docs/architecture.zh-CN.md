@@ -4,7 +4,7 @@ title: "架构草案:分层、文档模型、GPU 策略与格式原则"
 description: mo2d 架构草案——文档模型=扁平线集合+关系图(无刚性树);L0-L4 分层;GPU 策略专节(SoA/统一顶点格式/DAG 并行/PBD-compute/CPU oracle+损伤渲染/实例化参照 BUI);存储格式原则;技术栈倾向 Rust+wgpu/wasm(待定)。
 tags: [architecture, gpu, damage-rendering, storage-format, layering]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T12:09:02Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T06:03:44Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -129,6 +129,14 @@ wgpu/WebGPU 但代码不可;BUI 是控件级 UI 工具包,mo2d"舞台即界面"�
    **零锁分区并行——唯动态关系(模拟积分)有状态依赖,该段只能顺序流或做检查点**;
    两种流各归其位:导出/录制走**像素流**,远端舞台走**显示列表流**(矢量绘制命令——
    还是线!带宽小一个量级,客户端可缩放)。
+
+**格式影响:零改造(2026-11-13 owner 问)——三个既有选型恰好已预付**:
+Tick 整数(任意帧独立重求值,scrub/seek 无漂移)、字节级确定性(断点续流=重放即一致)、
+头部 JSON+尾部 BLOB 的 offset/length 布局(静态服务器 + HTTP Range 即可先取头、按需懒取
+BLOB——渐进打开);工程目录形态(B7)再给文件粒度懒加载。唯一预留点:**模拟检查点**
+——动态关系有帧间状态,长模拟文档的 seek 需从 0 积分;若实测变慢,加**可选 cache 节**
+(按 tick 的状态快照):派生数据、可重生成、读端可忽略、**不计入规范哈希**(与 preview
+同类),信封附加节而非文档模型改造,走版本化+未知键透传;现在不加,等性能数据说话。
 
 落位:Phase A 不动;归 **B2 × C6 交界**(B2 出空间增量,C6 出传输通道,流式是"时间
 增量"这第三块拼图)。
