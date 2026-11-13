@@ -4,7 +4,7 @@ title: "Architecture Draft: Layering, Document Model, GPU Strategy, and Format P
 description: The mo2d architecture draft — document model = a flat line collection + relation graph (no rigid tree); L0-L4 layering; a dedicated GPU-strategy section (SoA / unified vertex format / DAG parallelism / PBD-compute / CPU oracle + damage rendering / instancing, referencing BUI); storage-format principles; tech stack leaning toward Rust + wgpu/wasm (to be decided).
 tags: [architecture, gpu, damage-rendering, storage-format, layering]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T06:03:44Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T06:06:38Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -161,6 +161,22 @@ so seeking in a long simulation re-integrates from tick 0; if that ever measures
 readers, **excluded from the canonical hash** (same class as preview) — an envelope attachment,
 not a document-model change, delivered via versioning + unknown-key passthrough. Not added now;
 wait for real performance data.
+
+**Principle & flow (diagram requested by the owner, 2026-11-13)**: on open, parse only the
+JSON head (BLOBs fetched lazily) → **the frame stream = a lazy iterator (pull-based)**:
+(1) track sampling (binary-search the track line for neighboring keyframes → segment-level
+interp → this frame's parameters) → (2) relation-DAG evaluation in topological order
+(invalidation check: diff against the last frame, emit the cached frame when unchanged;
+static relations compute directly; dynamic sim integrates from a checkpoint/tick 0) →
+(3) this frame's geometry → (4) render encoding (SoA instance stream; double buffering:
+encode frame n+1 while the GPU draws frame n) → (5) output adaptation (pixel stream →
+export/recording/AI frame checks; display-list stream → remote stage over WebSocket,
+downstream). **Five principles**: pull model (nothing pulled, nothing evaluated — idle at
+0% CPU); one stream of truth (playback/scrub/export/AI verification/remote stage all drink
+the same stream); space-time increment (temporal × spatial — `inval.rs` + the stage render
+cache are exactly the stream's cache layer); double-buffered pipeline; two seek paths
+(static docs re-evaluate any tick in O(1), simulations integrate from checkpoints).
+The remote variant is bidirectional: commands upstream, frames downstream.
 
 Placement: Phase A untouched; it lands at the B2 × C6 junction (B2 supplies spatial increment,
 C6 the transport; streaming is the third, temporal piece).

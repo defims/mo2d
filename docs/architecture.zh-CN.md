@@ -4,7 +4,7 @@ title: "架构草案:分层、文档模型、GPU 策略与格式原则"
 description: mo2d 架构草案——文档模型=扁平线集合+关系图(无刚性树);L0-L4 分层;GPU 策略专节(SoA/统一顶点格式/DAG 并行/PBD-compute/CPU oracle+损伤渲染/实例化参照 BUI);存储格式原则;技术栈倾向 Rust+wgpu/wasm(待定)。
 tags: [architecture, gpu, damage-rendering, storage-format, layering]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T06:03:44Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T06:06:38Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -137,6 +137,16 @@ BLOB——渐进打开);工程目录形态(B7)再给文件粒度懒加载。唯�
 ——动态关系有帧间状态,长模拟文档的 seek 需从 0 积分;若实测变慢,加**可选 cache 节**
 (按 tick 的状态快照):派生数据、可重生成、读端可忽略、**不计入规范哈希**(与 preview
 同类),信封附加节而非文档模型改造,走版本化+未知键透传;现在不加,等性能数据说话。
+
+**原理流程(2026-11-13 owner 要图)**:打开只解析 JSON 头(BLOB 惰性取)→
+**帧流=惰性迭代器(pull 式)**:①轨道采样(轨道线二分找邻近关键帧→段级 interp 插值
+→本帧参数)→ ②关系 DAG 拓扑序求值(失效检查:与上帧 diff,没变直接吐缓存帧;静态
+关系直算;动态 sim 从检查点/0 积分)→ ③本帧几何 → ④渲染编码(实例流 SoA 打包,
+双缓冲:编码帧 n+1 时 GPU 画帧 n)→ ⑤输出适配(像素流→导出/录制/AI 截帧;显示
+列表流→远端舞台 WebSocket 下行)。**五原理**:拉取模型(不拉不算,空闲 0% CPU);
+单一真值流(播放/scrub/导出/AI 验证/远端舞台喝同一条流);时空增量(时间×空间,
+`inval.rs`+舞台渲染缓存即流式缓存层);双缓冲流水线;seek 两路(静态 O(1) 独立求值,
+模拟从检查点积分)。远端变体=双向通道:命令流上行、帧流下行。
 
 落位:Phase A 不动;归 **B2 × C6 交界**(B2 出空间增量,C6 出传输通道,流式是"时间
 增量"这第三块拼图)。
