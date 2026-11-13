@@ -4,7 +4,7 @@ title: "关系即函数:预定义关系库与自定义关系"
 description: mo2d 的行为模型——关系=函数(输入线与参数,输出派生结构与值);集合/层/群组=预定义关系,关系参数=集合参数;九类预定义关系标准库、自定义关系、DAG 求值与冲突处理。
 tags: [relation, function, linkage, evaluation]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T10:55:00Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T05:54:00Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -49,7 +49,26 @@ sources:
 | 生成 | **派生 derive** | (输入线集) → 输出线 | 中轴/包络/放样/文本→轮廓的生成参数 |
 | 时间 | **轨道引用 track** | (轨道线, 目标属性) → 每帧采样写入;**轨道本身=线**(节点=关键帧:position=Tick、值=节点级属性)——轨道是数据,track 关系是导线(决议见 [mvp.md](mvp.zh-CN.md) §2.2) | 插值/缓动=轨道线的段级属性(每分量句柄) |
 | 动态 | **模拟 simulate** | (线集, 力场) → 逐帧积分后的线集 | 弹簧/阻尼/重力/风/碰撞/粒子发射率;随机种子 |
+| 生成 | **形状 shape(填充域)** | ([曲线引用|段引用(带方向)], …) → 可渲染区域;**一曲线可被 N 个 shape 关系共享**(关系只读线,曲线复用即多关系同输入) | fillOn/strokeOn、填充规则、样式、**zOrder(通道,叠放可动画)** |
 | 引用 | **外部资产引用 external-ref** | (文档外实体) → 可锚定的载荷 | file:// 路径、相对基准 |
+
+### 1.0.1 曲线复用与叠放(shape 关系,2026-11-13 owner 确立)
+
+**一个曲线多个图形**:shape(填充域)是预定义关系,输入是**曲线/段引用**(带方向
+flag,对应 Moho Shape 的 `edges {curve, segment, flag}`[^mohoproj-format])——同一条
+曲线可被 N 个 shape 关系引用(改曲线一处,N 个形状同变);曲线自身仍可描边
+(线级 `strokeOn`),Moho 的"一曲线双角色"由此回归。
+
+**叠放位置**:
+- shape 关系与线各带 **zOrder 通道**(Moho `shape_order` 本就可动画[^mohoproj-format])
+  ⇒ **叠放顺序可打关键帧**(翻牌/遮挡反转);
+- 改动方便的三层:命令 `rel.set zOrder`;AI 自然语言;舞台直接操纵(AI 现场生成
+  深度滑杆——控制棒即线);语义命令 bringForward/sendBackward/toFront/toBack
+  (= zOrder 确定性算术);
+- **两层排序字典序合成**:层间=归属关系排序参数,层内=zOrder 通道;全局渲染序 =
+  `(层序, zOrder)`;
+- 同曲线的两个重叠填充域都渲染、按 zOrder 定先后(良定义);填充规则为 shape
+  关系的参数(逻辑载荷)。
 
 对照 Moho 语义的映射依据:
 - 角约束:Bone `fConstraints`/`fMinConstraint`/`fMaxConstraint`[^m-bone];

@@ -4,7 +4,7 @@ title: "Relations are Functions: The Predefined Relation Library and Custom Rela
 description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the nine-category predefined relation standard library, custom relations, DAG evaluation and conflict handling.
 tags: [relation, function, linkage, evaluation]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T10:55:00Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T05:54:00Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -52,7 +52,27 @@ is a parameter of that relation function; document-level parameters such as "fra
 | Generate | **derive** | (input line set) → an output line | Generation parameters for medial axis/envelope/loft/text→outline |
 | Time | **track relation** | (track line, target attribute) → sampled and written every frame; **the track itself = a line** (nodes = keyframes: position = tick, value = node-level attribute) — the track is data, the track relation is the wiring (decision in [mvp.md](mvp.md) §2.2) | Interpolation/easing = the track line's segment-level attribute (per-component handles) |
 | Dynamic | **simulate** | (line set, force field) → the line set after frame-by-frame integration | Spring/damping/gravity/wind/collision/particle emission rate; random seed |
+| Generate | **shape (fill region)** | ([curve-ref | segment-ref (with direction flag)], …) → a renderable region; **one curve may be shared by N shape relations** (relations only read lines; curve reuse = several relations with the same input) | fillOn/strokeOn, fill rule, style, **zOrder (a channel — stacking is animatable)** |
 | Reference | **external asset reference external-ref** | (out-of-document entity) → an anchorable payload | file:// path, relative base |
+
+### 1.0.1 Curve reuse and stacking (the shape relation; established 2026-11-13 by the owner)
+
+**One curve, multiple shapes**: a shape (fill region) is a predefined relation whose inputs are
+**curve/segment references** (with a direction flag — corresponding to Moho Shape's
+`edges {curve, segment, flag}`[^mohoproj-format]). The same curve can be referenced by N shape
+relations (edit the curve once, all N shapes change); the curve itself may still stroke
+(line-level `strokeOn`) — Moho's "one curve, two roles" returns.
+
+**Stacking order**:
+- each shape relation and line carries a **zOrder channel** (Moho's `shape_order` is itself
+  animatable[^mohoproj-format]) ⇒ **stacking can be keyframed** (card flips, occlusion reversals);
+- three layers of convenience: the command `rel.set zOrder`; AI natural language; direct stage
+  manipulation (the AI generates a temporary depth slider on the spot — a control bar is a line);
+  semantic commands bringForward/sendBackward/toFront/toBack (= deterministic zOrder arithmetic);
+- **two-level ordering composed lexicographically**: between layers = the ownership relation's
+  ordering parameter; within a layer = the zOrder channel; global render order = `(layerOrder, zOrder)`;
+- two overlapping fill regions over the same curve both render, ordered by zOrder (well-defined);
+  the fill rule is a parameter of the shape relation (logic payload).
 
 Grounding in Moho semantics:
 - Angle constraints: Bone `fConstraints`/`fMinConstraint`/`fMaxConstraint`[^m-bone];

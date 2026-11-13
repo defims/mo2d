@@ -3,6 +3,10 @@
 > 本文件是变更日志:条目按 OKF 规程以其书写语言保留,**不提供翻译**(与主流仓库惯例一致)。
 > This file is a change journal; entries stay in the language they were written in and are NOT translated.
 
+## 2026-11-13
+
+* **新增**: relations §1.0.1 曲线复用与叠放(owner 问"怎么支持一个曲线多个图形,且图形方便变更叠放位置",双语同步)。**形状=预定义关系**(填充域:输入=曲线/段引用带方向 flag,对应 Moho Shape 的 edges {curve,segment,flag});一曲线多图形 = N 个 shape 关系共享同一输入(关系只读线,改曲线一处 N 形状同变);曲线自身仍可描边(strokeOn)——Moho"一曲线双角色"回归。**叠放 = zOrder 通道**(shape 关系与线各带):可打关键帧(Moho shape_order 本就可动画)、命令 rel.set/AI 自然语言/舞台临时深度滑杆(控制棒即线)/语义命令 bringForward·toFront 等(zOrder 确定性算术);两层排序字典序合成(层间=归属排序参数,层内=zOrder),全局渲染序=(层序,zOrder);填充规则为 shape 关系参数。与既有 zOrder 通道词表(moho-mapping §7.1)衔接。归入待提交批次。
+
 ## 2026-11-12
 
 * **实现**: **B1 GPU 半落地(wgpu 路径,owner 批准)+ 更正排障结论**——owner 批准引入 wgpu(Apache-2.0 OR MIT;依赖注已同步 AGENTS.md 双语),`gpuwgpu.rs` 替换 Metal FFI 原型(gpumetal.rs 移除,发现已录 log)。**实现**:WGSL 版 uber-shader(描边四边形 ribbon 偏移 + 填充三角形的 MSL 逐条翻译)、storage buffer 实例数据(96B/实例,容量自动倍增)、单条 instanced draw 覆盖全部实例(`draw(6, N)`)、离屏 RGBA8 + blit 到 256 对齐 MAP_READ 缓冲去行填充回读、premul 混合(One/OneMinusSrcAlpha)、`FrontFace::Cw` + 无剔除(与 CPU 画序一致)。**门测试(gate_b1gpu,debug+release 双配置全绿)**:①构造+编码——整帧编码无校验错,内容可见;②**CPU/GPU 像素 parity 门激活**:采样网格容差 40 内 ≥95%(实测 0.981,p50/p90=0 内部像素精确,最差 215 为描边斜接关节的预期发散);③**100k@60fps**:release 实测**中位 4.17ms**(预算 16ms)✓,debug 放宽至 3× 预算(19.7ms ✓)。**排障更正**(撤回「Metal 4 绑定层送 NaN/丢实例」的误判):真相是三个叠加的常规 bug+一个方言事实——像素格式 71=sRGB(存储编码,[30]→[96])→改 70;图元类型 1=Line(画成轮廓)→改 3=Triangle;`baseInstance` 被静默忽略→每实例独立绑定+单实例绘制;`renderPassDescriptor`/`getBytes:`/便捷类构造器已移除→alloc/init+blitCommandEncoder 绕过;Foundation 需强制加载。依赖注同步 AGENTS.md 双语:CPU oracle 与字节级确定性保持零第三方依赖;wgpu(Apache-2.0 OR MIT)+pollster 为 owner 批准的 GPU 加速路径,新增 GPU 相邻依赖仍需 owner 批准。gate_b1gpu 门语句更新:parity 门激活(≥0.95 断言)+100k 计时双配置断言(release 严格 16ms/debug 3× 宽松)。测试:113 全绿(数量不变,GPU 门转正);frozen 再生逐字节一致;check-okf 0 错误。**Phase B 状态**:七项全部落地——B1 双路径(CPU oracle 确定性 + GPU parity 加速,60fps 于 release 达成 4.17ms)、B2–B7 全项带门测试与冻结演示物;剩余仅 owner 决策项(提交 68 个变更文件)。
