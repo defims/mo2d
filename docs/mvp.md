@@ -4,7 +4,7 @@ title: "MVP Final (v5): Tentacle + 3D Scene, Built End-to-End via the Command Pr
 description: MVP v5 consolidated draft — six items in scope (3D-ready line kernel / hot-path relations / Tick time / command protocol + validator / format + export / minimal stage), six gated acceptance steps (A1 includes the 3D scene hash gate, A6 hand-built and AI command streams isomorphic), an eight-item Definition of Done, a nine-item frozen decision list, and the basic-3D hard boundary plus anti-scope-creep clauses.
 tags: [mvp, scope, stage, mcp, ticks, 3d]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -108,9 +108,9 @@ BLOB area, project-directory layout, collaboration; **3D side**: lights, materia
 
 ## 5. Key trade-offs
 
-- **Headless first, A6 wraps a thin viewport**: strictly the four operations; **whatever is missing, have the AI emit commands — add no controls to the viewport**;
+- **Headless first, A6 wraps a thin viewport**: strictly the five operations (four + tap since the 2026-11-17 D8 revision); **whatever is missing, have the AI emit commands — add no controls to the viewport**;
 - **No GPU in the MVP**: CPU oracle single-track; SoA layout keeps the path open (roadmap B1);
-- **Minimal interpolation set**: Linear/Bezier (im 0/9); Smooth and the rest deferred (moho-mapping §5.2);
+- **Minimal interpolation set**: Linear/Bezier (im 0/9); **step (im=3) added with the C7 interactivity slice (2026-11-17)** — discrete channels; Smooth and the rest deferred (moho-mapping §5.2);
 - **Simplest linear bind**: single bone + projected-distance weights; multi-bone blending / weight painting deferred;
 - **Invalidation strategy deferred**: full recomputation; damage rendering / DAG reverse invalidation goes into roadmap B1;
 - **Command normalization across different paths is not in the MVP**: only same-path replay is verified (known boundary);
@@ -140,7 +140,7 @@ BLOB area, project-directory layout, collaboration; **3D side**: lights, materia
 | Bezier handle semantics | Segment shape = in/out handles at both ends (empirically verified in moho-mapping §5.2); a 1D angle channel first, Vec2 later |
 | Byte determinism broken by timestamps/hashes | No timestamps in the envelope; preview not in the MVP; atomic writes + canonical field order |
 | A4 (protocol + validator + MCP) most likely to slip | Split into order: command-stream file → schema → determinism gate → MCP shell last |
-| A6/3D scope creep | Two hard boundaries in §5 (four operations / 3D list); whatever is missing, have the AI emit commands |
+| A6/3D scope creep | Two hard boundaries in §5 (five operations / 3D list); whatever is missing, have the AI emit commands |
 
 ## 8. Frozen decision list (basis for starting A1, nine items)
 
@@ -153,7 +153,7 @@ BLOB area, project-directory layout, collaboration; **3D side**: lights, materia
 | D5 | **3-node closed line = triangular face** (fill generalization) | 3D-extension resolution |
 | D6 | The renderer **is 3D**: z-buffer/perspective/back-face culling/flat color with no lighting, 2D through the same pipeline | Owner decided to directly support basic 3D |
 | D7 | Time = **raw Tick integers** (254,016,000,000/s) | file-format §2 |
-| D8 | Minimal stage pulled forward as A6, four-operation hard boundary | Owner decided to pull B1 forward |
+| D8 | Minimal stage pulled forward as A6, ~~four-operation hard boundary~~ **revised 2026-11-17 (owner approved): five operations** — draw / drag / connect / scrub / **tap** (tap = the `event.fire` command; still zero buttons, zero panels) | Owner decided to pull B1 forward; revision comes with the C7 interactivity slice (roadmap) |
 | D9 | Demo artifact includes a closed sucker (fill acceptance artifact) + a static z≠0 scene (3D acceptance artifact) | P0-3 / D6 |
 
 **Once this document is frozen, A1 can start.**

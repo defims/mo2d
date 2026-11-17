@@ -2,9 +2,9 @@
 type: Design Document
 title: "Architecture Draft: Layering, Document Model, GPU Strategy, and Format Principles"
 description: The mo2d architecture draft — document model = a flat line collection + relation graph (no rigid tree); L0-L4 layering; a dedicated GPU-strategy section (SoA / unified vertex format / DAG parallelism / PBD-compute / CPU oracle + damage rendering / instancing, referencing BUI); storage-format principles; tech stack leaning toward Rust + wgpu/wasm (to be decided).
-tags: [architecture, gpu, damage-rendering, storage-format, layering]
+tags: [architecture, gpu, damage-rendering, storage-format, layering, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T06:06:38Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -180,6 +180,39 @@ The remote variant is bidirectional: commands upstream, frames downstream.
 
 Placement: Phase A untouched; it lands at the B2 × C6 junction (B2 supplies spatial increment,
 C6 the transport; streaming is the third, temporal piece).
+
+### 3.3 Event-driven evaluation (2026-11-17, established by the owner — the C7 interactivity slice)
+
+The landscape survey's minimal interactive model (`pose = f(params)`,
+`params = g(inputs, time, physics)`; landscape F11) plus the owner's novice vision make
+in-file interactivity essential. The engine answer keeps the pull model intact:
+
+- **Evaluation widens to a pure function `f(doc, tick, eventPrefix)`** — the prefix of recorded
+  `event.fire` commands up to `tick`, sorted by `(tick, seq)`, is **folded** into channel state
+  (guarded respond relations applying their writes), then the topological evaluation runs as
+  before ([relations.md](relations.md) §4 event dimension, §1.2). The empty prefix reduces
+  exactly to the previous `f(doc, tick)` — **every existing gate and frozen hash is untouched**;
+- **Events are commands**: `event.fire` enters the registry and the command history — replay
+  includes behavior, undo keeps working for everything else, and an event is an irreversible
+  fact (inverse = `noop`);
+- **State machines are not a new concept**: a discrete channel (step interpolation, im=3 —
+  the Moho `INTERP_STEP` code) + guarded respond relations; a listener is a respond relation
+  on a target line; hit tests (tap/press/hover: segment distance; overlap: segment
+  intersection) are deterministic engine-side geometry — pure functions of the evaluated frame;
+- **Single-writer discipline holds**: a respond relation is a *conditional* writer; its action
+  target (line+attr) must not be claimed by any unconditional writer (validator-enforced);
+  the composition pattern is "respond writes a dedicated control channel, time-driven
+  relations consume it";
+- **Seek** = replay the event fold (O(events), cheap; same philosophy as replay-from-seed —
+  an optional per-tick checkpoint cache of the same class as the §3.2 sim cache can be added
+  later if long event histories ever measure slow; likewise excluded from the canonical hash);
+- **Stage**: the tap gesture joins draw/drag/connect/scrub as the **fifth operation**
+  (MVP D8 amended by the owner, 2026-11-17 — still zero buttons, zero panels, every gesture a
+  command). The plain offline player evaluates respond relations deterministically → the N3
+  gate ("tap it and it jumps" with no AI, no code) replays through the same command stream.
+
+Placement: roadmap C7; the `oscillate` periodic driver and step interpolation land first
+(pure `f(tick)`), respond + the event stream second.
 
 ## 4. Storage-format principles
 

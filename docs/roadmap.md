@@ -2,9 +2,9 @@
 type: Design Document
 title: "Roadmap: Three-Phase Advance (2026-11-11 v4, stage pulled forward into the MVP)"
 description: Phase A = MVP tentacle v4 (AI compiles, engine executes + A6 minimal stage = first example of a generatable view); Phase B = performance and vocabulary rollout (rendering & invalidation formalization / brush strokes / gradients / layers & groups / bitmap mesh / simulation / format formalization); Phase C = AI ecosystem (relation IR / controls-as-lines / import / audio / collaboration / wasm); six-components → phase mapping and performance metrics.
-tags: [roadmap, phases, mvp, long-term]
+tags: [roadmap, phases, mvp, long-term, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T12:09:02Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: mvp-doc
     resource: /mvp.md
@@ -33,7 +33,7 @@ no passing the gate, no next step. v4 is resequenced per the six-components engi
 
 | Component (vision §2) | Landing phase |
 |---|---|
-| 1 Semantic language | A (minimal vocabulary) → B4–B7 (vocabulary rollout) |
+| 1 Semantic language | A (minimal vocabulary) → B4–B7 (vocabulary rollout) → C7 (interaction vocabulary: respond/oscillate/step) |
 | 2 Deterministic runtime | A (core) → B2 (invalidation & parallelization) |
 | 3 Command protocol | A (three commands + command stream) → C (ecosystem scale-up) |
 | 4 Validator | A (schema + determinism gate) → C1 (gate for the relation IR) |
@@ -88,8 +88,9 @@ Dependencies: B1 depends on A's SoA layout; B2–B6 are mutually independent and
 | C4 Audio | Audio-track layer: media payload + level/jump tracks; Tick dividing 44.1k/48k evenly exists exactly for this | Lip-sync/beat-driven animation |
 | C5 Collaboration & versioning | Command-stream merging, change records, reference layers | Multi-session collaboration without conflicts |
 | C6 WebAssembly + frame streaming | wasm release + MCP over WebSocket + **streaming rendering** (architecture §3.2: frame-stream protocol; pixel streams for export, display-list streams for remote stages) | tentacle demo in the browser, zero install; remote stage renders progressively |
+| C7 **Interactivity** (established 2026-11-17 by the owner; [relations.md](relations.md) §1.2, architecture §3.3) | **respond** relation family (event × guard → write channel/fire; state machine = discrete channel + guarded respond), **oscillate** periodic driver, **step interpolation im=3** (discrete channels — the Switch basis), events enter the command stream (**`event.fire`**, irreversible facts), stage tap (D8 amended: five operations), minimal **perform-record** (gesture → track keys via auto-key); evaluation = pure `f(doc, tick, event-prefix)`, empty prefix = existing behavior | "Tap it and it jumps": **tap_jump demo replays byte-identically offline, no AI, no code** (the novice gate N3); breathe/sway oscillate demos; same stream + same events → same bytes |
 
-Dependencies: C1 depends on the A4 validator and B1 (hot-path fallback); C3's .moho depends on B4 (layers/groups) + B5 (bitmap mesh); C4 depends on B7 (format formalization).
+Dependencies: C1 depends on the A4 validator and B1 (hot-path fallback); C3's .moho depends on B4 (layers/groups) + B5 (bitmap mesh); C4 depends on B7 (format formalization); C7 depends on the A4 protocol/validator (events are commands) and the D8 revision (owner approved 2026-11-17).
 
 ## Milestones and performance metrics
 

@@ -2,9 +2,9 @@
 type: Design Document
 title: "AI-Native Interaction: The Stage Is the Interface"
 description: The mo2d interaction model — no standard toolbar/menus; display equals edit (multiple clients of one rendering core); dual channels (direct manipulation + natural language); controls are lines (temporary controls generated on demand by AI); every operation is a command (JSON command stream + MCP); unified undo/history.
-tags: [ai-native, interaction, command-protocol, mcp, display-equals-edit]
+tags: [ai-native, interaction, command-protocol, mcp, display-equals-edit, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: vectorcraft-mcp
     resource: file:///Users/wei/vectorcraft/docs/mcp.md
@@ -54,6 +54,12 @@ The technical implication of "GUI no longer matters": **there is no editor/playe
 
 The two channels are equivalent: every action done by hand is also a command (see §4), and every sentence said to the AI also lands on the same command stream.
 
+**Novice form of the dual channels (established 2026-11-17)**: the equivalence holds *also for users
+with zero vocabulary* — the language channel accepts only everyday words (the dictionary in
+[vernacular.md](vernacular.md) §2; professional terms are never required), and the hand channel is
+direct manipulation. Both land on the same command stream, so the novice path and the AI path stay
+isomorphic (A6's gate, generalized).
+
 ## 3. Controls are lines
 
 Temporary controls **are themselves lines**, generated on demand by AI and discarded after use — no control framework needed:
@@ -76,7 +82,11 @@ if you can draw a line, you can make a control; AI generating a control = AI dra
   AI context = command-stream summaries;
 - **MCP server mode**: the engine exposes commands as an MCP server (following the engineering practice of
   vectorcraft/maohou[^vectorcraft-mcp]); AI hosts (zcode etc.) perform all operations over MCP;
-- **Determinism**: same document + same command stream → same result (verified by the CPU oracle).
+- **Determinism**: same document + same command stream → same result (verified by the CPU oracle);
+- **Events are commands too (established 2026-11-17, C7)**: interactions enter the same command
+  stream as `event.fire` commands — the replayed history includes behavior, determinism covers
+  event handling ([relations.md](relations.md) §1.2, architecture §3.3); the stage's tap is the
+  fifth gesture (MVP D8 amended, still zero buttons/panels).
 
 ## 5. Drawing the boundary between document state and session state
 

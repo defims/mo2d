@@ -4,7 +4,7 @@ title: "动画软件全景调研:传统与 AI 工具及概念"
 description: 对 20+ 款传统与 AI 时代动画工具的第一性原理调研——范式、概念清单、本质/偶然而判定、新手学习成本证据、AI 工具的五维可控性判定;提炼动画创作的不可约内核,支撑生活概念层(vernacular.md)。
 tags: [landscape, survey, first-principles, essential-incidental, ai-tools, learning-cost, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T06:23:07Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: adobe-animate
     resource: https://helpx.adobe.com/animate/desktop.html
@@ -317,15 +317,15 @@ Motion Diffusion Models(文本→动作,transformer 骨干)[^mdm];涂鸦→绑�
 | 参数空间(参数→姿势) | Live2D·Unity·Godot·Rive | 姿势与时间解耦 | E | **通道**(早已是一等公民) |
 | 混合空间(N 姿势↔参数) | Unity·Godot·Rive·Live2D | 连续姿势混合 | E | 通道+多轨道采样关系 |
 | 物理 / 钟摆 | Moho·Live2D·Spine·Creature | 自主次级运动 | D | N9 sim 关系(B6 已落地) |
-| 事件(时间标记→宿主) | Spine·Rive·Unity·Godot | 与应用逻辑同步 | E | — **缺口,见 §6 R2** |
-| 状态机(带守卫的过渡) | Rive·Unity·Godot | 离散行为选择 | E | — **缺口,见 §6 R2** |
-| 监听器(输入→动作) | Rive | 文件内交互接线 | E | — **缺口,见 §6 R2** |
+| 事件(时间标记→宿主) | Spine·Rive·Unity·Godot | 与应用逻辑同步 | E | **respond** 关系族(路线图 C7,2026-11-17 确认) |
+| 状态机(带守卫的过渡) | Rive·Unity·Godot | 离散行为选择 | E | **离散通道+带守卫的 respond**(C7,2026-11-17 确认) |
+| 监听器(输入→动作) | Rive | 文件内交互接线 | E | 目标线上的 **respond** 关系(C7,2026-11-17 确认) |
 | 节点图(绑定/FX/合成) | Harmony·OpenToonz | 声明式接线 | I | 关系(但作为*函数*,而非 GUI) |
 | 预合成 / 嵌套 | AE·OpenToonz | 封装一组 | E(功能) | group 关系(N7,B4 已落地) |
 | 表达式 / 脚本 | AE·Animate·TVPaint·OpenToonz | 程序化关系 | I | 自定义关系(沙箱 IR) |
 | 曝光 / 停留 | OpenToonz·TVPaint·Krita | 停 N 帧 | E | 轨道节点间距 |
 | 预设(动作/缓动) | Animate·AE | 打包的命名意图 | E(模式) | 样式模板(B2)+AI |
-| 表演 / 录制手势 | Dreams·AE(Motion Sketch) | 先捕获后编辑 | E(入门) | — **缺口,见 §6 R6** |
+| 表演 / 录制手势 | Dreams·AE(Motion Sketch) | 先捕获后编辑 | E(入门) | **表演录制**(C7:手势→轨道关键帧,走 auto-key,2026-11-17 确认) |
 | 摄像机 / 舞台 | Animate·OpenToonz·Harmony | 视口变换 | E | 盒线(line-model §3.1) |
 | 场景 / 合成套合成 | Animate·AE·Dreams | 文档分段 | I | 文档=一个舞台;复用靠 group |
 | 纸质血统(xsheet/pegbar/台面/秒表) | OpenToonz·TVPaint | 数字化经典工作流 | I | 留功能,绝不留名字 |
@@ -351,11 +351,11 @@ Motion Diffusion Models(文本→动作,transformer 骨干)[^mdm];涂鸦→绑�
 ## 6. 这份调研对 mo2d 意味着什么
 
 - **R1 — 内核覆盖确认。** §4 每个本质概念都能经九大映射归约;调研不暗示任何格式改动(与 architecture §3.2 流式渲染"零格式改造"结论一致)。
-- **R2 — 缺口:文件内交互。** 交互簇(事件/状态机/监听器)对愿景("交互动画")是本质的,但缺席于标准关系库与 roadmap。提案[推导,待 owner 确认]:**respond** 关系族——(事件源:点击·触摸·松开·悬停·拖拽·按键·时间点·动画播完)×(条件)→(动作:写通道 / 切离散轨道 / 触发另一事件);"状态机"即离散通道+带守卫的 respond 关系;"监听器"即目标线上的 respond 关系。完全契合"关系即函数",无需改模型;意味着 roadmap Phase C 增词表项+纯播放器运行时支持(确定性事件处理)。
-- **R3 — 缺口:周期驱动器。** 生活动词(摆/呼吸/飘/浮沉)要循环轨道模式或 `oscillate` 热路径关系(周期/振幅/相位通道)[推导]。
+- **R2 — 缺口:文件内交互。** 交互簇(事件/状态机/监听器)对愿景("交互动画")是本质的,但缺席于标准关系库与 roadmap。**owner 2026-11-17 确认:respond 关系族**——(事件源:点击·触摸·松开·悬停·拖拽·按键·时间点·动画播完)×(条件)→(动作:写通道 / 切离散轨道 / 触发另一事件);"状态机"即离散通道+带守卫的 respond 关系;"监听器"即目标线上的 respond 关系。完全契合"关系即函数",无需改模型;**落路线图 C7**(词表在 relations.zh-CN.md §1.2,事件驱动求值在 architecture §3.3,纯播放器确定性事件处理)。
+- **R3 — 缺口:周期驱动器。** 生活动词(摆/呼吸/飘/浮沉)要循环轨道模式或 `oscillate` 热路径关系(周期/振幅/相位通道)——**2026-11-17 确认**:`oscillate` 关系(路线图 C7)。
 - **R4 — 带可见确认检查点的自动绑定**(Mixamo/Animated Drawings 模式):AI 能力(vision §6 已划给 AI)增加要求:提案绑定以普通线+bind 关系落地,播放前有一眼可校的确认[推导]。
 - **R5 — 生成的动作以轨道/关键帧落地,绝不落像素**:文本/草图/表演输入编译为轨道线+段缓动(能力即数据,vision 规则 3);ToonCrafter 式中间帧只走线条几何路线[推导]。
-- **R6 — 表演录制作为捕获通道**(Dreams Perform 模式):录手势→轨道关键帧[推导]。
+- **R6 — 表演录制作为捕获通道**(Dreams Perform 模式):录手势→轨道关键帧——**2026-11-17 确认**:最小表演录制落路线图 C7(手势→轨道关键帧,走 auto-key)。
 - **R7 — 小白界面是独立于内核的关注点**:生活概念层——AI 接受哪些词、什么永不出现、验收门——在 [vernacular.zh-CN.md](vernacular.zh-CN.md) 规定。
 
 ## 7. 来源

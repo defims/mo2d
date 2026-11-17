@@ -4,7 +4,7 @@ title: "The Everyday-Concept Layer: Zero-Jargon Authoring for Novices"
 description: The novice vision made concrete — owner normative statement; first-principles definitions of learning cost / controllability / familiarity; the everyday-word → engine-compilation dictionary (pull/follow/bounce/appear/tap…); the six-step novice interaction loop; ten design rules; progressive disclosure without terminology; five acceptance gates and the concept budget.
 tags: [vernacular, novice, everyday-concepts, ai-mediated, learning-cost, controllability, interaction]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T06:23:07Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: landscape-doc
     resource: /landscape.md
@@ -81,8 +81,10 @@ already applies to determinism and throughput.
 The dictionary is the product of this layer: **users speak life; AI compiles to the command protocol.**
 Every compilation lands in existing kernel vocabulary — track lines/nodes/segment easing (line-model N4),
 relations from the standard library ([relations.md](relations.md) §1), channels, controls-as-lines
-([ai-interaction.md](ai-interaction.md) §3). Items marked ⓓ are new proposals (derived, pending owner
-confirmation) — they extend, never bend, the model.
+([ai-interaction.md](ai-interaction.md) §3). Items marked ⓓ were proposals at survey time —
+**the owner confirmed them on 2026-11-17** (the respond family, `oscillate`, step interpolation,
+perform-record; landing as roadmap C7, contract in [relations.md](relations.md) §1.2) — they extend,
+never bend, the model.
 
 ### 2.1 Motion words (make it move)
 
@@ -117,7 +119,8 @@ confirmation) — they extend, never bend, the model.
 
 ### 2.3 Interaction words (make it respond)
 
-The perceive→decide→respond minimum model (F11). Proposed mapping ⓓ (R2):
+The perceive→decide→respond minimum model (F11). Owner-confirmed mapping (2026-11-17;
+[relations.md](relations.md) §1.2):
 
 | Life word | User intent | mo2d compilation | Replaces |
 |---|---|---|---|
@@ -235,12 +238,12 @@ convention: every step ships a visible deliverable accepted via the command stre
   vision rule 3).
 - **N4 — Trust**: same document + same command stream (including AI actions) replays byte-identically;
   every AI action undoable via inverse commands. Covered by the existing determinism gate, extended to
-  respond relations ⓓ.
+  respond relations.
 - **N5 — Concept budget**: the entire novice surface (all UI strings, all AI replies, all docs aimed at
   novices) uses ≤ ~25 everyday roots (dictionary §2), zero professional terms required. Audited like
   the frozen hash gate: a jargon word leaking into the novice surface is a regression.
 
-## 7. Impact on existing docs & roadmap (all ⓓ pending owner confirmation)
+## 7. Impact on existing docs & roadmap (owner-confirmed 2026-11-17; landing = roadmap C7)
 
 - **relations.md §1**: add the **respond** relation family (interaction: event × condition → channel
   write / track switch / fire) and optionally `oscillate` (cyclic driver: period/amplitude/phase) —
@@ -256,10 +259,14 @@ convention: every step ships a visible deliverable accepted via the command stre
 
 ## 8. Open Questions
 
-- [ ] Confirm the respond relation family + event vocabulary (§2.3) — owner decision (R2);
-- [ ] Confirm `oscillate` / cyclic-track mode vs pure sim for sway/breathe/float (R3);
-- [ ] Confirm the dictionary roots (~25) and the Chinese/English word lists as a normative budget;
+- [x] The respond relation family + event vocabulary (§2.3) — **confirmed by the owner 2026-11-17**
+  (relations.md §1.2; events enter the command stream as irreversible `event.fire` facts);
+- [x] `oscillate` / cyclic-track mode vs pure sim — **confirmed 2026-11-17**: both exist — `oscillate`
+  is the deterministic cyclic driver (breathe/float/spin), sim keeps physical sway;
+- [x] Perform-record placement — **confirmed 2026-11-17**: the minimal version (gesture → track keys
+  via auto-key) lands in roadmap C7;
+- [ ] The dictionary roots (~25) and the Chinese/English word lists as a normative budget —
+  provisionally adopted; per-word review continues as the AI surface grows;
 - [ ] The confirm-checkpoint UX for auto-rig (one-glance handles: what exactly is shown, N1);
-- [ ] Whether perform-record is Phase C or later (it needs input capture in the stage);
 - [ ] Localization policy for the dictionary in other languages (the life words must stay everyday in
   each locale — terminology-free is a per-language property).

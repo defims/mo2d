@@ -4,7 +4,7 @@ title: "Animation Software Landscape Survey: Traditional & AI Tools and Concepts
 description: First-principles survey of 20+ traditional and AI-era animation tools — paradigms, concept inventories, essential-vs-incidental decomposition, novice learning-cost evidence, and a control-dimension verdict on AI tools; distills the irreducible core of animation authoring and feeds the everyday-concept layer (vernacular.md).
 tags: [landscape, survey, first-principles, essential-incidental, ai-tools, learning-cost, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T06:23:07Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: adobe-animate
     resource: https://helpx.adobe.com/animate/desktop.html
@@ -457,15 +457,15 @@ references the nine mappings of [line-model.md](line-model.md) §3 (N1–N9) and
 | Parameter space (param→pose) | Live2D·Unity·Godot·Rive | pose decoupled from time | E | **channels** (first-class already) |
 | Blend space (N poses ↔ params) | Unity·Godot·Rive·Live2D | continuous pose blending | E | channels + relations sampling multiple tracks |
 | Physics / pendulum | Moho·Live2D·Spine·Creature | autonomous secondary motion | D | N9 sim relation (landed B6) |
-| Events (time markers → host) | Spine·Rive·Unity·Godot | sync with app logic | E | — **gap, see §6 R2** |
-| State machine (guarded transitions) | Rive·Unity·Godot | discrete behavior selection | E | — **gap, see §6 R2** |
-| Listeners (input → action) | Rive | in-file interaction binding | E | — **gap, see §6 R2** |
+| Events (time markers → host) | Spine·Rive·Unity·Godot | sync with app logic | E | **respond** relation family (roadmap C7, confirmed 2026-11-17) |
+| State machine (guarded transitions) | Rive·Unity·Godot | discrete behavior selection | E | **discrete channel + guarded respond** (C7, confirmed 2026-11-17) |
+| Listeners (input → action) | Rive | in-file interaction binding | E | **respond** relation on a target line (C7, confirmed 2026-11-17) |
 | Node graph (rig/FX/composite) | Harmony·OpenToonz | declarative wiring | I | relations (but as *functions*, not a GUI) |
 | Precomp / nesting | AE·OpenToonz | encapsulate a group | E(fn) | group relation (N7, landed B4) |
 | Expressions / scripting | AE·Animate·TVPaint·OpenToonz | programmatic relations | I | custom relation (sandboxed IR) |
 | Exposure / hold | OpenToonz·TVPaint·Krita | keep N frames | E | track node spacing |
 | Presets (motion/easing) | Animate·AE | packaged named intent | E(pattern) | style templates (B2) + AI |
-| Perform / record gestures | Dreams·AE(Motion Sketch) | capture-then-edit | E(onramp) | — **gap, see §6 R6** |
+| Perform / record gestures | Dreams·AE(Motion Sketch) | capture-then-edit | E(onramp) | **perform-record** (C7: gesture → track keys via auto-key, confirmed 2026-11-17) |
 | Camera / stage | Animate·OpenToonz·Harmony | viewport transform | E | box line (line-model §3.1) |
 | Scenes / comps-of-comps | Animate·AE·Dreams | document segmentation | I | document = one stage; reuse via groups |
 | Paper heritage (xsheet/pegbar/table/stopwatch) | OpenToonz·TVPaint | digitize classical workflow | I | keep function, never the name |
@@ -528,14 +528,16 @@ Both are addressed in §6.
   zero format changes).
 - **R2 — Gap: in-file interactivity.** The interaction cluster (events / state machines / listeners) is
   essential for the vision ("交互动画") but absent from the standard relation library and roadmap.
-  Proposal [derived, pending owner confirmation]: a **respond** relation family —
+  **Confirmed by the owner 2026-11-17: the respond relation family** —
   (event source: tap·touch·release·hover·drag·key·time-point·animation-end) × (condition) →
   (action: write a channel / switch a discrete track / fire another event); a "state machine" is then a
   discrete channel + guarded respond relations; a "listener" is a respond relation on a target line.
-  Fits "relations are functions" unchanged; implies a roadmap Phase-C vocabulary item + plain-player
-  runtime support (deterministic event handling).
+  Fits "relations are functions" unchanged; **lands as roadmap C7** (vocabulary in
+  relations.md §1.2, event-driven evaluation in architecture §3.3, plain-player deterministic
+  event handling).
 - **R3 — Gap: periodic drivers.** Everyday verbs (sway/breathe/float/bob) want a cyclic track mode or an
-  `oscillate` hot-path relation (period/amplitude/phase channels) [derived].
+  `oscillate` hot-path relation (period/amplitude/phase channels) — **confirmed 2026-11-17**: the
+  `oscillate` relation (roadmap C7).
 - **R4 — Auto-rig with a visible confirm checkpoint** (Mixamo/Animated Drawings pattern): AI capability
   (already assigned to AI in vision §6) gains the requirement: the proposed rig lands as ordinary lines +
   bind relations, shown for one-glance correction before play [derived].
@@ -543,7 +545,8 @@ Both are addressed in §6.
   track lines + segment easing (capability-as-data, vision rule 3); ToonCrafter-style in-betweening only
   via the stroke-geometric branch [derived].
 - **R6 — Perform-record as a capture channel** (Dreams Perform pattern): record gestures → track keys
-  [derived].
+  — **confirmed 2026-11-17**: minimal perform-record in roadmap C7 (gesture → track keys via
+  auto-key).
 - **R7 — The novice surface is a separate concern from the kernel**: the everyday-concept layer — which
   words AI accepts, what is never shown, the acceptance gates — is specified in
   [vernacular.md](vernacular.md).

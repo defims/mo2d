@@ -2,9 +2,9 @@
 type: Design Document
 title: "架构草案:分层、文档模型、GPU 策略与格式原则"
 description: mo2d 架构草案——文档模型=扁平线集合+关系图(无刚性树);L0-L4 分层;GPU 策略专节(SoA/统一顶点格式/DAG 并行/PBD-compute/CPU oracle+损伤渲染/实例化参照 BUI);存储格式原则;技术栈倾向 Rust+wgpu/wasm(待定)。
-tags: [architecture, gpu, damage-rendering, storage-format, layering]
+tags: [architecture, gpu, damage-rendering, storage-format, layering, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T06:06:38Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -150,6 +150,30 @@ BLOB——渐进打开);工程目录形态(B7)再给文件粒度懒加载。唯�
 
 落位:Phase A 不动;归 **B2 × C6 交界**(B2 出空间增量,C6 出传输通道,流式是"时间
 增量"这第三块拼图)。
+
+### 3.3 事件驱动求值(2026-11-17,owner 确立——C7 交互切片)
+
+全景调研的交互最小模型(`姿势 = f(参数)`,`参数 = g(输入, 时间, 物理)`;landscape F11)
+加 owner 的小白愿景,使文件内交互成为本质能力。引擎的回答保持拉取模型不动:
+
+- **求值扩为纯函数 `f(doc, tick, 事件前缀)`**——截至 `tick` 的已记录 `event.fire`
+  命令前缀按 `(tick, seq)` 排序后**折叠**进通道状态(带守卫的 respond 关系执行其
+  写入),再照旧进入拓扑求值([relations.zh-CN.md](relations.zh-CN.md) §4 事件维度、§1.2)。
+  空前缀恰好退化为原先的 `f(doc, tick)`——**一切既有门与冻结哈希原样不动**;
+- **事件也是命令**:`event.fire` 进注册表与命令历史——重放包含行为,其余一切照常
+  可撤销,事件本身是不可逆事实(逆命令 = `noop`);
+- **状态机不是新概念**:离散通道(step 插值,im=3——Moho `INTERP_STEP` 码)+
+  带守卫的 respond 关系;监听器=目标线上的 respond 关系;命中测试(tap/press/hover:
+  线段距离;overlap:线段相交)是引擎侧确定性几何——被求值帧的纯函数;
+- **单写者纪律照旧**:respond 关系是*条件写者*;其动作目标(线+属性)不得被任何
+  无条件写者认领(校验器强制);合成模式="respond 写专用控制通道,时间驱动的关系消费它";
+- **Seek** = 重放事件折叠(O(事件数),廉价;与种子重放同一哲学——若漫长事件史实测
+  变慢,日后可加与 §3.2 sim 缓存同类的逐 tick 检查点缓存,同样不计入规范哈希);
+- **舞台**:tap 手势加入 draw/drag/connect/scrub 成为**第五操作**(MVP D8 修订,
+  owner 2026-11-17 批准——仍零按钮、零面板,每个手势都是命令)。纯离线播放器确定性
+  求值 respond 关系 ⇒ N3 门("点它就跳",无 AI 无代码)经同一命令流回放。
+
+落位:路线图 C7;`oscillate` 周期驱动器与 step 插值先落(纯 `f(tick)`),respond+事件流其次。
 
 ## 4. 存储格式原则
 

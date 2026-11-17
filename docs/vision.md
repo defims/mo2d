@@ -2,9 +2,9 @@
 type: Design Document
 title: "Vision: An AI-Native 2D Vector Animation Engine"
 description: mo2d's positioning and the definition of what an AI-era engine is (six components — semantic language / deterministic runtime / command protocol / validator / performance machine / generatable views); four core ideas; division-of-labor principles; success criteria; open decision items.
-tags: [vision, positioning, ai-native, engine-definition]
+tags: [vision, positioning, ai-native, engine-definition, novice-gates]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -130,7 +130,13 @@ a "hot-path kernel + semantic anchors"; AI-generated relation function bodies ru
 1. Users complete skeletal rigging and animation by intuition (draw lines/drag nodes/connect lines) plus natural language, with zero menu operations;
 2. AI completes **all** operations through the command protocol (create lines, create relations, set keyframes, export), and the command stream replays reproducibly;
 3. Large-scale scenes (on the order of a hundred thousand nodes) evaluate + render smoothly on the GPU; the CPU oracle agrees with the GPU output (determinism);
-4. Once AI-generated capabilities are solidified, **offline (no-AI) playback/export** results match the online ones.
+4. Once AI-generated capabilities are solidified, **offline (no-AI) playback/export** results match the online ones;
+5. **Novice gates N1–N5** (established 2026-11-17 with the owner's session goal; specified in
+   [vernacular.md](vernacular.md) §6): a user who has never used animation software turns a sketch
+   into a first animation in ten minutes with zero professional terms (N1); any single part is
+   fixable without redoing the rest (N2); **interactive playback works offline with no AI and no
+   code** (N3 — the tap_jump demo, roadmap C7); determinism + undo cover every AI action (N4);
+   the whole novice surface stays within the everyday-word budget (N5).
 
 ## 8. Open Decision Items (not to be written as settled facts)
 

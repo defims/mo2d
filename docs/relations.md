@@ -1,10 +1,10 @@
 ---
 type: Design Document
 title: "Relations are Functions: The Predefined Relation Library and Custom Relations"
-description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the nine-category predefined relation standard library, custom relations, DAG evaluation and conflict handling.
-tags: [relation, function, linkage, evaluation]
+description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the predefined relation standard library (now incl. interaction: respond + oscillate, established 2026-11-17), custom relations, DAG evaluation, event-prefix folding and conflict handling.
+tags: [relation, function, linkage, evaluation, interaction, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-13T05:54:00Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -50,8 +50,10 @@ is a parameter of that relation function; document-level parameters such as "fra
 | Constraint | **constraint** | (line A, line B) → geometric restrictions | Angle min/max, equal length, tangency |
 | Drive | **propagate** | (control line, target line set) → targets follow the control | Drive mapping, value range |
 | Generate | **derive** | (input line set) → an output line | Generation parameters for medial axis/envelope/loft/text→outline |
-| Time | **track relation** | (track line, target attribute) → sampled and written every frame; **the track itself = a line** (nodes = keyframes: position = tick, value = node-level attribute) — the track is data, the track relation is the wiring (decision in [mvp.md](mvp.md) §2.2) | Interpolation/easing = the track line's segment-level attribute (per-component handles) |
+| Time | **track relation** | (track line, target attribute) → sampled and written every frame; **the track itself = a line** (nodes = keyframes: position = tick, value = node-level attribute) — the track is data, the track relation is the wiring (decision in [mvp.md](mvp.md) §2.2) | Interpolation/easing = the track line's segment-level attribute (per-component handles); interpolation codes follow Moho (moho-mapping §5.2): **0 linear / 3 step / 9 Bézier** — step (im=3) is the discrete channel, the basis of Switch/state machines (established 2026-11-17, roadmap C7) |
 | Dynamic | **simulate** | (line set, force field) → the line set after frame-by-frame integration | Spring/damping/gravity/wind/collision/particle emission rate; random seed |
+| Drive | **oscillate** | (target attribute) → a periodic value of tick: base + amplitude × wave(tick − phase); the deterministic cyclic driver (breathe/sway/float/spin) — physical sway stays with simulate | Waveform (sine/triangle/saw), period (ticks), phase, base, amplitude (established 2026-11-17) |
+| Interaction | **respond** | (event × guard) → ordered actions: **write** a channel {target line+attr, value \| add} / **fire** an event; events ∈ {tap, press, release, hoverIn, hoverOut, overlap(lineB), timePoint(t)}; **a state machine = a discrete channel + guarded respond relations**; a listener = a respond relation on a target line — no new concept (established 2026-11-17, see §1.2) | Event vocabulary, guard {channel, op, value}, actions list, hit-test radius |
 | Generate | **shape (fill region)** | ([curve-ref | segment-ref (with direction flag)], …) → a renderable region; **one curve may be shared by N shape relations** (relations only read lines; curve reuse = several relations with the same input) | fillOn/strokeOn, fill rule, style, **zOrder (a channel — stacking is animatable)** |
 | Reference | **external asset reference external-ref** | (out-of-document entity) → an anchorable payload | file:// path, relative base |
 
@@ -98,6 +100,40 @@ the Phase B vocabulary:
 One writer per output still governs: gradient claims a recolor channel of a
 line (fill and stroke roles compose), group/sim claim their members'/line's
 positions; a second writer on the same claim is rejected by the validator.
+The interaction slice (**oscillate**, **step interpolation im=3**, **respond** +
+the event stream) lands at roadmap **C7** — the contract is §1.2 below.
+
+### 1.2 Interaction relations (respond; established 2026-11-17 by the owner)
+
+The landscape survey (F11: perceive → decide → respond is the minimal interactive
+model; the bool·number·trigger input triad recurs across Rive/Unity/Godot) plus the
+owner's novice vision ("交互动画" is in the goal sentence) make in-file interactivity
+an essential capability. It lands entirely inside "relations are functions":
+
+- **Events are commands**: an interaction enters the document history as
+  `event.fire {name, tick, target?, x?, y?}` — the replayed command stream
+  includes behavior, so determinism (same doc + same stream + same events →
+  byte-identical output) extends to event handling unchanged. Events are
+  **irreversible facts**: the inverse of `event.fire` is `noop` (deleting an
+  event would change everything downstream of it);
+- **Event vocabulary v1**: `tap` / `press` / `release` / `hoverIn` / `hoverOut`
+  (pointer against a target line, engine-side deterministic hit test = segment
+  distance, same criterion as the stage), `overlap(lineB)` (segment intersection
+  at the current tick), `timePoint(t)` (a moment arrived);
+- **Guards**: a respond relation may carry a condition on a channel
+  `{channel, op, value}` — guarded transitions, exactly the Rive/Unity/Godot
+  convergence (F11);
+- **Actions** (ordered list): `write {target line+attr, value | add}` (a state
+  machine = a **discrete channel** written by guarded respond relations — the
+  discrete values ride **step interpolation, im=3**, and are the Switch-layer
+  equivalent) and `fire {name}` (chain reactions: one event triggering another);
+- **Single-writer discipline holds**: a respond is a *conditional* writer — the
+  validator rejects an action target (line+attr) that any unconditional writer
+  (track/oscillate/bind/…) already claims. Composition pattern: respond writes
+  a dedicated control channel, time-driven relations consume it;
+- **Plain-player interactivity (N3)**: respond relations evaluate
+  deterministically in any offline player, no AI, no scripts (capability as
+  data, vision rule 3) — evaluation semantics in §4.
 
 ## 2. Dynamic Relations (Simulation)
 
@@ -133,6 +169,14 @@ This is mo2d's single outlet for extensibility — **add no new kernel primitive
   Every evaluation re-integrates dynamic relations from tick 0 in fixed 240 Hz substeps (254,016,000,000 ticks / 240 = 1,058,400,000
   exactly), with anchors sampled per substep from their driving position tracks. Cost is O(tick/240 × nodes) per evaluation — bounded,
   and scrub-back/replay/offline export are byte-identical by construction;
+- **Event dimension (established 2026-11-17, C7)**: evaluation is a pure function
+  **`f(doc, tick, eventPrefix)`** — the recorded `event.fire` prefix up to `tick`, sorted by
+  `(tick, seq)`, is **folded** into channel state (guarded respond relations applying their writes),
+  and the folded state feeds the topological evaluation. The fold is deterministic (same prefix →
+  same state) and cheap (O(events)); the empty prefix reduces exactly to the time-driven
+  `f(doc, tick)` — every existing gate and frozen hash is untouched. Seek = replay the fold
+  (same philosophy as replay-from-seed; an optional per-tick checkpoint cache of the same class
+  as the sim one may be added later if long event histories ever measure slow);
 - **Cycles and conflicts**: cycles are in principle forbidden in the relation graph (detected → error); multiple writing relations on the same node
   are composed by relation priority + a deterministic order (details during engineering; the principles recorded now: **determinism, explainability, parallelizability**);
 - **Reverse-dependency invalidation (landed, B1)**: the DAG doubles as the change-propagation index — an edit to a line dirties exactly its

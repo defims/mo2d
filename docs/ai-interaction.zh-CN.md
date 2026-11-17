@@ -2,9 +2,9 @@
 type: Design Document
 title: "AI 原生交互:舞台即界面"
 description: mo2d 交互模型——无标准工具栏/菜单,展示编辑一体(同一渲染核心的多个客户端),双通道(直接操纵+自然语言),控件即线(临时控件由 AI 按需生成),一切操作皆命令(JSON 命令流+MCP),撤销/历史统一。
-tags: [ai-native, interaction, command-protocol, mcp, display-equals-edit]
+tags: [ai-native, interaction, command-protocol, mcp, display-equals-edit, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T15:56:02Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: vectorcraft-mcp
     resource: file:///Users/wei/vectorcraft/docs/mcp.md
@@ -52,6 +52,10 @@ owner 的出发点:**有了 AI,不仅 GUI 控件等几乎就不怎么需要了,�
 
 两通道等价:手做的每个动作也是命令(见 §4),AI 说的每句话也落在同一命令流上。
 
+**双通道的小白形态(2026-11-17 确立)**:等价性*对零词汇用户同样成立*——语言通道只收
+生活词([vernacular.zh-CN.md](vernacular.zh-CN.md) §2 的字典;专业术语永不被要求),
+手通道即直接操纵。两者落在同一命令流上,小白路径与 AI 路径保持同构(A6 门,推广形态)。
+
 ## 3. 控件即线
 
 临时控件**本身也是线**,由 AI 按需生成、用后即弃——不需要控件框架:
@@ -73,7 +77,10 @@ AI 生成控件 = AI 画线。
 - **可回放**:命令流即历史——撤销=逆命令,协作=命令流合并,AI 上下文=命令流摘要;
 - **MCP server 模式**:引擎作为 MCP server 暴露命令(参照 vectorcraft/maohou 的
   工程实践[^vectorcraft-mcp]),AI 宿主(zcode 等)经 MCP 完成全部操作;
-- **确定性**:同一文档 + 同一命令流 → 同一结果(CPU oracle 验证)。
+- **确定性**:同一文档 + 同一命令流 → 同一结果(CPU oracle 验证);
+- **事件也是命令(2026-11-17 确立,C7)**:交互以 `event.fire` 命令进入同一命令流——
+  重放的历史包含行为,确定性覆盖事件处理([relations.zh-CN.md](relations.zh-CN.md) §1.2、
+  architecture §3.3);舞台的 tap 即第五手势(MVP D8 修订,仍零按钮零面板)。
 
 ## 5. 文档状态与会话状态的划界
 

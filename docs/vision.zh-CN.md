@@ -2,9 +2,9 @@
 type: Design Document
 title: "愿景:AI 原生的 2D 矢量动画引擎"
 description: mo2d 定位与 AI 时代引擎的形态定义(六部件:语义语言/确定性运行时/命令协议/校验器/性能机器/可生成视图);四条核心理念;分工原则;成功判据;待定决策项。
-tags: [vision, positioning, ai-native, engine-definition]
+tags: [vision, positioning, ai-native, engine-definition, novice-gates]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T13:25:25Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -130,7 +130,12 @@ owner:"既然有了 AI,是不是可以将更多的能力交给 AI,而引擎只�
 1. 用户凭直觉(画线/拖节点/连线)+ 自然语言完成骨骼绑定动画,零菜单操作;
 2. AI 通过命令协议完成**全部**操作(建线、建关系、打关键帧、导出),且命令流可回放复现;
 3. 大规模场景(十万节点级)GPU 求值+渲染流畅;CPU oracle 与 GPU 输出一致(确定性);
-4. AI 生成的能力固化后,**离线(无 AI)播放/导出**结果与在线一致。
+4. AI 生成的能力固化后,**离线(无 AI)播放/导出**结果与在线一致;
+5. **小白门 N1–N5**(2026-11-17 随 owner 会话目标确立;细则见
+   [vernacular.zh-CN.md](vernacular.zh-CN.md) §6):从未用过动画软件的用户十分钟内零专业术语
+   把一张涂鸦变成第一个动画(N1);任何局部可单独修正而不推翻其余(N2);**交互播放离线
+   可演,无 AI 无代码**(N3——tap_jump demo,路线图 C7);确定性+撤销覆盖每个 AI 动作(N4);
+   小白界面全部守住生活词预算(N5)。
 
 ## 8. 待定决策项(不以已决事实书写)
 
