@@ -23,10 +23,12 @@ mo2d——AI 原生的 2D 矢量动画引擎(万物皆线)——的正式文档�
 # 概念文档(建议阅读顺序)
 
 * [vision.md](vision.zh-CN.md) - 愿景:AI 原生的 2D 矢量动画引擎,四条核心理念
+* [landscape.md](landscape.zh-CN.md) - 全景调研:传统与 AI 动画软件——概念清单、本质 vs 偶然、学习成本证据、AI 工具可控性判定(F1–F13)
 * [line-model.md](line-model.zh-CN.md) - **万物皆线**(核心):线、节点、三级属性(线/节点/段)、九大映射与非线边界
 * [moho-mapping.md](moho-mapping.zh-CN.md) - Moho 概念逐项映射:点线属性关系全表(完整属性值/关系参数词表)
 * [relations.md](relations.zh-CN.md) - 关系即函数:预定义关系标准库与自定义关系
 * [ai-interaction.md](ai-interaction.zh-CN.md) - AI 原生交互:舞台即界面,控件即线,一切操作皆命令
+* [vernacular.md](vernacular.zh-CN.md) - 生活概念层:小白零术语创作——生活词字典、六步交互循环、十条设计规则、验收门 N1–N5
 * [architecture.md](architecture.zh-CN.md) - 架构草案:分层、文档模型、GPU 策略、格式原则(status: draft)
 * [file-format.md](file-format.zh-CN.md) - 文件格式:设计建议与参照(信封草案/Tick 时间/双形态/glTF·vectorcraft·maop 参照表)
 * [mvp.md](mvp.zh-CN.md) - MVP 定稿 v5:触手+3D 场景,六件范围/六步门/八条完成定义/九项冻结决策

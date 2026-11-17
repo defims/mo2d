@@ -20,10 +20,12 @@ editing any .md here) and [log.md](log.md) for the change journal.
 # Concept documents (suggested reading order)
 
 * [vision.md](vision.md) - Vision: the AI-native engine — six-component definition, division of labor
+* [landscape.md](landscape.md) - Landscape survey: traditional & AI animation software — concept inventories, essential vs incidental, learning-cost evidence, AI control verdict (F1–F13)
 * [line-model.md](line-model.md) - **Everything is lines** (core): lines, nodes, three-level attributes, nine mappings, non-line boundary
 * [moho-mapping.md](moho-mapping.md) - Moho concept mapping: complete attribute/relation value inventories
 * [relations.md](relations.md) - Relations are functions: the standard relation library and custom relations
 * [ai-interaction.md](ai-interaction.md) - AI-native interaction: the stage is the interface; controls are lines
+* [vernacular.md](vernacular.md) - The everyday-concept layer: zero-jargon authoring — dictionary, six-step novice loop, ten design rules, gates N1–N5
 * [architecture.md](architecture.md) - Architecture draft: layering, document model, GPU strategy
 * [file-format.md](file-format.md) - File format: `.mo2d` single-file deliverable, Tick time, reference table
 * [mvp.md](mvp.md) - MVP (v5): tentacle + 3D scene via the command protocol
