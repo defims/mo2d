@@ -4,7 +4,7 @@ title: "Relations are Functions: The Predefined Relation Library and Custom Rela
 description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the predefined relation standard library (now incl. interaction: respond + oscillate, established 2026-11-17), custom relations, DAG evaluation, event-prefix folding and conflict handling.
 tags: [relation, function, linkage, evaluation, interaction, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:47:04Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -53,7 +53,7 @@ is a parameter of that relation function; document-level parameters such as "fra
 | Time | **track relation** | (track line, target attribute) → sampled and written every frame; **the track itself = a line** (nodes = keyframes: position = tick, value = node-level attribute) — the track is data, the track relation is the wiring (decision in [mvp.md](mvp.md) §2.2) | Interpolation/easing = the track line's segment-level attribute (per-component handles); interpolation codes follow Moho (moho-mapping §5.2): **0 linear / 3 step / 9 Bézier** — step (im=3) is the discrete channel, the basis of Switch/state machines (established 2026-11-17, roadmap C7) |
 | Dynamic | **simulate** | (line set, force field) → the line set after frame-by-frame integration | Spring/damping/gravity/wind/collision/particle emission rate; random seed |
 | Drive | **oscillate** | (target attribute) → a periodic value of tick: base + amplitude × wave(tick − phase); the deterministic cyclic driver (breathe/sway/float/spin) — physical sway stays with simulate | Waveform (sine/triangle/saw), period (ticks), phase, base, amplitude (established 2026-11-17) |
-| Interaction | **respond** | (event × guard) → ordered actions: **write** a channel {target line+attr, value \| add} / **fire** an event; events ∈ {tap, press, release, hoverIn, hoverOut, overlap(lineB), timePoint(t)}; **a state machine = a discrete channel + guarded respond relations**; a listener = a respond relation on a target line — no new concept (established 2026-11-17, see §1.2) | Event vocabulary, guard {channel, op, value}, actions list, hit-test radius |
+| Interaction | **respond** | (event × guard) → ordered actions: **write** a channel {target line+attr, value \| add} / **fire** an event; events ∈ {tap, press, release, hoverIn, hoverOut, overlap(lineB), timePoint(t)}; **a state machine = a discrete channel + guarded respond relations**; a listener = a respond relation on a target line — no new concept (established 2026-11-17, see §1.2) | Event vocabulary, guard {channel, op, value}, actions list, hit-test radius, `minHold`/`maxHold` (release-class hold discrimination — C8, see §1.2) |
 | Generate | **shape (fill region)** | ([curve-ref | segment-ref (with direction flag)], …) → a renderable region; **one curve may be shared by N shape relations** (relations only read lines; curve reuse = several relations with the same input) | fillOn/strokeOn, fill rule, style, **zOrder (a channel — stacking is animatable)** |
 | Reference | **external asset reference external-ref** | (out-of-document entity) → an anchorable payload | file:// path, relative base |
 
@@ -143,6 +143,56 @@ an essential capability. It lands entirely inside "relations are functions":
   pattern): the fold sequences their writes by (moment, document order), and
   the first claimant applies the composed state exactly once per frame.
 
+#### Gesture timelines (established 2026-11-17 by the owner — line-model §0 statement; landing = roadmap C8)
+
+**Interactive events are timelines**: a gesture's phase edges (`hoverIn` / `press` /
+`release` / `hoverOut`) are keyframes on a **gesture line** — a **step track line
+(im=3)** named `gesture/<target>` (targetless broadcast events → `gesture/pointer`),
+node value = the phase code (0 out / 1 hover / 2 pressed):
+
+- **Recording is materialization**: `event.fire` becomes an **atomic dual-write** —
+  append the irreversible `MoEvent` (**shape unchanged**: single tick, no duration,
+  no phase field) + upsert the phase key on the gesture line. Keys land **only on
+  phase changes** (same-value upserts are skipped). The line grows only with events:
+  the validator reserves the `gesture/` namespace (user lines cannot take it, and no
+  relation may write it), the stage refuses to drag/delete its nodes — an event is
+  irreversible, so its materialized timeline is **read-only**;
+- **Phase semantics follow the browser's hover/click split** — the line tracks
+  *physical containment* (hover semantics), hold discrimination uses the *event pair*
+  (click semantics: down + up on the same target completes regardless of path; the
+  release hit test stays radius-based):
+
+  | Physical state (inside radius? × button?) | Browser counterpart | Phase | Key lands when |
+  |---|---|---|---|
+  | outside · up | `pointerout` / no hover | 0 | leaving the radius |
+  | inside · up | `pointerover` / `:hover` | 1 | entering the radius |
+  | inside · down | `pointerdown` | 2 | pressing inside |
+  | outside · down (wandered off mid-hold) | physically out — `pointerout` already fired | 0 | leaving the radius (re-entry restores 2) |
+  | inside · release | click completes, still hovering | 1 | releasing inside |
+  | outside · release | click does not complete | 0 | (already 0 — no key) |
+
+  In the common no-wander case the pressed segment's length **is**
+  `release.tick − press.tick` — the duration is a length on the timeline, not a
+  metadata field; when the pointer wanders the two quantities split, exactly as the
+  browser splits hover from click;
+- **Hold-aware responds**: a release-class respond may carry `minHold` / `maxHold`
+  (ticks) — "long-press vs short-tap" is a **length predicate on the gesture
+  timeline**. The fold evaluates it by a deterministic lookback: pair the release
+  with the latest unpaired press on the same target in the prefix (sorted by
+  `(tick, seq)`; per-target pairing stack) — hold = `release.tick − press.tick`,
+  pure arithmetic on recorded facts. `tap` stays as-is (recorder-synthesized
+  "press + release without drag", `tap_jump` frozen demo untouched); conceptually
+  it is the shorthand for a short, unmoved press→release pair;
+- **Reads stay cycle-free**: v1 guards may read **only** gesture lines — they derive
+  from events, not geometry, so "respond reads no lines" survives (event → gesture
+  line → guard is one-way data flow). Generalizing track-guards to arbitrary track
+  lines would break that argument and is deferred (§5);
+- **Rendering = read-only reference lane**: the stage draws gesture lines as faint
+  lanes on the time axis (session overlay; tags `track` + `gesture` — the offline
+  renderer and the scene snapshot skip them exactly like `track` lines), the pressed
+  segment's drawn length being the duration. Offline frames and frozen PNG hashes
+  are untouched; picking (hit tests) ignores gesture lines.
+
 ## 2. Dynamic Relations (Simulation)
 
 Owner normative statement: **a simulation process is, in essence, a relation between lines** — not a concept outside lines, just relations
@@ -154,14 +204,18 @@ Owner normative statement: **a simulation process is, in essence, a relation bet
 - **Particles**: the emitter is a line; each particle is a short **directed segment** (position + velocity vector);
   attraction/repulsion/attachment are also relations between lines.
 
-The solver code itself is **logical payload** (non-line boundary category 2, see [line-model.md](line-model.md) §4),
-but the **structure** of the simulation lives entirely in relations between lines. Determinism requirement: the random seed must be made an explicit parameter;
+The solver code is the **function body of the simulate relation** — inside the relation
+(owner, 2026-11-17: "代码是关系里的,关系即函数"; the non-line boundary no longer lists code,
+see the revised [line-model.md](line-model.md) §4), and the **structure** of the simulation
+lives entirely in relations between lines. Determinism requirement: the random seed must be made an explicit parameter;
 same document, same input → same output (verifiable by the CPU oracle).
 
 ## 3. Custom Relations
 
 Functions defined by users/AI: the function body is logical payload (expressions/scripts), the parameters are channels.
 This is mo2d's single outlet for extensibility — **add no new kernel primitives, only new relations**.
+The body lives *inside* the relation concept (owner, 2026-11-17: "代码是关系里的,关系即函数" —
+the non-line boundary no longer lists code; see the revised line-model §4).
 
 - AI generates from natural language: "make the tentacle tip follow the cursor" → generates a custom propagate/simulate relation;
 - Reverse explanation: with any relation selected, AI can translate its parameters and behavior back into natural language;
@@ -185,6 +239,9 @@ This is mo2d's single outlet for extensibility — **add no new kernel primitive
   `f(doc, tick)` — every existing gate and frozen hash is untouched. Seek = replay the fold
   (same philosophy as replay-from-seed; an optional per-tick checkpoint cache of the same class
   as the sim one may be added later if long event histories ever measure slow);
+  gesture-line phase keys (C8) ride event ticks — they add **no** fold moments; a release
+  respond with `minHold`/`maxHold` adds one deterministic lookback to the fold (per-target
+  press pairing, §1.2);
 - **Cycles and conflicts**: cycles are in principle forbidden in the relation graph (detected → error); multiple writing relations on the same node
   are composed by relation priority + a deterministic order (details during engineering; the principles recorded now: **determinism, explainability, parallelizability**);
 - **Reverse-dependency invalidation (landed, B1)**: the DAG doubles as the change-propagation index — an edit to a line dirties exactly its
@@ -195,3 +252,7 @@ This is mo2d's single outlet for extensibility — **add no new kernel primitive
 - [ ] Refining the parameter tables of each predefined relation (the first version takes the minimal set used by [mvp.md](mvp.md) as authoritative); — the landed Phase B forms are recorded in §1.1, fuller tables still pending;
 - [ ] Whether the propagate relation supports a "lookup table" form (the smart-bone equivalent) in the first version, or is deferred;
 - [x] ~~The playback/scrub-back consistency strategy for dynamic relations~~ — **resolved 2026-11-12 (B6): replay-from-seed** (§4); if interactive cost ever demands incremental state, the replacement strategy must reproduce byte-identical results against this baseline.
+- [ ] Whether track-guards generalize beyond gesture lines (v1 restricts guard reads to
+  `gesture/*` to keep respond geometry-free, §1.2), and whether touch-style implicit capture
+  (hold preserved when the pointer is dragged off) joins the desktop physical semantics —
+  both await owner confirmation.

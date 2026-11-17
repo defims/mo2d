@@ -1,10 +1,10 @@
 ---
 type: Reference
 title: "Glossary (English–Chinese)"
-description: One-sentence definitions of every mo2d term — line/node/segment/three-level attributes (line-level/node-level/segment-level)/brush stroke/channel/relation/function/predefined & custom relations/nine kinds of relations/track/keyframe/control bar/transform box/four kinds of non-line boundaries/GPU-related/command & session state.
+description: One-sentence definitions of every mo2d term — line/node/segment/three-level attributes (line-level/node-level/segment-level)/brush stroke/channel/relation/function/predefined & custom relations/nine kinds of relations/track/keyframe/control bar/transform box/three kinds of non-line boundaries (revised 2026-11-17)/GPU-related/command & session state.
 tags: [glossary, terminology]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T10:55:00Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:15:24Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -32,7 +32,7 @@ sources:
 | Pressure | 压力 | Node-level width channel (stylus input): width = line width × pressure; an explicit node width wins (landed in B2) |
 | Style Template | 样式模板 | A named line-attribute template; `style.apply` copies its defined fields onto a line — switching brush strokes = applying another template (B2) |
 | Fallback | 回落 | The rule that a missing node attribute takes the line-level default value |
-| Channel | 通道 | A sequence of scalar parameters that can be sampled and animated |
+| Channel | 通道 | An addressable, animatable parameter — the quantity at (line, node?, attribute); its value sequence is carried by a track line when keyframe-driven, written by the interaction fold, or computed live by oscillate/sim (the carrier depends on the driver) |
 | Semantic Tag | 语义标签 | A role annotation attached to a line (bone/skeleton/track/mesh-warp…) |
 
 ## Relation primitives
@@ -81,13 +81,13 @@ sources:
 | Fill Region | 填充域 | The region enclosed by a closed line; interpretation rules (non-zero/even-odd) belong to the logic payload |
 | Camera | 摄像机 | A box line; push/pull/pan/truck = its node animation |
 
-## Non-line boundaries (four kinds)
+## Non-line boundaries (three kinds)
 
 | Term | 中文 | Definition |
 |---|---|---|
-| Payload | 载荷 | Non-geometric content attached to structure (media/logic) |
-| Media Field | 媒体场 | The sampled field data itself (bitmap pixels/audio samples/video frames); lines anchor, deform, and drive it |
-| Logic | 逻辑 | Symbols and rules such as expressions/scripts/function bodies/solvers/fill rules |
+| Payload | 载荷 | Non-geometric content bound to structure through relations (media payloads like fill; the loaded file behind an external ref) |
+| Media Field | 媒体场 | Sampling payloads (bitmap pixels/audio samples/video frames) — like fill: relation-bound, anchored/deformed/driven by lines and rendered by the relation (statement 12; not a boundary item) |
+| Logic | 逻辑 | The function body of a relation — expressions/scripts/solvers/fill rules live inside relations (statement 11), not in the boundary |
 | Session State | 会话状态 | Editor state outside the document (view/selection/undo stack/clipboard) |
 
 ## Evaluation & rendering

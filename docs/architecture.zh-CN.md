@@ -4,7 +4,7 @@ title: "架构草案:分层、文档模型、GPU 策略与格式原则"
 description: mo2d 架构草案——文档模型=扁平线集合+关系图(无刚性树);L0-L4 分层;GPU 策略专节(SoA/统一顶点格式/DAG 并行/PBD-compute/CPU oracle+损伤渲染/实例化参照 BUI);存储格式原则;技术栈倾向 Rust+wgpu/wasm(待定)。
 tags: [architecture, gpu, damage-rendering, storage-format, layering, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -172,9 +172,21 @@ BLOB——渐进打开);工程目录形态(B7)再给文件粒度懒加载。唯�
   变慢,日后可加与 §3.2 sim 缓存同类的逐 tick 检查点缓存,同样不计入规范哈希);
 - **舞台**:tap 手势加入 draw/drag/connect/scrub 成为**第五操作**(MVP D8 修订,
   owner 2026-11-17 批准——仍零按钮、零面板,每个手势都是命令)。纯离线播放器确定性
-  求值 respond 关系 ⇒ N3 门("点它就跳",无 AI 无代码)经同一命令流回放。
+  求值 respond 关系 ⇒ N3 门("点它就跳",无 AI 无代码)经同一命令流回放;
+- **手势时间线在命令层物化(C8,owner 2026-11-17 确立——line-model §0 规范表述、
+  relations §1.2、mvp D10)**:`event.fire` 升级为**原子双写**——追加 `MoEvent`
+  (结构不变)+ 在 `gesture/<target>` 上 upsert 相位键(广播事件落
+  `gesture/pointer`),即一条**只随事件生长**的步进(im=3)轨道线(只读:
+  `gesture/` 命名空间保留、舞台拒绝编辑其节点、拾取忽略它)。fold 把手势线键当作
+  普通文档数据——键骑在事件 tick 上,**不新增折叠时刻**;fold 的唯一扩展是 hold
+  回看(带 `minHold`/`maxHold` 的 release respond 在前缀中配对同 target 最近未配对
+  的 press——对已记录事实的确定性算术)。渲染:舞台把手势线画成**时间轴上的只读
+  参考泳道**(会话覆盖层,tags `track` + `gesture`);离线渲染按 `track` 线的同一
+  惯例跳过它们(Tick 节点"永不渲染"的同款约定)⇒ **冻结 PNG 哈希原样不动**,
+  `MoEvent` 仍是单 tick 不可逆事实。
 
 落位:路线图 C7;`oscillate` 周期驱动器与 step 插值先落(纯 `f(tick)`),respond+事件流其次。
+C8(手势时间线)在二者之上的命令层物化——fold 仅增 hold 回看。
 
 ## 4. 存储格式原则
 

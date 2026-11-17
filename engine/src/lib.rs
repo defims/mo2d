@@ -14,6 +14,7 @@ pub mod eval;
 pub mod export;
 pub mod format;
 pub mod gif;
+pub mod hull;
 #[cfg(target_os = "macos")]
 pub mod gpuwgpu;
 pub mod inval;

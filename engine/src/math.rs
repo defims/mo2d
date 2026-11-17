@@ -78,6 +78,22 @@ impl Mat4 {
     }
 }
 
+/// Rotation about an arbitrary axis (normalized internally), right-hand rule,
+/// radians. Column-major, translation column zero (D4 runtime form).
+pub fn rotation_axis_angle(axis: Vec3, angle_rad: f64) -> Mat4 {
+    let k = axis.normalize();
+    let (s, c) = angle_rad.sin_cos();
+    let t = 1.0 - c;
+    let (kx, ky, kz) = (k.x, k.y, k.z);
+    // m[col][row] = R[row][col] (column-major storage).
+    Mat4([
+        [t * kx * kx + c, t * kx * ky + s * kz, t * kx * kz - s * ky, 0.0],
+        [t * kx * ky - s * kz, t * ky * ky + c, t * ky * kz + s * kx, 0.0],
+        [t * kx * kz + s * ky, t * ky * kz - s * kx, t * kz * kz + c, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
+}
+
 /// Right-handed look-at matrix (camera at `eye`, looking at `target`, `up` hint).
 pub fn look_at(eye: Vec3, target: Vec3, up: Vec3) -> Mat4 {
     let z = eye.sub(target).normalize(); // forward is -z in view space
@@ -164,5 +180,28 @@ mod tests {
         assert_close(p.x, -1.0, 1e-12, "left");
         assert_close(p.y, -1.0, 1e-12, "bottom");
         assert_close(w, 1.0, 1e-12, "w");
+    }
+
+    #[test]
+    fn rotation_axis_angle_right_hand_rule() {
+        // +90° about +y takes +x to −z (right-handed, y-up).
+        let r = rotation_axis_angle(Vec3::new(0.0, 1.0, 0.0), std::f64::consts::FRAC_PI_2);
+        let (p, w) = r.project(Vec3::new(1.0, 0.0, 0.0));
+        assert_close(p.x, 0.0, 1e-12, "x");
+        assert_close(p.z, -1.0, 1e-12, "z");
+        assert_close(w, 1.0, 1e-12, "w");
+        // +90° about +z takes +x to +y.
+        let r = rotation_axis_angle(Vec3::new(0.0, 0.0, 1.0), std::f64::consts::FRAC_PI_2);
+        let (p, _) = r.project(Vec3::new(1.0, 0.0, 0.0));
+        assert_close(p.x, 0.0, 1e-12, "x");
+        assert_close(p.y, 1.0, 1e-12, "y");
+        // Axis is normalized internally.
+        let a = rotation_axis_angle(Vec3::new(0.0, 2.0, 0.0), std::f64::consts::FRAC_PI_2);
+        let b = rotation_axis_angle(Vec3::new(0.0, 1.0, 0.0), std::f64::consts::FRAC_PI_2);
+        for c in 0..4 {
+            for rrow in 0..4 {
+                assert_close(a.0[c][rrow], b.0[c][rrow], 1e-15, "normalize");
+            }
+        }
     }
 }

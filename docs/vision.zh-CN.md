@@ -4,7 +4,7 @@ title: "愿景:AI 原生的 2D 矢量动画引擎"
 description: mo2d 定位与 AI 时代引擎的形态定义(六部件:语义语言/确定性运行时/命令协议/校验器/性能机器/可生成视图);四条核心理念;分工原则;成功判据;待定决策项。
 tags: [vision, positioning, ai-native, engine-definition, novice-gates]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:51:12Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -96,8 +96,8 @@ GPU 要同构的数据形状;一次统一,两头收红利。
 ## 5. 内核极简
 
 **线(含节点与三级属性)+ 关系(函数)+ 通道(参数)+ 载荷**——四个原语承载全部领域概念;
-非线的东西诚实留在边界外(采样场/符号逻辑/文档外状态/外部引用,见
-[line-model.md](line-model.zh-CN.md) §4)。
+非线的东西诚实留在边界外(符号与语义/文档外状态/外部引用——采样载荷与填充同类,由关系绑定;
+见 [line-model.md](line-model.zh-CN.md) §4,2026-11-17 修订)。
 
 ## 6. AI 与引擎的分工(2026-11-11 owner 确立方向)
 

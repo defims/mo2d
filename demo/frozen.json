@@ -71,5 +71,17 @@
     "frameSha256": "75728688803b754ac7cd4151d1fab9e08476208c462b26c9ae8b1c7df97e3650",
     "packageSha256": "1402991471a1606844358184cc144e4f300d577d43eac247fcaaa4e50257ec4e",
     "midTick": 127008000000
+  },
+  "hull": {
+    "docSha256": "076cddb5db353858314cc7ef175f8a5255ab22ea5ebfab8e7c08c2dc4784f1f5",
+    "frameSha256": "db759ffd68c1d96c40c505cb057fbaa5cddae6eb3ab553373f0ce10f87f0899a",
+    "midTick": 0,
+    "derived": {
+      "yawSwing": "38862403b61e1ce14cc361ddaa36332557fdb2669377beb305dc54bace422329",
+      "pitchNod": "3297b5769fe1a646b8594a52f20e4f5a638eea307a6cf0195dd1603bfbfda797",
+      "orbitDiagonal": "364214b159b0a417fb4bc4e4a41ca5744169ae332240d9e89b151d42292979e7"
+    },
+    "slices": 128,
+    "grid": 256
   }
 }

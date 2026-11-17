@@ -4,7 +4,7 @@ title: "路线图:三阶段推进(2026-11-11 v4,舞台提前入 MVP)"
 description: Phase A=MVP 触手 v4(AI 编译引擎执行 + A6 最小舞台=生成的视图第一例);Phase B=性能与词表铺开(渲染与失效正式化/笔触/渐变/层群组/位图网格/模拟/格式正式化);Phase C=AI 生态(关系 IR/控件即线/导入/音频/协作/wasm);六部件→阶段映射与性能指标。
 tags: [roadmap, phases, mvp, long-term, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
 sources:
   - id: mvp-doc
     resource: /mvp.md
@@ -32,7 +32,7 @@ sources:
 
 | 部件(vision §2) | 落地阶段 |
 |---|---|
-| 1 语义语言 | A(最小词表)→ B4–B7(词表铺开)→ C7(交互词表:respond/oscillate/step) |
+| 1 语义语言 | A(最小词表)→ B4–B7(词表铺开)→ C7(交互词表:respond/oscillate/step)→ C8(手势时间线) |
 | 2 确定性运行时 | A(核心)→ B2(失效与并行化) |
 | 3 命令协议 | A(三命令+命令流)→ C(生态扩容) |
 | 4 校验器 | A(schema+确定性门)→ C1(关系 IR 的门) |
@@ -83,8 +83,9 @@ round-trip 字节相等、求值吞吐、校验器在岗、**直接操纵等价*
 | C5 协作与版本 | 命令流合并、变更记录、引用层 | 多会话协作无冲突 |
 | C6 WebAssembly + 帧流 | wasm 发布 + MCP over WebSocket + **流式渲染**(architecture §3.2:帧流协议,像素流导出/显示列表流远端舞台) | 网页里跑触手 demo,零安装;远端舞台渐进呈现 |
 | C7 **交互**(2026-11-17 owner 确立;[relations.md](relations.zh-CN.md) §1.2、architecture §3.3) | **respond** 关系族(事件×守卫→写通道/触发事件;状态机=离散通道+带守卫的 respond)、**oscillate** 周期驱动器、**step 插值 im=3**(离散通道——Switch 基座)、事件进命令流(**`event.fire`**,不可逆事实)、舞台 tap(D8 修订:五操作)、最小**表演录制**(手势→轨道关键帧,走 auto-key);求值=纯 `f(doc, tick, 事件前缀)`,空前缀=既有行为 | "点它就跳":**tap_jump demo 离线重放逐字节一致,无 AI 无代码**(小白门 N3);呼吸/摆动 oscillate demo;同流+同事件 → 同字节 |
+| C8 **交互手势时间线**(2026-11-17 owner 确立;line-model §0 规范表述、[relations.md](relations.zh-CN.md) §1.2、mvp §8 D10) | **手势线自事件流物化**:`event.fire` 原子双写 → 只读步进(im=3)轨道线 `gesture/<target>` / `gesture/pointer`(仅相位变化落键;`gesture/` 命名空间保留);录制端相位边沿(press/release/hoverIn/hoverOut 检测器加入 tap);**时长感知 respond**——`minHold`/`maxHold`=press→release 事件对测距(fold 回看,浏览器 click 语义;线值本身跟踪物理包含,浏览器 hover 语义);舞台时间轴上的只读参考泳道渲染(离线渲染按 `track` 线同样跳过 `gesture` 线——`MoEvent` 不变,事件仍是单 tick 事实) | "tap_vs_hold" demo:短按跳一下、长按(按住 ≥ 0.4s)变大——离线重放逐字节一致,无 AI 无代码(N3 式);同一脚本下手势线键字节稳定 |
 
-依赖:C1 依赖 A4 校验器与 B1(热路径退化);C3 的 .moho 依赖 B4(层/群组)+B5(位图网格);C4 依赖 B7(格式正式化);C7 依赖 A4 协议/校验器(事件即命令)与 D8 修订(owner 2026-11-17 批准)。
+依赖:C1 依赖 A4 校验器与 B1(热路径退化);C3 的 .moho 依赖 B4(层/群组)+B5(位图网格);C4 依赖 B7(格式正式化);C7 依赖 A4 协议/校验器(事件即命令)与 D8 修订(owner 2026-11-17 批准);C8 依赖 C7(事件流+step im=3)与 D10 决策(owner 2026-11-17 批准)。
 
 ## 里程碑与性能指标
 

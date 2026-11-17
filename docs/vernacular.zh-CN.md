@@ -4,7 +4,7 @@ title: "生活概念层:小白的零术语创作"
 description: 小白愿景的具体化——owner 规范表述;学习成本/可控性/熟悉度的第一性原理定义;生活词→引擎编译字典(拉/跟随/弹/出现/点击…);小白交互六步循环;十条设计规则;无术语的渐进披露;五道验收门与概念预算。
 tags: [vernacular, novice, everyday-concepts, ai-mediated, learning-cost, controllability, interaction]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
 sources:
   - id: landscape-doc
     resource: /landscape.zh-CN.md
@@ -104,13 +104,15 @@ sources:
 | 生活词 | 用户意图 | mo2d 编译 | 替代 |
 |---|---|---|---|
 | 点它 / 戳它 | 响应点击 | respond 关系:事件 `tap(目标线)`→动作 | listener+trigger 输入 |
+| 悬停 / 移开 | 指针在它上面 | 手势线 `hoverIn`/`hoverOut` 边沿(相位 1/0)+ hover 事件的 respond | mouseenter/mouseleave 监听器 |
 | 碰到 / 撞上 | 响应接触 | respond 关系:事件 `overlap(线A, 线B)` | 碰撞事件 |
-| 按住 / 松开 | 按压两态 | `press` / `release` 事件的 respond 关系,写一个开关通道 | boolean 输入 |
+| 按住 / 松开 | 按压两态 | 手势线:press/release 边沿物化为逐目标的手势时间线(im=3);`press` / `release` 事件的 respond 关系写一个开关通道 | boolean 输入 |
+| 长按 / 按久一点 | 持续按着一段时间 | release respond 带 `minHold`(时长=press→release 事件对测距=手势线按下段的长度) | long-press 事件 |
 | 一碰就跳 / 害羞地躲开 | 事件→动作 | respond→切换/启动轨道(AI 顺便写轨道) | 状态机+过渡 |
 | 等一下再… | 延迟响应 | `time-point(t)` / `track-end(轨道)` 事件的 respond | exit time / delay |
 | 动一下就停下 | 一次性行为 | 触发语义:发一次即复位 | trigger 输入 |
 
-**安放之处**:事件是会话控制线上的节点值;respond 关系是从(事件,条件)到通道写入/轨道切换的函数——正是"关系即函数"。纯播放器确定性地求值 respond 关系(同事件→同行为)——离线播放交互不丢,能力即数据(vision 规则 3)。
+**安放之处**:事件是单 tick 的不可逆事实;**手势是时间线**——它的相位边沿物化为时间轴上的**只读参考泳道**(`gesture/<目标线>`,step im=3,路线图 C8),按下段的长度就是按了多久。respond 关系是从(事件×守卫,含时长)到通道写入/触发的函数——正是"关系即函数"([relations.zh-CN.md](relations.zh-CN.md) §1.2)。纯播放器确定性地求值 respond 关系(同事件→同行为)——离线播放交互不丢,能力即数据(vision 规则 3)。
 
 ### 2.4 流程词(拼起来)
 
@@ -184,6 +186,7 @@ sources:
 - **roadmap.zh-CN.md Phase C**:交互词表+纯播放器确定性事件处理成为显式 C 项(以 N3 为门);表演录制(F6/R6)作为捕获通道;
 - **ai-interaction.zh-CN.md §2**:双通道补上其小白形态——两通道*对等*同样适用于零词汇用户(语言侧只收字典词);
 - **vision.zh-CN.md §7**:成功标准增补小白门 N1–N5(愿景早已要求"凭直觉、零菜单操作"——N1–N5 让它可测);
+- **C8(2026-11-17)**:交互词新增 悬停(hover)与 长按(long-press)——均编译到手势时间线词表([relations.zh-CN.md](relations.zh-CN.md) §1.2);字典预算吸收(+2 词根,仍在约 25 之内);
 - **mvp.zh-CN.md**:不变——MVP 触手原样;字典编译在其上(让触手摆动=demo 自己的命令)。
 
 ## 8. 待决问题

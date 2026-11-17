@@ -3,13 +3,16 @@
 
 use mo2d::command;
 use mo2d::eval;
+use mo2d::eval::{EvalLine, EvalNode};
 use mo2d::export::{export_frames, export_gif, ExportOpts};
 use mo2d::format;
+use mo2d::hull;
 use mo2d::json::{self, Value};
 use mo2d::mcp::{parse_camera, McpSession};
-use mo2d::model::{Document, TICKS_PER_SECOND};
+use mo2d::math::Vec3;
+use mo2d::model::{Document, SegAttrs, TICKS_PER_SECOND};
 use mo2d::png::encode_png;
-use mo2d::render::{render_with_assets, RenderOpts};
+use mo2d::render::{render, render_with_assets, Camera, RenderOpts};
 use mo2d::sha::sha256_hex;
 use mo2d::stage::{serve, StageState};
 use mo2d::validate;
@@ -38,6 +41,7 @@ fn main() {
         "hash" => cmd_hash(rest),
         "pack" => cmd_pack(rest),
         "unpack" => cmd_unpack(rest),
+        "hull" => cmd_hull(rest),
         "schema" => cmd_schema(),
         "help" | "--help" | "-h" => {
             usage();
@@ -104,6 +108,216 @@ fn cmd_unpack(args: &[String]) -> Result<(), String> {
 fn cmd_schema() -> Result<(), String> {
     println!("{}", mo2d::schema::schema_v1());
     Ok(())
+}
+
+/// Visual-hull probe (docs/log.md 2026-11-17): lift the turnaround document
+/// (closed lines tagged `hull-frame`, tags `frame=N angle=DEG`) into a
+/// slice stack, derive the three default pose trajectories as new 2D
+/// contour timelines, and write per-timeline JSON artifacts + filmstrip
+/// PNGs. Prints a single-line JSON summary of artifact hashes.
+fn cmd_hull(args: &[String]) -> Result<(), String> {
+    let doc_path = require(args, "--doc");
+    let out_dir = Path::new(require(args, "--out"));
+    let doc = format::load_doc(Path::new(doc_path))?;
+
+    // Collect the turnaround frames from tagged lines.
+    let mut frames: Vec<(usize, hull::Frame)> = Vec::new();
+    for line in &doc.lines {
+        if !line.tags.iter().any(|t| t == "hull-frame") {
+            continue;
+        }
+        let mut idx = None;
+        let mut angle = None;
+        for tag in &line.tags {
+            if let Some(v) = tag.strip_prefix("frame=") {
+                idx = Some(v.parse::<usize>().map_err(|_| format!("line {}: bad frame tag", line.id))?);
+            }
+            if let Some(v) = tag.strip_prefix("angle=") {
+                angle = Some(v.parse::<f64>().map_err(|_| format!("line {}: bad angle tag", line.id))?);
+            }
+        }
+        let (Some(idx), Some(angle)) = (idx, angle) else {
+            return Err(format!("line {}: hull-frame needs frame= and angle= tags", line.id));
+        };
+        if !line.closed {
+            return Err(format!("line {}: hull-frame contour must be closed", line.id));
+        }
+        let contour = line
+            .nodes
+            .iter()
+            .map(|n| match &n.pos {
+                mo2d::model::NodePos::Geom(p) => Ok(*p),
+                mo2d::model::NodePos::Tick(_) => {
+                    Err(format!("line {}: hull-frame contour must be static geometry", line.id))
+                }
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+        frames.push((idx, hull::Frame { angle_deg: angle, contour }));
+    }
+    frames.sort_by_key(|(i, _)| *i);
+    if frames.is_empty() {
+        return Err("no hull-frame lines in document".into());
+    }
+    let frames: Vec<hull::Frame> = frames.into_iter().map(|(_, f)| f).collect();
+
+    std::fs::create_dir_all(out_dir).map_err(|e| format!("create {}: {}", out_dir.display(), e))?;
+
+    // Lift + derive.
+    let stack = hull::lift(&frames, hull::SLICES);
+    let specs = hull::default_specs(&stack);
+    let timelines = hull::derive_timelines(&stack, &specs);
+
+    // Artifacts: canonical JSON per timeline + a filmstrip PNG per timeline
+    // + a contact sheet of the input turnaround (eyeball policy, P1-7).
+    let mut summary = mo2d::json::Value::obj();
+    summary.set("slices", mo2d::json::Value::Int(hull::SLICES as i64));
+    summary.set("grid", mo2d::json::Value::Int(hull::GRID as i64));
+    for t in &timelines {
+        let json_bytes = hull::timeline_json(t);
+        let artifact = out_dir.join(format!("{}.json", t.name));
+        format::write_atomic(&artifact, json_bytes.as_bytes())?;
+        let sha = sha256_hex(json_bytes.as_bytes());
+        summary.set(&t.name, mo2d::json::Value::Str(sha));
+        let png = filmstrip_png(t);
+        let png_path = out_dir.join(format!("{}.png", t.name));
+        std::fs::write(&png_path, &png).map_err(|e| format!("write {}: {}", png_path.display(), e))?;
+    }
+    let contact = contact_sheet_png(&frames);
+    let contact_path = out_dir.join("turnaround_contact.png");
+    std::fs::write(&contact_path, &contact).map_err(|e| format!("write {}: {}", contact_path.display(), e))?;
+
+    println!("{}", mo2d::json::to_string(&summary)?);
+    Ok(())
+}
+
+/// Deterministic world→cell mapping for the preview sheets.
+fn sheet_transform(
+    bbox: (f64, f64, f64, f64), // xmin, xmax, ymin, ymax
+    cell: (f64, f64),
+) -> impl Fn(f64, f64) -> Vec3 + Copy {
+    let (xmin, xmax, ymin, ymax) = bbox;
+    let (cw, ch) = cell;
+    let m = 12.0;
+    let s = (((cw - 2.0 * m) / (xmax - xmin).max(1e-9)).min((ch - 2.0 * m) / (ymax - ymin).max(1e-9)) * 1000.0).round() / 1000.0;
+    let ox = m + ((cw - 2.0 * m) - s * (xmax - xmin)) / 2.0;
+    let oy = m + ((ch - 2.0 * m) - s * (ymax - ymin)) / 2.0;
+    move |x: f64, y: f64| Vec3::new(ox + (x - xmin) * s, oy + (y - ymin) * s, 0.0)
+}
+
+fn poly_lines(
+    id: &str,
+    loops: &[Vec<(f64, f64)>],
+    xf: impl Fn(f64, f64) -> mo2d::math::Vec3 + Copy,
+    color: [u8; 4],
+    width: f64,
+) -> Vec<EvalLine> {
+    loops
+        .iter()
+        .enumerate()
+        .map(|(li, pts)| EvalLine {
+            id: format!("{}_{}", id, li),
+            tags: Vec::new(),
+            closed: true,
+            stroke_on: true,
+            fill_on: false,
+            fill_color: [0, 0, 0, 255],
+            texture: None,
+            width,
+            visible: true,
+            nodes: pts
+                .iter()
+                .map(|(x, y)| EvalNode {
+                    p: xf(*x, *y),
+                    width,
+                    color,
+                    fill: [0, 0, 0, 255],
+                    uv: None,
+                    handle_in: None,
+                    handle_out: None,
+                })
+                .collect(),
+            segs: vec![SegAttrs::default(); pts.len()],
+        })
+        .collect()
+}
+
+/// One PNG per derived timeline: all frames side by side, left to right.
+fn filmstrip_png(t: &mo2d::hull::DerivedTimeline) -> Vec<u8> {
+    let (cw, ch) = (170.0f64, 230.0f64);
+    let mut bbox = (f64::INFINITY, f64::NEG_INFINITY, f64::INFINITY, f64::NEG_INFINITY);
+    for f in &t.frames {
+        for lp in f {
+            for (x, y) in lp {
+                bbox.0 = bbox.0.min(*x);
+                bbox.1 = bbox.1.max(*x);
+                bbox.2 = bbox.2.min(*y);
+                bbox.3 = bbox.3.max(*y);
+            }
+        }
+    }
+    if !bbox.0.is_finite() {
+        bbox = (0.0, 1.0, 0.0, 1.0);
+    }
+    let n = t.frames.len();
+    let mut lines = Vec::new();
+    for (fi, f) in t.frames.iter().enumerate() {
+        let tx = |x: f64, y: f64| {
+            let cell = (cw, ch);
+            let f = sheet_transform(bbox, cell);
+            let mut p = f(x, y);
+            p.x += fi as f64 * cw;
+            p.y += 30.0;
+            p
+        };
+        lines.extend(poly_lines(&format!("f{}", fi), f, tx, [25, 25, 35, 255], 1.6));
+    }
+    let img = render(
+        &lines,
+        n as f64 * cw,
+        ch + 60.0,
+        &RenderOpts { width: (n as f64 * cw) as u32, height: (ch + 60.0) as u32, camera: Camera::Ortho2d, samples: 1 },
+    );
+    encode_png(&img)
+}
+
+/// Contact sheet of the input turnaround frames (4 per row).
+fn contact_sheet_png(frames: &[mo2d::hull::Frame]) -> Vec<u8> {
+    let (cw, ch) = (190.0f64, 250.0f64);
+    let mut bbox = (f64::INFINITY, f64::NEG_INFINITY, f64::INFINITY, f64::NEG_INFINITY);
+    for f in frames {
+        for p in &f.contour {
+            bbox.0 = bbox.0.min(p.x);
+            bbox.1 = bbox.1.max(p.x);
+            bbox.2 = bbox.2.min(p.y);
+            bbox.3 = bbox.3.max(p.y);
+        }
+    }
+    let cols = 4usize;
+    let rows = (frames.len() + cols - 1) / cols;
+    let mut lines = Vec::new();
+    for (fi, f) in frames.iter().enumerate() {
+        let loops = vec![f.contour.iter().map(|p| (p.x, p.y)).collect::<Vec<_>>()];
+        let tx = |x: f64, y: f64| {
+            let f2 = sheet_transform(bbox, (cw, ch));
+            let mut p = f2(x, y);
+            p.x += (fi % cols) as f64 * cw;
+            p.y += (fi / cols) as f64 * ch;
+            p
+        };
+        lines.extend(poly_lines(&format!("t{}", fi), &loops, tx, [30, 30, 45, 255], 1.5));
+    }
+    let img = render(
+        &lines,
+        cols as f64 * cw,
+        rows as f64 * ch,
+        &RenderOpts {
+            width: (cols as f64 * cw) as u32,
+            height: (rows as f64 * ch) as u32,
+            camera: Camera::Ortho2d,
+            samples: 1,
+        },
+    );
+    encode_png(&img)
 }
 
 fn usage() -> ! {

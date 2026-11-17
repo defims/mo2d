@@ -4,7 +4,7 @@ title: "MVP Final (v5): Tentacle + 3D Scene, Built End-to-End via the Command Pr
 description: MVP v5 consolidated draft — six items in scope (3D-ready line kernel / hot-path relations / Tick time / command protocol + validator / format + export / minimal stage), six gated acceptance steps (A1 includes the 3D scene hash gate, A6 hand-built and AI command streams isomorphic), an eight-item Definition of Done, a nine-item frozen decision list, and the basic-3D hard boundary plus anti-scope-creep clauses.
 tags: [mvp, scope, stage, mcp, ticks, 3d]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -142,7 +142,7 @@ BLOB area, project-directory layout, collaboration; **3D side**: lights, materia
 | A4 (protocol + validator + MCP) most likely to slip | Split into order: command-stream file → schema → determinism gate → MCP shell last |
 | A6/3D scope creep | Two hard boundaries in §5 (five operations / 3D list); whatever is missing, have the AI emit commands |
 
-## 8. Frozen decision list (basis for starting A1, nine items)
+## 8. Frozen decision list (basis for starting A1, ten items)
 
 | # | Decision | Source |
 |---|---|---|
@@ -155,5 +155,6 @@ BLOB area, project-directory layout, collaboration; **3D side**: lights, materia
 | D7 | Time = **raw Tick integers** (254,016,000,000/s) | file-format §2 |
 | D8 | Minimal stage pulled forward as A6, ~~four-operation hard boundary~~ **revised 2026-11-17 (owner approved): five operations** — draw / drag / connect / scrub / **tap** (tap = the `event.fire` command; still zero buttons, zero panels) | Owner decided to pull B1 forward; revision comes with the C7 interactivity slice (roadmap) |
 | D9 | Demo artifact includes a closed sucker (fill acceptance artifact) + a static z≠0 scene (3D acceptance artifact) | P0-3 / D6 |
+| D10 | **Interactive events are timelines**: a gesture's phase edges (hover/press/release/leave) are keyframes on a gesture timeline sharing the animation tick axis; the gesture's duration = the pressed segment's length; materialized as **read-only** step (im=3) track lines `gesture/<target>` (broadcast → `gesture/pointer`) via `event.fire` atomic dual-write; hold discrimination = press→release pair measurement (`minHold`/`maxHold`, fold lookback) | Owner design session 2026-11-17 ("交互事件其实也是时间线……点击事件的时间长短对应时间线的长短"); landing = roadmap C8 |
 
 **Once this document is frozen, A1 can start.**

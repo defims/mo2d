@@ -104,6 +104,27 @@ def main() -> None:
         "midTick": TPS // 2,
     }
 
+    # Hull probe demo (docs/log.md 2026-11-17): one turnaround timeline lifts
+    # into a visual hull, then derives three pose trajectories as new 2D
+    # contour timelines. Bespoke block: artifacts come from the `mo2d hull`
+    # subcommand, hashed per derived timeline (purely additive).
+    hull_doc = out / "hull_turnaround.mo2d"
+    run("replay", "--stream", str(ROOT / "demo/cmd/hull_turnaround.json"), "--out", str(hull_doc))
+    run("render", "--doc", str(hull_doc), "--tick", "0", "--out", str(out / "hull_turnaround.png"))
+    hull_summary = json.loads(run("hull", "--doc", str(hull_doc), "--out", str(out / "hull")))
+    frozen_b["hull"] = {
+        "docSha256": sha(hull_doc),
+        "frameSha256": sha(out / "hull_turnaround.png"),
+        "midTick": 0,
+        "derived": {
+            "yawSwing": hull_summary["yawSwing"],
+            "pitchNod": hull_summary["pitchNod"],
+            "orbitDiagonal": hull_summary["orbitDiagonal"],
+        },
+        "slices": hull_summary["slices"],
+        "grid": hull_summary["grid"],
+    }
+
     manifest = json.loads((out / "tentacle-frames" / "manifest.json").read_text())
     frozen = {
         "note": "Frozen acceptance references (mvp.md A1 3D scene gate / P1-7 hash freeze; Phase B demos). Regenerate via demo/freeze.py.",

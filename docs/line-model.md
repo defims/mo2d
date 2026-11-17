@@ -1,10 +1,10 @@
 ---
 type: Design Document
 title: "Everything is Lines: The Unified Model of Lines, Nodes, and Relations"
-description: mo2d core concept document — a line = an ordered sequence of nodes, with three-level attributes (line-level defaults / node-level overrides with interpolation / segment-level direct storage); bones/skeletons/timelines/gradients/layers/meshes/simulation are all projections of lines; four categories of non-line boundary with criteria; plus a Moho concept mapping and absorption table.
+description: mo2d core concept document — a line = an ordered sequence of nodes, with three-level attributes (line-level defaults / node-level overrides with interpolation / segment-level direct storage); bones/skeletons/timelines/gradients/layers/meshes/simulation are all projections of lines; the non-line boundary (three categories after the 2026-11-17 revisions) with criteria; plus a Moho concept mapping and absorption table.
 tags: [line-model, node, segment, attribute, core-concepts]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T10:41:04Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:51:12Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -53,6 +53,15 @@ bitmap meshes, gradients, layers — concepts that are mutually heterogeneous in
 >
 > **线和线关系可以最大化地利用 GPU,概念契合,提高性能。**
 > *Lines and line relations can maximize GPU utilization; the concepts fit, improving performance.*
+>
+> **交互事件是时间线:一次手势的相位边沿(悬停、按下、抬起、移出)是这条手势时间线上的关键帧,与动画共用同一 tick 轴;手势的时长即这条时间线上按下段的长度。**
+> *Interactive events are timelines: the phase edges of a gesture (hover, press, release, leave) are the keyframes of its gesture timeline, sharing the animation's tick axis; the gesture's duration is the length of the pressed segment on that timeline.*
+>
+> **代码是关系里的,关系即函数。**
+> *Code lives inside relations — a relation is a function. (2026-11-17 boundary revision: expressions, custom-relation function bodies, solvers and fill rules are relations — their bodies or parameters, NOT the non-line boundary; event scripts materialize as gesture timelines, mapping 10.)*
+>
+> **位图像素、音频样本、视频帧和填充类似。**
+> *Bitmap pixels, audio samples and video frames are like fill. (2026-11-17 boundary revision: sampling payloads are relation-bound — lines anchor/deform/drive them and the relation renders them, exactly like fill; not a non-line boundary category.)*
 
 ## 1. The Line Primitive and Three-Level Attributes
 
@@ -95,9 +104,9 @@ and a relation's parameters are the set's parameters (owner normative statement)
 The full taxonomy of relations is in [relations.md](relations.md); this document keeps only one sentence: layers and groups are organizational predefined relations,
 and bind, constraint, propagate, derive, track, and simulate make up the remaining categories.
 
-## 3. The Nine Mappings
+## 3. The Ten Mappings
 
-Each traditional concept = a projection of lines (or relations). The first four items and items 6/7 are owner normative statements; those marked [derived] are extensions of this document, pending owner confirmation.
+Each traditional concept = a projection of lines (or relations). The first four items, items 6/7, and item 10 are owner normative statements; those marked [derived] are extensions of this document, pending owner confirmation.
 
 | # | Traditional concept | mo2d formulation | Basis |
 |---|---|---|---|
@@ -110,6 +119,7 @@ Each traditional concept = a projection of lines (or relations). The first four 
 | 7 | Layer/group | **A set of lines** (predefined relation); nesting/parent-child = relation mapping; depth/occlusion = ordering parameters on the relation | Normative statement; **landed (B4)**: `group` relation with transform-box line + visibility |
 | 8 | Layer transform | **Box = a 4-node closed line**; [derived] dragging the box's nodes/edges applies scaling and rotation — the transform is an operation on the box line | Normative statement + derived |
 | 9 | Simulation | **Dynamic relations between lines** (springs/forces/collisions/particles); a particle = a short directed segment emitted by an emitter line (position + velocity vector) | Normative statement; **landed (B6)**: `sim` (Verlet chain, 240 Hz substeps, replay-from-seed) + seeded `particles` |
+| 10 | Interactive event (a click etc.) | A **gesture timeline**: a gesture's phase edges (hover/press/release/leave) are keyframes on a **step track line (im=3)** — materialized by `event.fire` dual-write as a **read-only** reference line `gesture/<target>` (broadcast events → `gesture/pointer`); the gesture's duration = the pressed segment's length; skipped by the offline renderer (a read-only reference lane on the stage's time axis) | Normative statement (established 2026-11-17); landing = roadmap C8 ([relations.md](relations.md) §1.2) |
 
 ### 3.1 Things That Don't Look Like Lines but Reduce Naturally
 
@@ -123,19 +133,17 @@ Each traditional concept = a projection of lines (or relations). The first four 
 | Brush scattering | Stamping along a line at intervals of a spacing channel |
 | Lipsync/Switch | Nodes carrying discrete values on a track's straight line |
 
-## 4. The Non-Line Boundary (Four Categories)
+## 4. The Non-Line Boundary (Three Categories)
 
-Converged through stress testing (two rounds of the owner asking "which further concepts cannot be associated with lines / have nothing to do with lines"): **in structure and in relations, everything is lines;
-the following four categories cannot be annexed any further — any further annexation is a stretch** (e.g., calling an MP3 clip a "line" is meaningless).
+Converged through stress testing (two rounds of the owner asking "which further concepts cannot be associated with lines / have nothing to do with lines"); **revised twice on 2026-11-17** — statement 11 ("代码是关系里的,关系即函数"): code, solvers and fill rules are relation bodies/parameters, the behavior layer; statement 12 ("位图像素、音频样本、视频帧和填充类似"): sampling payloads are **like fill** — relation-bound payloads that lines anchor/deform/drive (B5 precedent: texture ref + uv anchors) and the relation renders. **In structure and in relations, everything is lines; the following three categories cannot be annexed any further — any further annexation is a stretch** (an MP3 clip is not a line, but as a payload it is bound like fill — it is not a boundary item either).
 
 | # | Category | Contents | Why it cannot be absorbed |
 |---|---|---|---|
-| 1 | **Sampling fields** | Bitmap pixels, audio samples, video frames | Not geometry — data. Lines only anchor (the mesh), deform (warp/weft lines), drive (envelope lines); image outlines can be **derived** as lines, but that is an output, not the data itself |
-| 2 | **Symbols and logic** | Code (expressions/custom relation function bodies/solvers/event scripts), text strings and fonts (glyph outlines can be derived as lines; the semantic source is not lines), naming/annotations/semantic tags (metadata attached to lines) | Not geometry — semantics/rules. Fill rules (nonzero/even-odd) belong here: they are interpretation rules over a set of lines |
-| 3 | **Out-of-document processes and state** | Session state (view camera/selection set/undo stack/clipboard/snapping settings), collaboration and versioning, export and publishing configuration | Not document — environment |
-| 4 | **External asset references** | Out-of-document entities such as bitmap/audio/font files | Not inside the document — one end of a relation may point to a non-line entity |
+| 1 | **Symbols and semantics** | Text strings and fonts (glyph outlines can be derived as lines; the semantic source is not lines), naming/annotations/semantic tags (metadata attached to lines), style templates (named attribute payloads) | Not geometry — semantics/data, and not functions. Code, solvers and fill rules are NOT here (statement 11) — a relation is a function, so they are relations; event scripts materialize as gesture track lines (mapping 10, C8) |
+| 2 | **Out-of-document processes and state** | Session state (view camera/selection set/undo stack/clipboard/snapping settings), collaboration and versioning, export and publishing configuration | Not document — environment |
+| 3 | **Out-of-document endpoints** | External asset references — out-of-document entities such as bitmap/audio/font files | Not inside the document — one end of a relation may point to a non-line entity; once loaded, the payload is like fill (statement 12): lines anchor/deform/drive, the relation renders |
 
-Criteria: **non-geometric / non-document / out-of-document endpoint**.
+Criteria: **semantics/data that are not functions / not document / out-of-document endpoint**. Sampling payloads are like fill — bound by relations, rendered by them (statement 12).
 Document-level parameters (frame rate, color space) are not an independent category — they are **parameters of the root relation** (see [relations.md](relations.md)).
 
 ## 5. Data Model Skeleton (stack-agnostic pseudo-types)
@@ -204,4 +212,4 @@ Facts in the table below are taken from first-hand archives of the maohou knowle
       the relation between Bezier handles and segment geometry) awaits owner confirmation along [moho-mapping.md](moho-mapping.md) §5.2;
 - [ ] [derived] bitmap-mesh crossing points = nodes shared by warp and weft lines — whether to adopt;
 - [ ] [derived] transform = dragging the box line; interaction details decided during engineering;
-- [ ] The initial vocabulary of semantic tags (bone/skeleton/track/mesh-warp/…) to be decided during engineering.
+- [ ] The initial vocabulary of semantic tags (bone/skeleton/track/mesh-warp/gesture/…) to be decided during engineering.

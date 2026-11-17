@@ -4,7 +4,7 @@ title: "动画软件全景调研:传统与 AI 工具及概念"
 description: 对 20+ 款传统与 AI 时代动画工具的第一性原理调研——范式、概念清单、本质/偶然而判定、新手学习成本证据、AI 工具的五维可控性判定;提炼动画创作的不可约内核,支撑生活概念层(vernacular.md)。
 tags: [landscape, survey, first-principles, essential-incidental, ai-tools, learning-cost, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:47:04Z }
 sources:
   - id: adobe-animate
     resource: https://helpx.adobe.com/animate/desktop.html
@@ -312,7 +312,7 @@ Motion Diffusion Models(文本→动作,transformer 骨干)[^mdm];涂鸦→绑�
 | 变形器 / 骨骼 / 木偶 | Harmony·Animate·AE·Moho·OpenToonz·Spine·Live2D·Rive | 非刚性重塑 | E(角色) | N2/N3(骨=段,骨架=折线) |
 | 网格+权重 | Spine·Live2D·Rive·DragonBones·Creature | 多骨骼平滑弯曲 | D | N5 经纬线+bind 权重 |
 | 图形替换 / switch | Harmony·Moho·Scratch | 离散状态换装 | E | 轨道上的离散通道(line-model §3.1) |
-| 遮罩 / matte / cutter | Animate·AE·Harmony | 被另一形状裁剪 | E | shape 关系+填充规则(非线第 2 类) |
+| 遮罩 / matte / cutter | Animate·AE·Harmony | 被另一形状裁剪 | E | shape 关系+填充规则(关系参数) |
 | 绘制顺序(z) | Live2D·一切图层 | 遮挡 | E | zOrder 通道(moho-mapping §7.1) |
 | 参数空间(参数→姿势) | Live2D·Unity·Godot·Rive | 姿势与时间解耦 | E | **通道**(早已是一等公民) |
 | 混合空间(N 姿势↔参数) | Unity·Godot·Rive·Live2D | 连续姿势混合 | E | 通道+多轨道采样关系 |

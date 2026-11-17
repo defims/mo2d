@@ -4,7 +4,7 @@ title: "The Everyday-Concept Layer: Zero-Jargon Authoring for Novices"
 description: The novice vision made concrete — owner normative statement; first-principles definitions of learning cost / controllability / familiarity; the everyday-word → engine-compilation dictionary (pull/follow/bounce/appear/tap…); the six-step novice interaction loop; ten design rules; progressive disclosure without terminology; five acceptance gates and the concept budget.
 tags: [vernacular, novice, everyday-concepts, ai-mediated, learning-cost, controllability, interaction]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
 sources:
   - id: landscape-doc
     resource: /landscape.md
@@ -125,16 +125,21 @@ The perceive→decide→respond minimum model (F11). Owner-confirmed mapping (20
 | Life word | User intent | mo2d compilation | Replaces |
 |---|---|---|---|
 | 点它 / 戳它 tap / poke it | react to click | respond relation: event `tap(target line)` → action | listener + trigger input |
+| 悬停 / 移开 hover / move away | the pointer is over it | gesture-line `hoverIn`/`hoverOut` edges (phase 1/0) + respond on hover events | mouseenter/mouseleave listener |
 | 碰到 / 撞上 touch / bump into | react to contact | respond relation: event `overlap(line A, line B)` | collision event |
-| 按住 / 松开 press / let go | hold states | respond relations on `press` / `release` events writing a switch channel | boolean input |
+| 按住 / 松开 press / let go | hold states | gesture line: press/release edges materialize a per-target gesture timeline (im=3); respond relations on `press` / `release` write a switch channel | boolean input |
+| 长按 / 按久一点 hold it / press longer | keep pressing for a while | release respond with `minHold` (hold = press→release pair measurement = the gesture line's pressed-segment length) | long-press event |
 | 一碰就跳 / 害羞地躲开 jump when touched / shy away | event → motion | respond → switch/start a track (AI also writes the track) | state machine + transitions |
 | 等一下再… after a moment… | delayed response | respond on `time-point(t)` / `track-end(track)` event | exit time / delay |
 | 动一下就停下 stop after a while | one-shot behavior | trigger semantics: fires once, resets | trigger input |
 
-**Where it lives**: an event is a node-value on a session control line; a respond relation is a function
-from (event, condition) to channel writes / track switches — squarely "relations are functions". The
-plain player evaluates respond relations deterministically (same events → same behavior) — offline
-playback with interactivity intact, capability-as-data (vision rule 3).
+**Where it lives**: an event is a single-tick irreversible fact; a **gesture is a timeline** — its
+phase edges materialize as a **read-only reference lane on the time axis** (`gesture/<target>`,
+step im=3, roadmap C8), and the pressed segment's length *is* how long it was held. A respond
+relation is a function from (event × guard, incl. hold length) to channel writes / fires —
+squarely "relations are functions" ([relations.md](relations.md) §1.2). The plain player evaluates
+respond relations deterministically (same events → same behavior) — offline playback with
+interactivity intact, capability-as-data (vision rule 3).
 
 ### 2.4 Flow words (put it together)
 
@@ -254,6 +259,9 @@ convention: every step ships a visible deliverable accepted via the command stre
   for a user who has zero vocabulary (the language side must accept dictionary words only);
 - **vision.md §7**: success criteria gain the novice gates N1–N5 (the vision already demands
   "by intuition, zero menu operations" — N1–N5 make it testable);
+- **C8 (2026-11-17)**: the interaction words gain 悬停 (hover) and 长按 (long-press) — both compile
+  to the gesture-timeline vocabulary ([relations.md](relations.md) §1.2); the dictionary budget
+  absorbs them (+2 roots, still within ~25);
 - **mvp.md**: unchanged — the MVP tentacle is untouched; the dictionary compiles onto it
   (让触手摆动 = the demo's own commands).
 

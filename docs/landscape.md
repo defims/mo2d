@@ -4,7 +4,7 @@ title: "Animation Software Landscape Survey: Traditional & AI Tools and Concepts
 description: First-principles survey of 20+ traditional and AI-era animation tools — paradigms, concept inventories, essential-vs-incidental decomposition, novice learning-cost evidence, and a control-dimension verdict on AI tools; distills the irreducible core of animation authoring and feeds the everyday-concept layer (vernacular.md).
 tags: [landscape, survey, first-principles, essential-incidental, ai-tools, learning-cost, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:47:04Z }
 sources:
   - id: adobe-animate
     resource: https://helpx.adobe.com/animate/desktop.html
@@ -452,7 +452,7 @@ references the nine mappings of [line-model.md](line-model.md) §3 (N1–N9) and
 | Deformer / bone / puppet | Harmony·Animate·AE·Moho·OpenToonz·Spine·Live2D·Rive | non-rigid reshaping | E(char) | N2/N3 (bone=segment, skeleton=polyline) |
 | Mesh + weights | Spine·Live2D·Rive·DragonBones·Creature | smooth multi-bone bend | D | N5 warp/weft lines + bind weights |
 | Artwork substitution / switch | Harmony·Moho·Scratch | discrete state swap | E | discrete channel on track (§3.1 line-model) |
-| Mask / matte / cutter | Animate·AE·Harmony | clip by another's shape | E | shape relation + fill rule (non-line category 2) |
+| Mask / matte / cutter | Animate·AE·Harmony | clip by another's shape | E | shape relation + fill rule (a relation parameter) |
 | Draw order (z) | Live2D·all layers | occlusion | E | zOrder channel (moho-mapping §7.1) |
 | Parameter space (param→pose) | Live2D·Unity·Godot·Rive | pose decoupled from time | E | **channels** (first-class already) |
 | Blend space (N poses ↔ params) | Unity·Godot·Rive·Live2D | continuous pose blending | E | channels + relations sampling multiple tracks |

@@ -4,7 +4,7 @@ title: "Architecture Draft: Layering, Document Model, GPU Strategy, and Format P
 description: The mo2d architecture draft — document model = a flat line collection + relation graph (no rigid tree); L0-L4 layering; a dedicated GPU-strategy section (SoA / unified vertex format / DAG parallelism / PBD-compute / CPU oracle + damage rendering / instancing, referencing BUI); storage-format principles; tech stack leaning toward Rust + wgpu/wasm (to be decided).
 tags: [architecture, gpu, damage-rendering, storage-format, layering, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -211,10 +211,24 @@ in-file interactivity essential. The engine answer keeps the pull model intact:
 - **Stage**: the tap gesture joins draw/drag/connect/scrub as the **fifth operation**
   (MVP D8 amended by the owner, 2026-11-17 — still zero buttons, zero panels, every gesture a
   command). The plain offline player evaluates respond relations deterministically → the N3
-  gate ("tap it and it jumps" with no AI, no code) replays through the same command stream.
+  gate ("tap it and it jumps" with no AI, no code) replays through the same command stream;
+- **Gesture timelines materialize in the command layer (C8, established 2026-11-17 by the
+  owner — line-model §0 statement, relations §1.2, mvp D10)**: `event.fire` becomes an
+  **atomic dual-write** — append the `MoEvent` (shape unchanged) + upsert the phase key on
+  `gesture/<target>` (broadcast → `gesture/pointer`), a step (im=3) track line that **grows
+  only with events** (read-only: `gesture/` namespace reserved, stage refuses node edits,
+  picking ignores it). The fold treats gesture-line keys as ordinary document data — they
+  ride event ticks and add no fold moments; the only fold extension is the hold lookback
+  (a release respond with `minHold`/`maxHold` pairs the latest unpaired press on the same
+  target in the prefix — deterministic arithmetic on recorded facts). Rendering: the stage
+  draws gesture lines as **read-only reference lanes on the time axis** (session overlay,
+  tags `track` + `gesture`); the offline renderer skips them exactly like `track` lines
+  (the same convention that keeps Tick nodes "never rendered") → **frozen PNG hashes are
+  untouched**, and `MoEvent` stays a single-tick irreversible fact.
 
 Placement: roadmap C7; the `oscillate` periodic driver and step interpolation land first
-(pure `f(tick)`), respond + the event stream second.
+(pure `f(tick)`), respond + the event stream second. C8 (gesture timelines) materializes at
+the command layer on top of both — the fold gains only the hold lookback.
 
 ## 4. Storage-format principles
 

@@ -4,7 +4,7 @@ title: "AI-Native Interaction: The Stage Is the Interface"
 description: The mo2d interaction model — no standard toolbar/menus; display equals edit (multiple clients of one rendering core); dual channels (direct manipulation + natural language); controls are lines (temporary controls generated on demand by AI); every operation is a command (JSON command stream + MCP); unified undo/history.
 tags: [ai-native, interaction, command-protocol, mcp, display-equals-edit, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
 sources:
   - id: vectorcraft-mcp
     resource: file:///Users/wei/vectorcraft/docs/mcp.md
@@ -86,7 +86,10 @@ if you can draw a line, you can make a control; AI generating a control = AI dra
 - **Events are commands too (established 2026-11-17, C7)**: interactions enter the same command
   stream as `event.fire` commands — the replayed history includes behavior, determinism covers
   event handling ([relations.md](relations.md) §1.2, architecture §3.3); the stage's tap is the
-  fifth gesture (MVP D8 amended, still zero buttons/panels).
+  fifth gesture (MVP D8 amended, still zero buttons/panels). **And each gesture is itself a
+  timeline (C8)**: the phase edges materialize as a read-only reference lane on the time axis
+  (`gesture/<target>`, relations.md §1.2) — a click's duration is visible as an ordinary line
+  length, and a gesture-line grows only with events, never by direct editing.
 
 ## 5. Drawing the boundary between document state and session state
 

@@ -4,7 +4,7 @@ title: "AI 原生交互:舞台即界面"
 description: mo2d 交互模型——无标准工具栏/菜单,展示编辑一体(同一渲染核心的多个客户端),双通道(直接操纵+自然语言),控件即线(临时控件由 AI 按需生成),一切操作皆命令(JSON 命令流+MCP),撤销/历史统一。
 tags: [ai-native, interaction, command-protocol, mcp, display-equals-edit, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T07:26:46Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
 sources:
   - id: vectorcraft-mcp
     resource: file:///Users/wei/vectorcraft/docs/mcp.md
@@ -81,6 +81,9 @@ AI 生成控件 = AI 画线。
 - **事件也是命令(2026-11-17 确立,C7)**:交互以 `event.fire` 命令进入同一命令流——
   重放的历史包含行为,确定性覆盖事件处理([relations.zh-CN.md](relations.zh-CN.md) §1.2、
   architecture §3.3);舞台的 tap 即第五手势(MVP D8 修订,仍零按钮零面板)。
+  **且每个手势本身就是时间线(C8)**:相位边沿物化为时间轴上的只读参考泳道
+  (`gesture/<目标线>`,relations §1.2)——点击的时长作为普通的线长度直接可见,
+  手势线只随事件生长,不可直接编辑。
 
 ## 5. 文档状态与会话状态的划界
 
