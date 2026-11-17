@@ -450,6 +450,13 @@ pub enum RelationKind {
     /// verbs breathe/sway/float/spin compile to this (vernacular.md §2.1).
     /// Physical sway stays with `sim`.
     Oscillate,
+    /// respond (C7): interaction — (event × guard) → ordered actions.
+    /// Event-sourced: the fold of the recorded `event.fire` prefix decides
+    /// what fires; the eval arm applies the folded channel state (pure
+    /// function of (doc, tick, eventPrefix), relations.md §4). Reads no lines
+    /// (hit/overlap tests use rest geometry), so "tap on X changes X" is a
+    /// legal (cycle-free) graph.
+    Respond,
 }
 
 impl RelationKind {
@@ -463,6 +470,7 @@ impl RelationKind {
             RelationKind::Sim => "sim",
             RelationKind::Particles => "particles",
             RelationKind::Oscillate => "oscillate",
+            RelationKind::Respond => "respond",
         }
     }
 }
@@ -542,7 +550,172 @@ pub struct Relation {
     pub osc_phase_ticks: i64,
     /// Oscillation amplitude (world units / width units), >= 0.
     pub osc_amplitude: f64,
+    // respond (C7)
+    /// The line this respond watches (pointer target / overlap side A /
+    /// broadcast receiver for named events).
+    pub resp_trigger: String,
+    pub resp_event: RespondEvent,
+    /// overlap counterpart line (side B; empty unless event = overlap).
+    pub resp_other: String,
+    /// Pointer hit radius in world units (engine-side deterministic test).
+    pub resp_radius: f64,
+    /// Optional condition on a width channel (guarded transitions).
+    pub resp_guard: Option<RespondGuard>,
+    /// Ordered actions (write a channel / fire a named event).
+    pub resp_actions: Vec<RespondAction>,
     pub unknown: Vec<(String, Value)>,
+}
+
+impl Relation {
+    /// The channel-write target lines of a respond relation (dedup via
+    /// `writes_all`; borrow-backed, no allocation of ids).
+    pub fn respond_target_lines(&self) -> Vec<&str> {
+        self.resp_actions
+            .iter()
+            .filter_map(|a| match a {
+                RespondAction::WriteWidth { line, .. } | RespondAction::WritePosition { line, .. } => Some(line.as_str()),
+                RespondAction::Fire { .. } => None,
+            })
+            .collect()
+    }
+}
+
+/// A recorded interaction event (C7): the behavior-data half of "events are
+/// commands" — `event.fire` appends one to `Document.events`, and evaluation
+/// folds the prefix up to the target tick (relations.md §1.2/§4 event
+/// dimension). Events are irreversible facts (inverse = noop).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MoEvent {
+    /// Event name: the pointer vocabulary ("tap"/"press"/"release"/"hoverIn"/
+    /// "hoverOut"/"overlap") or any custom (named) event.
+    pub name: String,
+    /// The tick the event happened at (a fold moment).
+    pub tick: i64,
+    /// Order within the same tick (auto = insertion index).
+    pub seq: i64,
+    /// Target line (None = broadcast to every listener of this name).
+    pub target: Option<String>,
+    /// Pointer position, when the host recorded one (enables the engine-side
+    /// deterministic hit test against rest geometry).
+    pub x: Option<f64>,
+    pub y: Option<f64>,
+}
+
+/// What a respond relation listens for (relations.md §1.2 event vocabulary).
+#[derive(Debug, Clone, PartialEq)]
+pub enum RespondEvent {
+    /// Pointer tap on the trigger line.
+    Tap,
+    /// Pointer down on the trigger line.
+    Press,
+    /// Pointer release over the trigger line.
+    Release,
+    /// Pointer entered the trigger line (the recorder decides the edge).
+    HoverIn,
+    /// Pointer left the trigger line.
+    HoverOut,
+    /// Trigger line overlaps `resp_other` — engine-side rising-edge check at
+    /// fold moments, against rest geometry (v1 refinement note: moment-sampled,
+    /// not per-tick).
+    Overlap,
+    /// Fires when replay crosses tick `t` (no stored event needed — the fold
+    /// schedules the moment itself).
+    TimePoint(i64),
+    /// Fires on a named event delivered via `event.fire` or a Fire action.
+    Named(String),
+}
+
+impl RespondEvent {
+    /// The event name this kind listens for ("timePoint"/"named" are handled
+    /// structurally and return None).
+    pub fn listener_name(&self) -> Option<&'static str> {
+        match self {
+            RespondEvent::Tap => Some("tap"),
+            RespondEvent::Press => Some("press"),
+            RespondEvent::Release => Some("release"),
+            RespondEvent::HoverIn => Some("hoverIn"),
+            RespondEvent::HoverOut => Some("hoverOut"),
+            RespondEvent::Overlap => Some("overlap"),
+            RespondEvent::TimePoint(_) | RespondEvent::Named(_) => None,
+        }
+    }
+    /// Serialization code ("tap"/…/"timePoint"/"named").
+    pub fn code(&self) -> &'static str {
+        match self {
+            RespondEvent::TimePoint(_) => "timePoint",
+            RespondEvent::Named(_) => "named",
+            other => other.listener_name().unwrap_or("named"),
+        }
+    }
+}
+
+/// Guard comparison operator.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum RespondOp {
+    Lt,
+    Le,
+    Eq,
+    Ge,
+    Gt,
+}
+
+impl RespondOp {
+    pub fn code(&self) -> &'static str {
+        match self {
+            RespondOp::Lt => "<",
+            RespondOp::Le => "<=",
+            RespondOp::Eq => "=",
+            RespondOp::Ge => ">=",
+            RespondOp::Gt => ">",
+        }
+    }
+    pub fn from_code(s: &str) -> Option<RespondOp> {
+        match s {
+            "<" => Some(RespondOp::Lt),
+            "<=" => Some(RespondOp::Le),
+            "=" => Some(RespondOp::Eq),
+            ">=" => Some(RespondOp::Ge),
+            ">" => Some(RespondOp::Gt),
+            _ => None,
+        }
+    }
+    pub fn test(&self, cur: f64, value: f64) -> bool {
+        match self {
+            RespondOp::Lt => cur < value,
+            RespondOp::Le => cur <= value,
+            RespondOp::Eq => (cur - value).abs() < 1e-9,
+            RespondOp::Ge => cur >= value,
+            RespondOp::Gt => cur > value,
+        }
+    }
+}
+
+/// A respond guard: condition on a width channel. Absent channel state reads
+/// as the rest width (so "only fire if a previous tap widened it" works).
+#[derive(Debug, Clone, PartialEq)]
+pub struct RespondGuard {
+    pub line: String,
+    pub node: Option<usize>,
+    pub op: RespondOp,
+    pub value: f64,
+}
+
+/// Write mode for channel writes.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum WriteMode {
+    /// Absolute value.
+    Set,
+    /// Relative to the accumulated channel state (rest + Σ deltas).
+    Add,
+}
+
+/// One respond action (relations.md §1.2): write a channel or fire a named
+/// event (chain reactions, same fold moment, FIFO order).
+#[derive(Debug, Clone, PartialEq)]
+pub enum RespondAction {
+    WriteWidth { line: String, node: Option<usize>, mode: WriteMode, value: f64 },
+    WritePosition { line: String, node: Option<usize>, mode: WriteMode, value: Vec3 },
+    Fire { name: String },
 }
 
 impl Relation {
@@ -598,6 +771,12 @@ impl Relation {
             osc_period_ticks: TICKS_PER_SECOND,
             osc_phase_ticks: 0,
             osc_amplitude: 20.0,
+            resp_trigger: String::new(),
+            resp_event: RespondEvent::Tap,
+            resp_other: String::new(),
+            resp_radius: 12.0,
+            resp_guard: None,
+            resp_actions: Vec::new(),
             unknown: Vec::new(),
         }
     }
@@ -662,6 +841,13 @@ impl Relation {
         r.osc_attr = attr;
         r
     }
+    pub fn new_respond(id: &str, trigger: &str, event: RespondEvent) -> Relation {
+        let mut r = Relation::base(id);
+        r.kind = RelationKind::Respond;
+        r.resp_trigger = trigger.to_string();
+        r.resp_event = event;
+        r
+    }
 
     /// Lines this relation reads from (inputs).
     pub fn reads(&self) -> Vec<&str> {
@@ -688,6 +874,10 @@ impl Relation {
                 .collect(),
             // oscillate is a pure function of tick — it reads no lines.
             RelationKind::Oscillate => vec![],
+            // respond is event-sourced: hit/overlap tests use rest geometry,
+            // so there is no dependency on the evaluated frame (this is what
+            // makes "tap on X writes X" a cycle-free graph).
+            RelationKind::Respond => vec![],
         }
     }
 
@@ -706,6 +896,13 @@ impl Relation {
             // line is claimed, so there is no primary write target.
             RelationKind::Particles => &self.part_emitter,
             RelationKind::Oscillate => &self.osc_target,
+            // respond: first channel-write target; fire-only responds claim
+            // nothing (fall back to the trigger line like Particles does).
+            RelationKind::Respond => self
+                .respond_target_lines()
+                .first()
+                .copied()
+                .unwrap_or(&self.resp_trigger),
         }
     }
 
@@ -715,6 +912,18 @@ impl Relation {
             RelationKind::Group => self.group_members.iter().map(|s| s.as_str()).collect(),
             // Particles claim no document line.
             RelationKind::Particles => vec![],
+            // respond claims every channel-write target (dedup, document order).
+            RelationKind::Respond => {
+                let mut seen: Vec<&str> = Vec::new();
+                self.respond_target_lines().into_iter().filter(|l| {
+                    if seen.contains(l) {
+                        false
+                    } else {
+                        seen.push(l);
+                        true
+                    }
+                }).collect()
+            }
             _ => vec![self.writes()],
         }
     }
@@ -749,12 +958,16 @@ pub struct Document {
     pub relations: Vec<Relation>,
     /// Named attribute templates (B2). Absent in old files → empty.
     pub styles: Vec<Style>,
+    /// Recorded interaction events (C7, `event.fire`). Behavior data — the
+    /// document is the truth for offline interactive playback (vision rule 3).
+    /// Absent in old files → empty; not serialized when empty (byte-compat).
+    pub events: Vec<MoEvent>,
     pub unknown: Vec<(String, Value)>,
 }
 
 impl Default for Document {
     fn default() -> Self {
-        Document { root: Root::default(), lines: Vec::new(), relations: Vec::new(), styles: Vec::new(), unknown: Vec::new() }
+        Document { root: Root::default(), lines: Vec::new(), relations: Vec::new(), styles: Vec::new(), events: Vec::new(), unknown: Vec::new() }
     }
 }
 

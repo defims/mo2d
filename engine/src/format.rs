@@ -145,8 +145,41 @@ pub fn doc_to_value(doc: &Document) -> Value {
     if !doc.styles.is_empty() {
         v.set("styles", Value::Arr(doc.styles.iter().map(style_to_value).collect()));
     }
+    // Events (C7) emitted only when present — same byte-compat rule.
+    if !doc.events.is_empty() {
+        v.set("events", Value::Arr(doc.events.iter().map(event_to_value).collect()));
+    }
     append_unknown(&mut v, &doc.unknown);
     v
+}
+
+/// Canonical event serialization: fixed field order (name, tick, seq, then
+/// optional target/x/y) — byte-stable across runs.
+fn event_to_value(e: &MoEvent) -> Value {
+    let mut o = Value::obj();
+    o.set("name", Value::Str(e.name.clone()));
+    o.set("tick", Value::Int(e.tick));
+    o.set("seq", Value::Int(e.seq));
+    if let Some(t) = &e.target {
+        o.set("target", Value::Str(t.clone()));
+    }
+    if let Some(x) = e.x {
+        o.set("x", Value::Num(x));
+    }
+    if let Some(y) = e.y {
+        o.set("y", Value::Num(y));
+    }
+    o
+}
+
+fn event_from_value(v: &Value, idx: usize) -> Result<MoEvent, String> {
+    let name = v.get("name").and_then(|x| x.as_str()).ok_or("event.name must be a string")?.to_string();
+    let tick = v.get("tick").and_then(|x| x.as_i64()).ok_or("event.tick must be an integer")?;
+    let seq = v.get("seq").and_then(|x| x.as_i64()).unwrap_or(idx as i64);
+    let target = v.get("target").and_then(|x| x.as_str()).map(|s| s.to_string());
+    let x = v.get("x").and_then(|x| x.as_f64());
+    let y = v.get("y").and_then(|x| x.as_f64());
+    Ok(MoEvent { name, tick, seq, target, x, y })
 }
 
 /// Canonical document bytes (trailing newline).
@@ -534,6 +567,70 @@ fn relation_to_value(r: &Relation) -> Value {
             o.set("phase", Value::Int(r.osc_phase_ticks));
             o.set("amplitude", Value::Num(r.osc_amplitude));
         }
+        RelationKind::Respond => {
+            o.set("trigger", Value::Str(r.resp_trigger.clone()));
+            o.set("event", Value::Str(r.resp_event.code().into()));
+            match &r.resp_event {
+                RespondEvent::TimePoint(t) => o.set("at", Value::Int(*t)),
+                RespondEvent::Named(n) => o.set("eventName", Value::Str(n.clone())),
+                _ => {}
+            }
+            if !r.resp_other.is_empty() {
+                o.set("other", Value::Str(r.resp_other.clone()));
+            }
+            o.set("radius", Value::Num(r.resp_radius));
+            if let Some(g) = &r.resp_guard {
+                let mut gv = Value::obj();
+                gv.set("line", Value::Str(g.line.clone()));
+                if let Some(n) = g.node {
+                    gv.set("node", Value::Int(n as i64));
+                }
+                gv.set("op", Value::Str(g.op.code().into()));
+                gv.set("value", Value::Num(g.value));
+                o.set("guard", gv);
+            }
+            let mut acts = Vec::new();
+            for a in &r.resp_actions {
+                let mut av = Value::obj();
+                match a {
+                    RespondAction::WriteWidth { line, node, mode, value } => {
+                        let mut w = Value::obj();
+                        w.set("line", Value::Str(line.clone()));
+                        if let Some(n) = node {
+                            w.set("node", Value::Int(*n as i64));
+                        }
+                        w.set("attr", Value::Str("width".into()));
+                        w.set("mode", Value::Str(match mode {
+                            WriteMode::Set => "set",
+                            WriteMode::Add => "add",
+                        }.into()));
+                        w.set("value", Value::Num(*value));
+                        av.set("write", w);
+                    }
+                    RespondAction::WritePosition { line, node, mode, value } => {
+                        let mut w = Value::obj();
+                        w.set("line", Value::Str(line.clone()));
+                        if let Some(n) = node {
+                            w.set("node", Value::Int(*n as i64));
+                        }
+                        w.set("attr", Value::Str("position".into()));
+                        w.set("mode", Value::Str(match mode {
+                            WriteMode::Set => "set",
+                            WriteMode::Add => "add",
+                        }.into()));
+                        w.set("value", vec_value(*value));
+                        av.set("write", w);
+                    }
+                    RespondAction::Fire { name } => {
+                        let mut f = Value::obj();
+                        f.set("name", Value::Str(name.clone()));
+                        av.set("fire", f);
+                    }
+                }
+                acts.push(av);
+            }
+            o.set("actions", Value::Arr(acts));
+        }
     }
     append_unknown(&mut o, &r.unknown);
     o
@@ -648,9 +745,14 @@ pub fn doc_from_value(v: &Value) -> Result<Document, String> {
             doc.styles.push(style_from_value(sv)?);
         }
     }
+    if let Some(events) = v.get("events").and_then(|x| x.as_arr()) {
+        for (i, ev) in events.iter().enumerate() {
+            doc.events.push(event_from_value(ev, i)?);
+        }
+    }
 
     let _ = obj;
-    doc.unknown = unknown_of(v, &["format", "version", "minReader", "generator", "root", "lines", "relations", "styles"]);
+    doc.unknown = unknown_of(v, &["format", "version", "minReader", "generator", "root", "lines", "relations", "styles", "events"]);
     Ok(doc)
 }
 
@@ -977,6 +1079,73 @@ fn relation_from_value(v: &Value) -> Result<Relation, String> {
             }
             r
         }
+        "respond" => {
+            let trigger = v.get("trigger").and_then(|x| x.as_str()).ok_or_else(|| format!("relation '{}': respond needs trigger", id))?;
+            let code = v.get("event").and_then(|x| x.as_str()).ok_or_else(|| format!("relation '{}': respond needs event", id))?;
+            let event = match code {
+                "tap" => RespondEvent::Tap,
+                "press" => RespondEvent::Press,
+                "release" => RespondEvent::Release,
+                "hoverIn" => RespondEvent::HoverIn,
+                "hoverOut" => RespondEvent::HoverOut,
+                "overlap" => RespondEvent::Overlap,
+                "timePoint" => {
+                    let at = v.get("at").and_then(|x| x.as_i64()).ok_or_else(|| format!("relation '{}': respond timePoint needs at", id))?;
+                    RespondEvent::TimePoint(at)
+                }
+                "named" => {
+                    let n = v.get("eventName").and_then(|x| x.as_str()).ok_or_else(|| format!("relation '{}': respond named needs eventName", id))?;
+                    RespondEvent::Named(n.to_string())
+                }
+                other => return Err(format!("relation '{}': unknown respond event '{}'", id, other)),
+            };
+            let mut r = Relation::new_respond(&id, trigger, event);
+            if let Some(o) = v.get("other").and_then(|x| x.as_str()) {
+                r.resp_other = o.to_string();
+            }
+            if let Some(x) = v.get("radius").and_then(|x| x.as_f64()) {
+                r.resp_radius = x;
+            }
+            if let Some(g) = v.get("guard") {
+                let line = g.get("line").and_then(|x| x.as_str()).ok_or_else(|| format!("relation '{}': guard.line missing", id))?.to_string();
+                let node = g.get("node").and_then(|x| x.as_i64()).map(|n| n as usize);
+                let op_code = g.get("op").and_then(|x| x.as_str()).unwrap_or("=");
+                let op = RespondOp::from_code(op_code).ok_or_else(|| format!("relation '{}': guard.op must be <|<=|=|>=|>, got {:?}", id, op_code))?;
+                let value = g.get("value").and_then(|x| x.as_f64()).ok_or_else(|| format!("relation '{}': guard.value missing", id))?;
+                r.resp_guard = Some(RespondGuard { line, node, op, value });
+            }
+            if let Some(acts) = v.get("actions").and_then(|x| x.as_arr()) {
+                for a in acts {
+                    if let Some(w) = a.get("write") {
+                        let line = w.get("line").and_then(|x| x.as_str()).ok_or_else(|| format!("relation '{}': write.line missing", id))?.to_string();
+                        let node = w.get("node").and_then(|x| x.as_i64()).map(|n| n as usize);
+                        let mode = match w.get("mode").and_then(|x| x.as_str()) {
+                            Some("add") => WriteMode::Add,
+                            Some("set") | None => WriteMode::Set,
+                            o => return Err(format!("relation '{}': write.mode must be set|add, got {:?}", id, o)),
+                        };
+                        match w.get("attr").and_then(|x| x.as_str()) {
+                            Some("width") => {
+                                let value = w.get("value").and_then(|x| x.as_f64()).ok_or_else(|| format!("relation '{}': write.value missing", id))?;
+                                r.resp_actions.push(RespondAction::WriteWidth { line, node, mode, value });
+                            }
+                            Some("position") | None => {
+                                let val = w.get("value").ok_or_else(|| format!("relation '{}': write.value missing", id))?;
+                                let value = parse_vec3(val, &format!("relation '{}': write position value", id))?;
+                                r.resp_actions.push(RespondAction::WritePosition { line, node, mode, value });
+                            }
+                            o => return Err(format!("relation '{}': write.attr must be width|position, got {:?}", id, o)),
+                        }
+                    } else if let Some(f) = a.get("fire") {
+                        let name = f.get("name").and_then(|x| x.as_str()).ok_or_else(|| format!("relation '{}': fire.name missing", id))?.to_string();
+                        r.resp_actions.push(RespondAction::Fire { name });
+                    } else {
+                        return Err(format!("relation '{}': action must be {{write}} or {{fire}}", id));
+                    }
+                }
+            }
+            r
+        }
         other => return Err(format!("relation '{}': unknown type '{}'", id, other)),
     };
     if let Some(f) = v.get("falloff").and_then(|x| x.as_f64()) {
@@ -997,6 +1166,7 @@ fn relation_from_value(v: &Value) -> Result<Relation, String> {
         RelationKind::Sim => &["id", "type", "line", "anchors", "gravity", "damping", "iterations", "collideWith", "radius", "selfCollide"],
         RelationKind::Particles => &["id", "type", "emitter", "node", "rate", "speed", "dir", "spread", "life", "gravity", "damping", "size", "color", "len", "seed", "collideWith", "bounce", "radius"],
         RelationKind::Oscillate => &["id", "type", "target", "node", "attr", "axis", "wave", "period", "phase", "amplitude"],
+        RelationKind::Respond => &["id", "type", "trigger", "event", "at", "eventName", "other", "radius", "guard", "actions"],
     };
     r.unknown = unknown_of(v, consumed);
     Ok(r)

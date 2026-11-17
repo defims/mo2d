@@ -65,11 +65,12 @@ def main() -> None:
         run("render", "--doc", str(doc_path), "--tick", str(TPS // 2), "--out", str(png_path))
         frozen_b[key] = {"docSha256": sha(doc_path), "frameSha256": sha(png_path), "midTick": TPS // 2}
 
-    # Phase C7 interactivity demos (roadmap C7: oscillate breathe/sway;
-    # tap_jump joins at the respond + event-stream step).
+    # Phase C7 interactivity demos (roadmap C7: oscillate breathe/sway +
+    # the respond/event-stream tap_jump — the N3 gate, offline no-AI playback).
     c_demos = {
         "breathe": "breathe.json",
         "sway": "sway.json",
+        "tapJump": "tap_jump.json",
     }
     for key, name in c_demos.items():
         doc_path = out / f"{key}.mo2d"

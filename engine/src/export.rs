@@ -58,7 +58,7 @@ pub fn export_frames(doc: &Document, opts: &ExportOpts, dir: &Path) -> Result<Ex
     let mut tick = opts.from_tick;
     let mut index = 0u64;
     while tick <= opts.to_tick {
-        let lines = eval::evaluate(doc, tick)?;
+        let lines = eval::evaluate_with_events(doc, tick, &doc.events)?;
         let mut assets = AssetStore::new();
         assets.root = opts.asset_root.clone();
         let img = render_with_assets(
@@ -121,7 +121,7 @@ pub fn export_gif(doc: &Document, opts: &ExportOpts, path: &Path) -> Result<(), 
     let mut images = Vec::new();
     let mut tick = opts.from_tick;
     while tick <= opts.to_tick {
-        let lines = eval::evaluate(doc, tick)?;
+        let lines = eval::evaluate_with_events(doc, tick, &doc.events)?;
         let mut assets = AssetStore::new();
         assets.root = opts.asset_root.clone();
         let img = render_with_assets(

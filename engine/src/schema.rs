@@ -29,7 +29,8 @@ pub fn schema_v1() -> &'static str {
     },
     "lines": {"type": "array", "items": {"$ref": "#/definitions/line"}},
     "relations": {"type": "array", "items": {"$ref": "#/definitions/relation"}},
-    "styles": {"type": "array", "items": {"$ref": "#/definitions/style"}}
+    "styles": {"type": "array", "items": {"$ref": "#/definitions/style"}},
+    "events": {"type": "array", "items": {"$ref": "#/definitions/event"}}
   },
   "definitions": {
     "color": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}, "minItems": 4, "maxItems": 4},
@@ -142,8 +143,27 @@ pub fn schema_v1() -> &'static str {
           "attr": {"enum": ["position", "width"]}, "axis": {"$ref": "#/definitions/vec3"},
           "wave": {"type": "integer", "enum": [0, 1, 2], "description": "0 sine / 1 triangle / 2 saw"},
           "period": {"type": "integer"}, "phase": {"type": "integer"},
-          "amplitude": {"type": "number", "minimum": 0}}}
+          "amplitude": {"type": "number", "minimum": 0}}},
+        {"properties": {"type": {"const": "respond"}, "trigger": {"type": "string"},
+          "event": {"enum": ["tap", "press", "release", "hoverIn", "hoverOut", "overlap", "timePoint", "named"]},
+          "at": {"type": "integer", "minimum": 0}, "eventName": {"type": "string"},
+          "other": {"type": "string"}, "radius": {"type": "number", "minimum": 0},
+          "guard": {"type": "object", "properties": {"line": {"type": "string"}, "node": {"type": "integer", "minimum": 0},
+            "op": {"enum": ["<", "<=", "=", ">=", ">"]}, "value": {"type": "number"}}},
+          "actions": {"type": "array", "items": {"type": "object", "properties": {
+            "write": {"type": "object", "properties": {"line": {"type": "string"}, "node": {"type": "integer", "minimum": 0},
+              "attr": {"enum": ["width", "position"]}, "mode": {"enum": ["set", "add"]}, "value": {}}}}}}}}
       ]
+    },
+    "event": {
+      "type": "object",
+      "required": ["name", "tick"],
+      "description": "C7 recorded interaction event (event.fire)",
+      "properties": {
+        "name": {"type": "string"}, "tick": {"type": "integer", "minimum": 0},
+        "seq": {"type": "integer", "minimum": 0}, "target": {"type": "string"},
+        "x": {"type": "number"}, "y": {"type": "number"}
+      }
     },
     "nodeRef": {
       "type": "object",

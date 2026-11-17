@@ -11,6 +11,7 @@
 use crate::json::Value;
 use crate::math::Vec3;
 use crate::model::*;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// An evaluated node as seen by the renderer.
 #[derive(Debug, Clone, PartialEq)]
@@ -101,8 +102,17 @@ pub fn topo_order(doc: &Document) -> Result<Vec<usize>, String> {
     Ok(order)
 }
 
-/// Evaluate the document at `tick`.
+/// Evaluate the document at `tick` — the time-driven entry point: folds the
+/// document's recorded event prefix (empty prefix = pure time-driven behavior,
+/// identical to pre-C7 evaluation, so every existing gate is untouched).
 pub fn evaluate(doc: &Document, tick: i64) -> Result<Vec<EvalLine>, String> {
+    evaluate_with_events(doc, tick, &[])
+}
+
+/// Evaluate with an extra event slice on top of the document's recorded
+/// events (`doc.events` ++ `extra`, sorted by (tick, seq)) — the full pure
+/// function `f(doc, tick, eventPrefix)` of relations.md §4 / architecture §3.3.
+pub fn evaluate_with_events(doc: &Document, tick: i64, extra: &[MoEvent]) -> Result<Vec<EvalLine>, String> {
     // Working copy: positions/widths/colors start from rest state.
     let mut lines: Vec<EvalLine> = doc
         .lines
@@ -140,6 +150,11 @@ pub fn evaluate(doc: &Document, tick: i64) -> Result<Vec<EvalLine>, String> {
         })
         .collect();
     let find_line = |lines: &[EvalLine], id: &str| -> Option<usize> { lines.iter().position(|l| l.id == id) };
+
+    // Fold the recorded event prefix up to `tick` into channel state
+    // (relations.md §4 event dimension): same prefix → same state, cheap
+    // (O(events)); empty prefix → no respond fires.
+    let fold = fold_events(doc, tick, extra);
 
     let order = topo_order(doc)?;
     for ri in order {
@@ -228,9 +243,333 @@ pub fn evaluate(doc: &Document, tick: i64) -> Result<Vec<EvalLine>, String> {
             RelationKind::Oscillate => {
                 apply_oscillate(&mut lines, r, tick);
             }
+            RelationKind::Respond => {
+                apply_respond_state(&mut lines, r, &fold);
+            }
         }
     }
     Ok(lines)
+}
+
+// ---------------------------------------------------------------------------
+// C7 respond — event-sourced interaction (fold of the recorded event prefix)
+// ---------------------------------------------------------------------------
+
+/// Folded channel state for one (line, node) key.
+#[derive(Debug, Default, Clone)]
+struct ChannelState {
+    /// Final width (absolute) once any width write has happened.
+    width: Option<f64>,
+    /// Position: (absolute?, value) — add accumulates an offset from rest,
+    /// set pins an absolute position.
+    pos: Option<(bool, Vec3)>,
+}
+
+/// The fold result: per-channel state + edge-tracking sets. All maps are
+/// BTree — iteration order is deterministic.
+#[derive(Debug, Default, Clone)]
+struct Fold {
+    channels: BTreeMap<(String, Option<usize>), ChannelState>,
+    /// Channel key → the first respond relation that wrote it (document
+    /// order). Only the owner applies the folded state in eval, so multiple
+    /// guarded responds composing one channel land exactly once per frame.
+    ownership: BTreeMap<(String, Option<usize>), String>,
+    /// Overlap respond ids currently in the overlapping state (rising edges).
+    overlapping: BTreeSet<String>,
+    /// Synthetic event sequence counter (continues after the stored ones).
+    synthetic_seq: i64,
+}
+
+fn rest_width(doc: &Document, line: &str, node: Option<usize>) -> f64 {
+    doc.line(line).map(|l| match node {
+        Some(n) if n < l.nodes.len() => l.stroke_width(n),
+        _ => l.width,
+    }).unwrap_or(0.0)
+}
+
+/// Deterministic 2D distance from p to the rest segments of `line`
+/// (closed lines include the closing segment).
+fn distance_to_line(line: &Line, p: Vec3) -> f64 {
+    let pts: Vec<Vec3> = line.nodes.iter().filter_map(|n| n.pos.geom().ok()).collect();
+    if pts.len() < 2 {
+        return f64::INFINITY;
+    }
+    let mut best = f64::INFINITY;
+    let n = pts.len();
+    let segs = if line.closed { n } else { n - 1 };
+    for k in 0..segs {
+        let (_, d, _) = point_segment(p, pts[k], pts[(k + 1) % n]);
+        if d < best {
+            best = d;
+        }
+    }
+    best
+}
+
+/// Deterministic 2D segment-intersection test between the rest geometry of
+/// two lines (closed lines include the closing segment).
+fn lines_intersect(a: &Line, b: &Line) -> bool {
+    let segs = |l: &Line| -> Vec<(Vec3, Vec3)> {
+        let pts: Vec<Vec3> = l.nodes.iter().filter_map(|n| n.pos.geom().ok()).collect();
+        let n = pts.len();
+        if n < 2 {
+            return vec![];
+        }
+        let count = if l.closed { n } else { n - 1 };
+        (0..count).map(|k| (pts[k], pts[(k + 1) % n])).collect()
+    };
+    let orient = |p: Vec3, q: Vec3, r: Vec3| -> f64 { (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x) };
+    let on_seg = |p: Vec3, q: Vec3, r: Vec3| -> bool {
+        q.x >= p.x.min(r.x) - 1e-9 && q.x <= p.x.max(r.x) + 1e-9 && q.y >= p.y.min(r.y) - 1e-9 && q.y <= p.y.max(r.y) + 1e-9
+    };
+    for (p1, p2) in segs(a) {
+        for (q1, q2) in segs(b) {
+            let d1 = orient(q1, q2, p1);
+            let d2 = orient(q1, q2, p2);
+            let d3 = orient(p1, p2, q1);
+            let d4 = orient(p1, p2, q2);
+            if ((d1 > 0.0 && d2 < 0.0) || (d1 < 0.0 && d2 > 0.0))
+                && ((d3 > 0.0 && d4 < 0.0) || (d3 < 0.0 && d4 > 0.0))
+            {
+                return true;
+            }
+            if d1.abs() < 1e-9 && on_seg(q1, q2, p1) { return true; }
+            if d2.abs() < 1e-9 && on_seg(q1, q2, p2) { return true; }
+            if d3.abs() < 1e-9 && on_seg(p1, p2, q1) { return true; }
+            if d4.abs() < 1e-9 && on_seg(p1, p2, q2) { return true; }
+        }
+    }
+    false
+}
+
+/// The guard reads the fold's width channel; an unwritten channel reads as
+/// the rest width.
+fn guard_ok(doc: &Document, fold: &Fold, r: &Relation) -> bool {
+    let Some(g) = &r.resp_guard else { return true };
+    let key = (g.line.clone(), g.node);
+    let cur = fold.channels.get(&key).and_then(|c| c.width).unwrap_or_else(|| rest_width(doc, &g.line, g.node));
+    g.op.test(cur, g.value)
+}
+
+/// Does recorded event `e` wake respond `r`?
+fn event_matches(doc: &Document, r: &Relation, e: &MoEvent) -> bool {
+    match &r.resp_event {
+        // Handled structurally at their fold moments / edges.
+        RespondEvent::TimePoint(_) | RespondEvent::Overlap => false,
+        RespondEvent::Named(n) => {
+            e.name == *n && e.target.as_deref().map(|t| t == r.resp_trigger).unwrap_or(true)
+        }
+        kind => {
+            let Some(want) = kind.listener_name() else { return false };
+            if e.name != want {
+                return false;
+            }
+            if !e.target.as_deref().map(|t| t == r.resp_trigger).unwrap_or(true) {
+                return false;
+            }
+            // Engine-side hit test: with a recorded pointer position, the
+            // event must land within `resp_radius` of the trigger's rest
+            // geometry (same criterion as the stage's pick, deterministic).
+            if let (Some(x), Some(y)) = (e.x, e.y) {
+                if let Ok(l) = doc.line(&r.resp_trigger) {
+                    return distance_to_line(l, Vec3::new(x, y, 0.0)) <= r.resp_radius;
+                }
+            }
+            true
+        }
+    }
+}
+
+/// Execute one respond's actions into the fold (state) and the synthetic
+/// event queue (chain reactions).
+fn execute_respond(doc: &Document, fold: &mut Fold, r: &Relation, moment: i64, queue: &mut std::collections::VecDeque<MoEvent>) {
+    for a in &r.resp_actions {
+        match a {
+            RespondAction::WriteWidth { line, node, mode, value } => {
+                let key = (line.clone(), *node);
+                fold.ownership.entry(key.clone()).or_insert_with(|| r.id.clone());
+                let st = fold.channels.entry(key).or_default();
+                let cur = st.width.unwrap_or_else(|| rest_width(doc, line, *node));
+                st.width = Some(match mode {
+                    WriteMode::Set => *value,
+                    WriteMode::Add => cur + value,
+                });
+            }
+            RespondAction::WritePosition { line, node, mode, value } => {
+                let key = (line.clone(), *node);
+                fold.ownership.entry(key.clone()).or_insert_with(|| r.id.clone());
+                let st = fold.channels.entry(key).or_default();
+                st.pos = Some(match (mode, st.pos) {
+                    (WriteMode::Set, _) => (true, *value),
+                    (WriteMode::Add, Some((false, acc))) => (false, acc.add(*value)),
+                    (WriteMode::Add, Some((true, base))) => (true, base.add(*value)),
+                    (WriteMode::Add, None) => (false, *value),
+                });
+            }
+            RespondAction::Fire { name } => {
+                queue.push_back(MoEvent {
+                    name: name.clone(),
+                    tick: moment,
+                    seq: fold.synthetic_seq,
+                    target: None, // broadcast: named listeners on any line receive it
+                    x: None,
+                    y: None,
+                });
+                fold.synthetic_seq += 1;
+            }
+        }
+    }
+}
+
+/// Fold the event prefix `doc.events` ++ `extra` up to `target` tick into
+/// channel state. Deterministic: moments ascend, events order by (tick, seq),
+/// relations apply in document order, all sets/maps are BTree.
+fn fold_events(doc: &Document, target: i64, extra: &[MoEvent]) -> Fold {
+    let mut fold = Fold { synthetic_seq: doc.events.len() as i64 + extra.len() as i64, ..Default::default() };
+    // The combined stored prefix, normalized to (tick, seq) order.
+    let mut stored: Vec<MoEvent> = doc.events.iter().cloned().chain(extra.iter().cloned()).collect();
+    stored.retain(|e| e.tick <= target);
+    stored.sort_by(|a, b| (a.tick, a.seq).cmp(&(b.tick, b.seq)));
+    // Moments: every event tick + every declared TimePoint ≤ target.
+    let mut moments: Vec<i64> = stored.iter().map(|e| e.tick).collect();
+    for r in &doc.relations {
+        if let (RelationKind::Respond, RespondEvent::TimePoint(t)) = (&r.kind, &r.resp_event) {
+            if *t <= target && *t >= 0 {
+                moments.push(*t);
+            }
+        }
+    }
+    moments.sort_unstable();
+    moments.dedup();
+
+    let mut idx = 0usize;
+    for &m in &moments {
+        // 1) stored events at this moment, in (tick, seq) order.
+        while idx < stored.len() && stored[idx].tick == m {
+            let e = stored[idx].clone();
+            idx += 1;
+            let mut queue = std::collections::VecDeque::new();
+            for r in &doc.relations {
+                if let RelationKind::Respond = r.kind {
+                    if event_matches(doc, r, &e) && guard_ok(doc, &fold, r) {
+                        execute_respond(doc, &mut fold, r, m, &mut queue);
+                    }
+                }
+            }
+            // Chain reactions: FIFO within the same moment.
+            while let Some(e2) = queue.pop_front() {
+                for r in &doc.relations {
+                    if let RelationKind::Respond = r.kind {
+                        if event_matches(doc, r, &e2) && guard_ok(doc, &fold, r) {
+                            execute_respond(doc, &mut fold, r, m, &mut queue);
+                        }
+                    }
+                }
+            }
+        }
+        // 2) declared TimePoint responds at this moment (document order).
+        for r in &doc.relations {
+            if let RelationKind::Respond = r.kind {
+                if let RespondEvent::TimePoint(t) = r.resp_event {
+                    if t == m && guard_ok(doc, &fold, r) {
+                        let mut queue = std::collections::VecDeque::new();
+                        execute_respond(doc, &mut fold, r, m, &mut queue);
+                        while let Some(e2) = queue.pop_front() {
+                            for r2 in &doc.relations {
+                                if let RelationKind::Respond = r2.kind {
+                                    if event_matches(doc, r2, &e2) && guard_ok(doc, &fold, r2) {
+                                        execute_respond(doc, &mut fold, r2, m, &mut queue);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // 3) overlap rising edges at this moment (rest geometry, edge state
+        // tracked per relation — re-fires on re-entry).
+        for r in &doc.relations {
+            if let RelationKind::Respond = r.kind {
+                if let RespondEvent::Overlap = r.resp_event {
+                    if let (Ok(a), Ok(b)) = (doc.line(&r.resp_trigger), doc.line(&r.resp_other)) {
+                        let now = lines_intersect(a, b);
+                        let was = fold.overlapping.contains(&r.id);
+                        if now && !was && guard_ok(doc, &fold, r) {
+                            let mut queue = std::collections::VecDeque::new();
+                            execute_respond(doc, &mut fold, r, m, &mut queue);
+                            while let Some(e2) = queue.pop_front() {
+                                for r2 in &doc.relations {
+                                    if let RelationKind::Respond = r2.kind {
+                                        if event_matches(doc, r2, &e2) && guard_ok(doc, &fold, r2) {
+                                            execute_respond(doc, &mut fold, r2, m, &mut queue);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if now {
+                            fold.overlapping.insert(r.id.clone());
+                        } else {
+                            fold.overlapping.remove(&r.id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    fold
+}
+
+/// Apply one respond relation's folded channel state to the working copy
+/// (single writer — the folded value replaces what the rest state held).
+fn apply_respond_state(lines: &mut [EvalLine], r: &Relation, fold: &Fold) {
+    // Unique channel keys of this relation (document order, deduped).
+    let mut keys: Vec<(String, Option<usize>)> = Vec::new();
+    for a in &r.resp_actions {
+        if let RespondAction::WriteWidth { line, node, .. } | RespondAction::WritePosition { line, node, .. } = a {
+            let key = (line.clone(), *node);
+            if !keys.contains(&key) {
+                keys.push(key);
+            }
+        }
+    }
+    for (line, node) in keys {
+        // Only the owning respond applies this channel's folded state —
+        // later guarded responds composed it in the fold already.
+        if fold.ownership.get(&(line.clone(), node)).map(|o| o != &r.id).unwrap_or(true) {
+            continue;
+        }
+        let Some(st) = fold.channels.get(&(line.clone(), node)) else { continue };
+        let li = match lines.iter().position(|l| l.id == line) {
+            Some(li) => li,
+            None => continue,
+        };
+        if let Some(w) = st.width {
+            match node {
+                Some(n) if n < lines[li].nodes.len() => lines[li].nodes[n].width = w,
+                Some(_) => {}
+                None => {
+                    lines[li].width = w;
+                    for nd in &mut lines[li].nodes {
+                        nd.width = w;
+                    }
+                }
+            }
+        }
+        if let Some((absolute, v)) = st.pos {
+            let count = lines[li].nodes.len();
+            let targets: Vec<usize> = match node {
+                Some(n) if n < count => vec![n],
+                Some(_) => vec![],
+                None => (0..count).collect(),
+            };
+            for j in targets {
+                let cur = lines[li].nodes[j].p;
+                lines[li].nodes[j].p = if absolute { v } else { cur.add(v) };
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

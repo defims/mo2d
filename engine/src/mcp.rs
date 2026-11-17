@@ -110,7 +110,7 @@ impl McpSession {
         let width = args.get("width").and_then(|v| v.as_i64()).unwrap_or(self.doc.root.width as i64) as u32;
         let height = args.get("height").and_then(|v| v.as_i64()).unwrap_or(self.doc.root.height as i64) as u32;
         let camera = parse_camera(args.get("camera"))?;
-        let lines = eval::evaluate(&self.doc, tick)?;
+        let lines = eval::evaluate_with_events(&self.doc, tick, &self.doc.events)?;
         let mut assets = AssetStore::new();
         assets.root = self.doc_path.parent().map(|p| p.to_path_buf()).unwrap_or_default();
         // B7: packaged documents resolve textures from their blob area.

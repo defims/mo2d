@@ -69,7 +69,7 @@ impl StageState {
     }
 
     fn scene_json(&self) -> Result<Value, String> {
-        let lines = eval::evaluate(&self.session.doc, self.tick)?;
+        let lines = eval::evaluate_with_events(&self.session.doc, self.tick, &self.session.doc.events)?;
         let mut out = Value::obj();
         let doc = &self.session.doc;
         out.set("tick", Value::Int(self.tick));
@@ -171,6 +171,10 @@ impl StageState {
                     }
                     ro.set("attr", Value::Str(r.osc_attr.name().into()));
                 }
+                crate::model::RelationKind::Respond => {
+                    ro.set("trigger", Value::Str(r.resp_trigger.clone()));
+                    ro.set("event", Value::Str(r.resp_event.code().into()));
+                }
             }
             rels.push(ro);
         }
@@ -185,7 +189,7 @@ impl StageState {
                 return Ok(png.clone());
             }
         }
-        let lines = eval::evaluate(&self.session.doc, self.tick)?;
+        let lines = eval::evaluate_with_events(&self.session.doc, self.tick, &self.session.doc.events)?;
         self.assets.root = self.session.doc_path.parent().map(|p| p.to_path_buf()).unwrap_or_default();
         let doc = &self.session.doc;
         let img = render_with_assets(

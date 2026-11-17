@@ -198,7 +198,9 @@ in-file interactivity essential. The engine answer keeps the pull model intact:
 - **State machines are not a new concept**: a discrete channel (step interpolation, im=3 —
   the Moho `INTERP_STEP` code) + guarded respond relations; a listener is a respond relation
   on a target line; hit tests (tap/press/hover: segment distance; overlap: segment
-  intersection) are deterministic engine-side geometry — pure functions of the evaluated frame;
+  intersection) are deterministic engine-side geometry evaluated against **rest geometry**
+  (v1 note: overlap edges are sampled at fold moments — a continuous watch is a v2
+  refinement);
 - **Single-writer discipline holds**: a respond relation is a *conditional* writer; its action
   target (line+attr) must not be claimed by any unconditional writer (validator-enforced);
   the composition pattern is "respond writes a dedicated control channel, time-driven

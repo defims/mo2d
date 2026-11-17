@@ -88,7 +88,8 @@ pub fn registry() -> Vec<CmdSpec> {
         CmdSpec { name: "node.append", args: "{line, p, w?, pr?, c?, hi?, ho?, v?}", doc: "Append a node to a line." },
         CmdSpec { name: "node.delete", args: "{line, index}", doc: "Delete a node (and its keyframe if it lives on a track line)." },
         CmdSpec { name: "seg.set", args: "{line, index, type?, visible?, interp?}", doc: "Merge segment attributes (straight/curve, visibility, interp for track segments)." },
-        CmdSpec { name: "relation.create", args: "{id?, type: bind|share|track|gradient|group|sim|particles|oscillate, ...}", doc: "bind: {target, skeleton, falloff?, stretch?}; share: {driver: {line,node}, driven: {line,node}}; track: {trackLine, target: {line, node?, attr: position|width|color}}; gradient (B3): {bar, target, role?: fill|stroke}; group (B4): {box, members, visible?} — transform-box line; sim (B6): {line, anchors: [{node, driver: {line,node}}], gravity?, damping?, iterations?, collideWith?, radius?, selfCollide?} — deterministic trailing rope with optional collisions; particles (B6): {emitter, node?, rate?, speed?, dir?, spread?, life?, gravity?, damping?, size?, color?, len?, seed?, collideWith?, bounce?, radius?}; oscillate (C7): {target, node?, attr?: position|width, axis?, wave?: 0|1|2, period?, phase?, amplitude?} — deterministic periodic driver (breathe/sway/float). Auto id r<N>." },
+        CmdSpec { name: "relation.create", args: "{id?, type: bind|share|track|gradient|group|sim|particles|oscillate|respond, ...}", doc: "bind: {target, skeleton, falloff?, stretch?}; share: {driver: {line,node}, driven: {line,node}}; track: {trackLine, target: {line, node?, attr: position|width|color}}; gradient (B3): {bar, target, role?: fill|stroke}; group (B4): {box, members, visible?} — transform-box line; sim (B6): {line, anchors: [{node, driver: {line,node}}], gravity?, damping?, iterations?, collideWith?, radius?, selfCollide?} — deterministic trailing rope with optional collisions; particles (B6): {emitter, node?, rate?, speed?, dir?, spread?, life?, gravity?, damping?, size?, color?, len?, seed?, collideWith?, bounce?, radius?}; oscillate (C7): {target, node?, attr?: position|width, axis?, wave?: 0|1|2, period?, phase?, amplitude?} — deterministic periodic driver (breathe/sway/float); respond (C7): {trigger, event: tap|press|release|hoverIn|hoverOut|overlap|timePoint|<named>, at? (timePoint tick), other? (overlap), radius?, guard?: {line, node?, op?: <|<=|=|>=|>, value}, actions: [{write: {line, node?, attr: width|position, mode?: set|add, value}} | {fire: {name}}]}. Auto id r<N>." },
+        CmdSpec { name: "event.fire", args: "{name, tick, target?, x?, y?}", doc: "Record an interaction event (C7): appended to the document's event prefix; evaluation folds events up to the queried tick (relations.md §4). Events are irreversible facts — the inverse is noop." },
         CmdSpec { name: "relation.delete", args: "{id}", doc: "Delete a relation." },
         CmdSpec { name: "track.create", args: "{line, node, attr?: position|width, tick?, value?}", doc: "Create a track line (auto id trk_<line>_<node>_<attr>) + its track relation + the first keyframe (defaults: tick 0, value = the node's current value). This is the gesture command for node→timeline connect; AI uses it too, so both channels produce identical documents." },
         CmdSpec { name: "style.create", args: "{id?, width?, color?, fillColor?, strokeOn?, fillOn?, brush?}", doc: "Define a named line-attribute template (B2 styles). Auto id st<N>." },
@@ -519,6 +520,12 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                     }
                     RelationKind::Particles => r.part_emitter == id || r.part_collide_with.iter().any(|l| l == &id),
                     RelationKind::Oscillate => r.osc_target == id,
+                    RelationKind::Respond => {
+                        r.resp_trigger == id
+                            || r.resp_other == id
+                            || r.resp_guard.as_ref().map(|g| g.line == id).unwrap_or(false)
+                            || r.respond_target_lines().contains(&id.as_str())
+                    }
                 };
                 if touches {
                     doc.relations.remove(i);
@@ -975,6 +982,74 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                     }
                     r
                 }
+                "respond" => {
+                    let trigger = need_str(cmd, "trigger")?.to_string();
+                    let ev = cmd.arg("event").and_then(|x| x.as_str()).ok_or("relation.create: respond needs event")?;
+                    let event = match ev {
+                        "tap" => RespondEvent::Tap,
+                        "press" => RespondEvent::Press,
+                        "release" => RespondEvent::Release,
+                        "hoverIn" => RespondEvent::HoverIn,
+                        "hoverOut" => RespondEvent::HoverOut,
+                        "overlap" => RespondEvent::Overlap,
+                        "timePoint" => {
+                            let at = cmd.arg("at").and_then(|x| x.as_i64()).ok_or("relation.create: respond timePoint needs at (tick)")?;
+                            if at < 0 {
+                                return Err(format!("relation.create: respond timePoint at must be >= 0, got {}", at));
+                            }
+                            RespondEvent::TimePoint(at)
+                        }
+                        other => RespondEvent::Named(other.to_string()),
+                    };
+                    let mut r = Relation::new_respond("", &trigger, event);
+                    if let Some(o) = cmd.arg("other").and_then(|x| x.as_str()) {
+                        r.resp_other = o.to_string();
+                    }
+                    if let Some(x) = cmd.arg("radius").and_then(|x| x.as_f64()) {
+                        r.resp_radius = x;
+                    }
+                    if let Some(g) = cmd.arg("guard") {
+                        let line = g.get("line").and_then(|x| x.as_str()).ok_or("relation.create: guard.line missing")?.to_string();
+                        let node = g.get("node").and_then(|x| x.as_i64()).map(|n| n as usize);
+                        let op = match g.get("op").and_then(|x| x.as_str()) {
+                            Some(s) => RespondOp::from_code(s).ok_or_else(|| format!("relation.create: guard.op must be <|<=|=|>=|>, got {:?}", s))?,
+                            None => RespondOp::Eq,
+                        };
+                        let value = g.get("value").and_then(|x| x.as_f64()).ok_or("relation.create: guard.value missing")?;
+                        r.resp_guard = Some(RespondGuard { line, node, op, value });
+                    }
+                    if let Some(acts) = cmd.arg("actions").and_then(|x| x.as_arr()) {
+                        for (i, a) in acts.iter().enumerate() {
+                            if let Some(w) = a.get("write") {
+                                let line = w.get("line").and_then(|x| x.as_str()).ok_or("relation.create: write.line missing")?.to_string();
+                                let node = w.get("node").and_then(|x| x.as_i64()).map(|n| n as usize);
+                                let mode = match w.get("mode").and_then(|x| x.as_str()) {
+                                    Some("add") => WriteMode::Add,
+                                    Some("set") | None => WriteMode::Set,
+                                    o => return Err(format!("relation.create: write.mode must be set|add, got {:?}", o)),
+                                };
+                                match w.get("attr").and_then(|x| x.as_str()) {
+                                    Some("width") => {
+                                        let value = w.get("value").and_then(|x| x.as_f64()).ok_or("relation.create: write.value missing")?;
+                                        r.resp_actions.push(RespondAction::WriteWidth { line, node, mode, value });
+                                    }
+                                    Some("position") | None => {
+                                        let v = w.get("value").ok_or("relation.create: write.value missing")?;
+                                        let value = parse_json_vec3(v, "relation.create: write position value")?;
+                                        r.resp_actions.push(RespondAction::WritePosition { line, node, mode, value });
+                                    }
+                                    o => return Err(format!("relation.create: write.attr must be width|position, got {:?}", o)),
+                                }
+                            } else if let Some(f) = a.get("fire") {
+                                let name = f.get("name").and_then(|x| x.as_str()).ok_or("relation.create: fire.name missing")?.to_string();
+                                r.resp_actions.push(RespondAction::Fire { name });
+                            } else {
+                                return Err(format!("relation.create: actions[{}] must be {{write}} or {{fire}}", i));
+                            }
+                        }
+                    }
+                    r
+                }
                 o => return Err(format!("relation.create: unknown type '{}'", o)),
             };
             r.id = match cmd.arg("id").and_then(|v| v.as_str()) {
@@ -1145,6 +1220,48 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                         return Err("relation.create oscillate: axis must be non-zero for position oscillation".into());
                     }
                 }
+                RelationKind::Respond => {
+                    let t = doc.line(&r.resp_trigger).map_err(|e| format!("relation.create respond: {}", e))?;
+                    if t.is_track() {
+                        return Err("relation.create respond: trigger must be a geometric line".into());
+                    }
+                    if r.resp_radius < 0.0 {
+                        return Err("relation.create respond: radius must be >= 0".into());
+                    }
+                    if let RespondEvent::Overlap = r.resp_event {
+                        let o = doc.line(&r.resp_other).map_err(|e| format!("relation.create respond overlap: {}", e))?;
+                        if o.is_track() {
+                            return Err("relation.create respond: overlap other must be a geometric line".into());
+                        }
+                        if r.resp_other == r.resp_trigger {
+                            return Err("relation.create respond: overlap other must differ from trigger".into());
+                        }
+                    }
+                    if let Some(g) = &r.resp_guard {
+                        let gl = doc.line(&g.line).map_err(|e| format!("relation.create respond guard: {}", e))?;
+                        if let Some(n) = g.node {
+                            if n >= gl.nodes.len() {
+                                return Err(format!("relation.create respond guard: node {} out of range", n));
+                            }
+                        }
+                    }
+                    if r.resp_actions.is_empty() {
+                        return Err("relation.create respond: needs at least one action".into());
+                    }
+                    for a in &r.resp_actions {
+                        if let RespondAction::WriteWidth { line, node, .. } | RespondAction::WritePosition { line, node, .. } = a {
+                            let wl = doc.line(line).map_err(|e| format!("relation.create respond write: {}", e))?;
+                            if wl.is_track() {
+                                return Err(format!("relation.create respond: write target '{}' must be a geometric line", line));
+                            }
+                            if let Some(n) = *node {
+                                if n >= wl.nodes.len() {
+                                    return Err(format!("relation.create respond: write node {} out of range", n));
+                                }
+                            }
+                        }
+                    }
+                }
             }
             doc.relations.push(r.clone());
             let inv = obj_command("relation.delete", &[("id", Value::Str(r.id.clone()))]);
@@ -1269,6 +1386,32 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                 }
             }
             Ok(Effect { inverse: obj_command("noop", &[]), summary: format!("drop key {}#{} @{}", line_id, index, tick) })
+        }
+
+        "event.fire" => {
+            let name = need_str(cmd, "name")?.to_string();
+            if name.is_empty() {
+                return Err("event.fire: name must be non-empty".into());
+            }
+            let tick = cmd.arg("tick").and_then(|v| v.as_i64()).ok_or("event.fire: 'tick' must be an integer")?;
+            if tick < 0 {
+                return Err(format!("event.fire: tick must be >= 0, got {}", tick));
+            }
+            let target = match cmd.arg("target").and_then(|v| v.as_str()) {
+                Some(t) => {
+                    doc.line(t).map_err(|e| format!("event.fire: target '{}': {}", t, e))?;
+                    Some(t.to_string())
+                }
+                None => None,
+            };
+            let x = cmd.arg("x").and_then(|v| v.as_f64());
+            let y = cmd.arg("y").and_then(|v| v.as_f64());
+            let seq = doc.events.len() as i64;
+            doc.events.push(MoEvent { name, tick, seq, target, x, y });
+            // Events are irreversible facts (relations.md §1.2): deleting one
+            // would change everything folded after it — the inverse is noop.
+            let inv = obj_command("noop", &[]);
+            Ok(Effect { inverse: inv, summary: "fire event".into() })
         }
 
         "noop" => Ok(Effect { inverse: obj_command("noop", &[]), summary: "noop".into() }),

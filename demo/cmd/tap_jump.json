@@ -1,0 +1,161 @@
+{
+  "v": 1,
+  "cmds": [
+    {
+      "op": "doc.setRoot",
+      "width": 640,
+      "height": 360,
+      "fps": 24
+    },
+    {
+      "op": "line.create",
+      "id": "floor",
+      "closed": false,
+      "width": 3,
+      "strokeOn": true,
+      "color": [
+        150,
+        150,
+        160,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            360,
+            140,
+            0
+          ]
+        },
+        {
+          "p": [
+            600,
+            140,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "op": "line.create",
+      "id": "ball",
+      "closed": true,
+      "width": 3,
+      "strokeOn": true,
+      "color": [
+        190,
+        90,
+        40,
+        255
+      ],
+      "fillOn": true,
+      "fillColor": [
+        240,
+        130,
+        60,
+        255
+      ],
+      "nodes": [
+        {
+          "p": [
+            480,
+            180,
+            0
+          ]
+        },
+        {
+          "p": [
+            510,
+            160,
+            0
+          ]
+        },
+        {
+          "p": [
+            480,
+            140,
+            0
+          ]
+        },
+        {
+          "p": [
+            450,
+            160,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "op": "relation.create",
+      "type": "respond",
+      "trigger": "ball",
+      "event": "tap",
+      "radius": 60,
+      "actions": [
+        {
+          "write": {
+            "line": "ball",
+            "attr": "position",
+            "mode": "add",
+            "value": [
+              0,
+              50,
+              0
+            ]
+          }
+        },
+        {
+          "write": {
+            "line": "ball",
+            "attr": "width",
+            "mode": "add",
+            "value": 1.5
+          }
+        }
+      ]
+    },
+    {
+      "op": "relation.create",
+      "type": "respond",
+      "trigger": "ball",
+      "event": "timePoint",
+      "at": 189999000000,
+      "guard": {
+        "line": "ball",
+        "op": ">",
+        "value": 3
+      },
+      "actions": [
+        {
+          "write": {
+            "line": "ball",
+            "attr": "position",
+            "mode": "add",
+            "value": [
+              0,
+              -50,
+              0
+            ]
+          }
+        },
+        {
+          "write": {
+            "line": "ball",
+            "attr": "width",
+            "mode": "add",
+            "value": -1.5
+          }
+        }
+      ]
+    },
+    {
+      "op": "event.fire",
+      "name": "tap",
+      "tick": 63504000000,
+      "target": "ball",
+      "x": 480,
+      "y": 160
+    }
+  ]
+}

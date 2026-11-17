@@ -29,11 +29,30 @@ pub fn validate(doc: &Document) -> Vec<Problem> {
     validate_root(doc, &mut p);
     validate_lines(doc, &mut p);
     validate_relations(doc, &mut p);
+    validate_events(doc, &mut p);
     validate_writers(doc, &mut p);
     if let Err(e) = eval::topo_order(doc) {
         p.push(Problem::new("relations", e));
     }
     p
+}
+
+/// Recorded events (C7): canonical form is seq == array index; ticks are
+/// non-negative; names non-empty. Targets may reference deleted lines
+/// (events are irreversible facts), so no referential check here.
+fn validate_events(doc: &Document, p: &mut Vec<Problem>) {
+    for (i, e) in doc.events.iter().enumerate() {
+        let base = format!("events[{}]", i);
+        if e.name.is_empty() {
+            p.push(Problem::new(&base, "event name must be non-empty"));
+        }
+        if e.tick < 0 {
+            p.push(Problem::new(&format!("{}.tick", base), format!("tick must be >= 0, got {}", e.tick)));
+        }
+        if e.seq != i as i64 {
+            p.push(Problem::new(&format!("{}.seq", base), format!("canonical form requires seq == index, got {} vs {}", e.seq, i)));
+        }
+    }
 }
 
 fn validate_root(doc: &Document, p: &mut Vec<Problem>) {
@@ -432,6 +451,66 @@ fn validate_relations(doc: &Document, p: &mut Vec<Problem>) {
                     p.push(Problem::new(&format!("{}.axis", base), "axis must be non-zero for position oscillation"));
                 }
             }
+            RelationKind::Respond => {
+                check_line(doc, &r.resp_trigger, &format!("{}.trigger", base), p);
+                if let Ok(t) = doc.line(&r.resp_trigger) {
+                    if t.is_track() {
+                        p.push(Problem::new(&format!("{}.trigger", base), "trigger must be a geometric line"));
+                    }
+                }
+                if r.resp_radius < 0.0 {
+                    p.push(Problem::new(&format!("{}.radius", base), "radius must be >= 0"));
+                }
+                if let RespondEvent::Overlap = r.resp_event {
+                    check_line(doc, &r.resp_other, &format!("{}.other", base), p);
+                    if let Ok(o) = doc.line(&r.resp_other) {
+                        if o.is_track() {
+                            p.push(Problem::new(&format!("{}.other", base), "overlap other must be a geometric line"));
+                        }
+                    }
+                    if r.resp_other == r.resp_trigger {
+                        p.push(Problem::new(&format!("{}.other", base), "overlap other must differ from trigger"));
+                    }
+                }
+                if let RespondEvent::TimePoint(t) = r.resp_event {
+                    if t < 0 {
+                        p.push(Problem::new(&format!("{}.at", base), format!("timePoint tick must be >= 0, got {}", t)));
+                    }
+                }
+                if let Some(g) = &r.resp_guard {
+                    check_line(doc, &g.line, &format!("{}.guard.line", base), p);
+                    if let Ok(gl) = doc.line(&g.line) {
+                        if let Some(n) = g.node {
+                            if n >= gl.nodes.len() {
+                                p.push(Problem::new(&format!("{}.guard.node", base), format!("index {} out of range ({} nodes)", n, gl.nodes.len())));
+                            }
+                        }
+                    }
+                }
+                if r.resp_actions.is_empty() {
+                    p.push(Problem::new(&base, "respond needs at least one action"));
+                }
+                for (ai, a) in r.resp_actions.iter().enumerate() {
+                    if let RespondAction::WriteWidth { line, node, .. } | RespondAction::WritePosition { line, node, .. } = a {
+                        check_line(doc, line, &format!("{}.actions[{}].write.line", base, ai), p);
+                        if let Ok(wl) = doc.line(line) {
+                            if wl.is_track() {
+                                p.push(Problem::new(&format!("{}.actions[{}].write.line", base, ai), "write target must be a geometric line"));
+                            }
+                            if let Some(n) = *node {
+                                if n >= wl.nodes.len() {
+                                    p.push(Problem::new(&format!("{}.actions[{}].write.node", base, ai), format!("index {} out of range ({} nodes)", n, wl.nodes.len())));
+                                }
+                            }
+                        }
+                    }
+                    if let RespondAction::Fire { name } = a {
+                        if name.is_empty() {
+                            p.push(Problem::new(&format!("{}.actions[{}].fire.name", base, ai), "fired event name must be non-empty"));
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -460,6 +539,12 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
         GroupMember(String),
         /// Sim claims the whole simulated line's positions (B6).
         SimLine(String),
+        /// Respond (C7) is a *conditional* writer: it conflicts with every
+        /// unconditional claim on the same channel, but NOT with other
+        /// respond claims — guarded responds composing one discrete channel
+        /// is exactly the state-machine pattern (the fold sequences them
+        /// deterministically by (moment, document order)).
+        RespondChannel(String, Option<usize>, TrackAttr),
     }
     let claims: Vec<(&Relation, Claim)> = doc
         .relations
@@ -487,6 +572,22 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
                     TrackAttr::Width => vec![Claim::TrackNode(r.osc_target.clone(), r.osc_node, TrackAttr::Width)],
                     TrackAttr::Color => vec![],
                 },
+                // Respond (C7) claims its channel targets as *conditional*
+                // writes — conflicts with unconditional writers, composes
+                // with other responds (see Claim::RespondChannel).
+                RelationKind::Respond => r
+                    .resp_actions
+                    .iter()
+                    .flat_map(|a| match a {
+                        RespondAction::WriteWidth { line, node, .. } => {
+                            vec![Claim::RespondChannel(line.clone(), *node, TrackAttr::Width)]
+                        }
+                        RespondAction::WritePosition { line, node, .. } => {
+                            vec![Claim::RespondChannel(line.clone(), *node, TrackAttr::Position)]
+                        }
+                        RespondAction::Fire { .. } => vec![],
+                    })
+                    .collect(),
             };
             base.into_iter().map(move |c| (r, c))
         })
@@ -515,6 +616,21 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
                 (Claim::GroupMember(la), Claim::GroupMember(lb)) => la == lb,
                 (Claim::GroupMember(la), Claim::SimLine(lb)) | (Claim::SimLine(lb), Claim::GroupMember(la)) => la == lb,
                 (Claim::SimLine(la), Claim::SimLine(lb)) => la == lb,
+                // Respond channels (C7, conditional) conflict with unconditional
+                // writers on the same line/channel — but compose with each other
+                // (the fold sequences them by (moment, document order)).
+                (Claim::RespondChannel(la, na, wa), Claim::TrackNode(lb, nb, wb))
+                | (Claim::TrackNode(lb, nb, wb), Claim::RespondChannel(la, na, wa)) => {
+                    la == lb && wa == wb && (na == nb || na.is_none() || nb.is_none())
+                }
+                (Claim::RespondChannel(la, _, TrackAttr::Position), Claim::Bind(lb))
+                | (Claim::Bind(lb), Claim::RespondChannel(la, _, TrackAttr::Position)) => la == lb,
+                (Claim::RespondChannel(la, _, TrackAttr::Position), Claim::ShareNode(lb, _))
+                | (Claim::ShareNode(lb, _), Claim::RespondChannel(la, _, TrackAttr::Position)) => la == lb,
+                (Claim::RespondChannel(la, _, TrackAttr::Position), Claim::GroupMember(lb))
+                | (Claim::GroupMember(lb), Claim::RespondChannel(la, _, TrackAttr::Position)) => la == lb,
+                (Claim::RespondChannel(la, _, TrackAttr::Position), Claim::SimLine(lb))
+                | (Claim::SimLine(lb), Claim::RespondChannel(la, _, TrackAttr::Position)) => la == lb,
                 (Claim::TrackNode(la, na, attr_a), Claim::TrackNode(lb, nb, attr_b)) => {
                     la == lb && attr_a == attr_b && (na == nb || na.is_none() || nb.is_none())
                 }

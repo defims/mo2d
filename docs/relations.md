@@ -133,7 +133,15 @@ an essential capability. It lands entirely inside "relations are functions":
   a dedicated control channel, time-driven relations consume it;
 - **Plain-player interactivity (N3)**: respond relations evaluate
   deterministically in any offline player, no AI, no scripts (capability as
-  data, vision rule 3) — evaluation semantics in §4.
+  data, vision rule 3) — evaluation semantics in §4;
+- **v1 evaluation notes (landed with C7)**: hit tests and overlap checks use
+  **rest geometry** (the document's un-animated positions — deterministic and
+  cycle-free, which is what makes "tap on X writes X" legal); overlap edges
+  are sampled at **fold moments** (recorded event ticks and declared
+  timePoints), not every tick — a continuous overlap watch is a v2 refinement;
+  multiple guarded responds may compose **one** channel (the state-machine
+  pattern): the fold sequences their writes by (moment, document order), and
+  the first claimant applies the composed state exactly once per frame.
 
 ## 2. Dynamic Relations (Simulation)
 
