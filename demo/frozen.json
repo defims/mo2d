@@ -46,6 +46,16 @@
     "frameSha256": "c6c8ca801de0ea0a2348dbfb3cea8a0cac25fb7c636accd90f3f9f5d5fc468d6",
     "midTick": 127008000000
   },
+  "breathe": {
+    "docSha256": "3149d45a5e7d5982faeef28a1815fffa145a44e4431d303005913f013c1a012d",
+    "frameSha256": "8dff0a4d90f324c7486e33731d0813df5a80c4d7b36281c917ca1160ad21d2a6",
+    "midTick": 127008000000
+  },
+  "sway": {
+    "docSha256": "6f1be3137938e71637ea1e6dc29922ad0b2b5db4917f29fcabf0a5219367148c",
+    "frameSha256": "12fd39b4925550082ad4630b74d92cc49ecabf8768c40047875c62fda3a1fbd8",
+    "midTick": 127008000000
+  },
   "mesh": {
     "docSha256": "854a36d8f0d2e4f7ec1028a9a3e02f32afff3397179f5406dbf21c9be319896c",
     "frameSha256": "75728688803b754ac7cd4151d1fab9e08476208c462b26c9ae8b1c7df97e3650",

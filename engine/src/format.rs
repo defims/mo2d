@@ -522,6 +522,18 @@ fn relation_to_value(r: &Relation) -> Value {
                 o.set("radius", Value::Num(r.part_radius));
             }
         }
+        RelationKind::Oscillate => {
+            o.set("target", Value::Str(r.osc_target.clone()));
+            if let Some(n) = r.osc_node {
+                o.set("node", Value::Int(n as i64));
+            }
+            o.set("attr", Value::Str(r.osc_attr.name().into()));
+            o.set("axis", vec_value(r.osc_axis));
+            o.set("wave", Value::Int(r.osc_wave.code()));
+            o.set("period", Value::Int(r.osc_period_ticks));
+            o.set("phase", Value::Int(r.osc_phase_ticks));
+            o.set("amplitude", Value::Num(r.osc_amplitude));
+        }
     }
     append_unknown(&mut o, &r.unknown);
     o
@@ -939,6 +951,32 @@ fn relation_from_value(v: &Value) -> Result<Relation, String> {
             }
             r
         }
+        "oscillate" => {
+            let target = v.get("target").and_then(|x| x.as_str()).ok_or_else(|| format!("relation '{}': oscillate needs target", id))?;
+            let node = v.get("node").and_then(|x| x.as_i64()).map(|n| n as usize);
+            let attr = match v.get("attr").and_then(|x| x.as_str()) {
+                Some("position") | None => TrackAttr::Position,
+                Some("width") => TrackAttr::Width,
+                other => return Err(format!("relation '{}': oscillate attr must be 'position'|'width', got {:?}", id, other)),
+            };
+            let mut r = Relation::new_oscillate(&id, target, node, attr);
+            if let Some(x) = v.get("axis") {
+                r.osc_axis = parse_vec3(x, &format!("relation '{}': axis", id))?;
+            }
+            if let Some(x) = v.get("wave").and_then(|x| x.as_i64()) {
+                r.osc_wave = Wave::from_code(x).ok_or_else(|| format!("relation '{}': wave must be 0|1|2, got {}", id, x))?;
+            }
+            if let Some(x) = v.get("period").and_then(|x| x.as_i64()) {
+                r.osc_period_ticks = x;
+            }
+            if let Some(x) = v.get("phase").and_then(|x| x.as_i64()) {
+                r.osc_phase_ticks = x;
+            }
+            if let Some(x) = v.get("amplitude").and_then(|x| x.as_f64()) {
+                r.osc_amplitude = x;
+            }
+            r
+        }
         other => return Err(format!("relation '{}': unknown type '{}'", id, other)),
     };
     if let Some(f) = v.get("falloff").and_then(|x| x.as_f64()) {
@@ -958,6 +996,7 @@ fn relation_from_value(v: &Value) -> Result<Relation, String> {
         RelationKind::Group => &["id", "type", "box", "members", "visible"],
         RelationKind::Sim => &["id", "type", "line", "anchors", "gravity", "damping", "iterations", "collideWith", "radius", "selfCollide"],
         RelationKind::Particles => &["id", "type", "emitter", "node", "rate", "speed", "dir", "spread", "life", "gravity", "damping", "size", "color", "len", "seed", "collideWith", "bounce", "radius"],
+        RelationKind::Oscillate => &["id", "type", "target", "node", "attr", "axis", "wave", "period", "phase", "amplitude"],
     };
     r.unknown = unknown_of(v, consumed);
     Ok(r)

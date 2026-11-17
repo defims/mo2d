@@ -164,6 +164,13 @@ impl StageState {
                         ro.set("radius", Value::Num(r.part_radius));
                     }
                 }
+                crate::model::RelationKind::Oscillate => {
+                    ro.set("target", Value::Str(r.osc_target.clone()));
+                    if let Some(n) = r.osc_node {
+                        ro.set("node", Value::Int(n as i64));
+                    }
+                    ro.set("attr", Value::Str(r.osc_attr.name().into()));
+                }
             }
             rels.push(ro);
         }

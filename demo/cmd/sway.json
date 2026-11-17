@@ -1,0 +1,16 @@
+{
+  "v": 1,
+  "cmds": [
+    {"op": "doc.setRoot", "width": 640, "height": 360, "fps": 24},
+    {"op": "line.create", "id": "ground", "closed": false, "width": 3, "strokeOn": true, "color": [150, 150, 160, 255], "nodes": [
+      {"p": [220, 300, 0]},
+      {"p": [420, 300, 0]}
+    ]},
+    {"op": "line.create", "id": "pendulum", "closed": false, "width": 5, "strokeOn": true, "color": [60, 170, 110, 255], "nodes": [
+      {"p": [320, 300, 0]},
+      {"p": [320, 210, 0]},
+      {"p": [320, 120, 0]}
+    ]},
+    {"op": "relation.create", "type": "oscillate", "target": "pendulum", "node": 2, "attr": "position", "axis": [1, 0, 0], "wave": 1, "period": 254016000000, "amplitude": 60}
+  ]
+}

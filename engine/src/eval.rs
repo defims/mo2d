@@ -225,9 +225,60 @@ pub fn evaluate(doc: &Document, tick: i64) -> Result<Vec<EvalLine>, String> {
                 let generated = emit_particles(doc, &lines, r, tick)?;
                 lines.extend(generated);
             }
+            RelationKind::Oscillate => {
+                apply_oscillate(&mut lines, r, tick);
+            }
         }
     }
     Ok(lines)
+}
+
+// ---------------------------------------------------------------------------
+// C7 oscillate — deterministic periodic driver
+// ---------------------------------------------------------------------------
+
+/// oscillate: writes `amplitude × wave(phase)` into the target attribute,
+/// phase = ((tick − phaseTicks) mod periodTicks)/periodTicks ∈ [0, 1).
+/// Position: every targeted node offsets along `axis` (single-writer rule
+/// applies — the working copy holds the rest state, so add is rest + delta).
+/// Width: node or line level, clamped at 0. Pure function of tick.
+fn apply_oscillate(lines: &mut [EvalLine], r: &Relation, tick: i64) {
+    let period = r.osc_period_ticks.max(1);
+    let phase = (tick - r.osc_phase_ticks).rem_euclid(period) as f64 / period as f64;
+    let delta = r.osc_amplitude * r.osc_wave.eval(phase);
+    let Some(ti) = lines.iter().position(|l| l.id == r.osc_target) else {
+        return;
+    };
+    match r.osc_attr {
+        TrackAttr::Position => {
+            let axis = r.osc_axis;
+            let targets: Vec<usize> = match r.osc_node {
+                Some(n) if n < lines[ti].nodes.len() => vec![n],
+                Some(_) => vec![],
+                None => (0..lines[ti].nodes.len()).collect(),
+            };
+            for j in targets {
+                let cur = lines[ti].nodes[j].p;
+                lines[ti].nodes[j].p = cur.add(axis.scale(delta));
+            }
+        }
+        TrackAttr::Width => match r.osc_node {
+            Some(n) if n < lines[ti].nodes.len() => {
+                let w = lines[ti].nodes[n].width + delta;
+                lines[ti].nodes[n].width = w.max(0.0);
+            }
+            Some(_) => {}
+            None => {
+                let w = (lines[ti].width + delta).max(0.0);
+                lines[ti].width = w;
+                for nd in &mut lines[ti].nodes {
+                    nd.width = w;
+                }
+            }
+        },
+        // Rejected at creation; nothing to do here.
+        TrackAttr::Color => {}
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -749,6 +800,13 @@ pub fn sample_track(track: &Line, tick: i64) -> Result<Vec<f64>, String> {
     let comps = values[i].len();
     let mut out = Vec::with_capacity(comps);
     match interp {
+        Some(Interp { im: 3, .. }) => {
+            // Step (im=3, Moho INTERP_STEP): hold key i's value until key i+1
+            // — discrete channels (Switch layers / state machines, C7).
+            for c in 0..comps {
+                out.push(values[i][c]);
+            }
+        }
         Some(Interp { im: 9, b }) => {
             for c in 0..comps {
                 let h = b.as_ref().map(|bb| bb.get(c).copied()).flatten().unwrap_or_else(BezierHandle::default_handle);

@@ -1,0 +1,149 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "ball",
+      "closed": true,
+      "width": 3.0,
+      "color": [
+        40,
+        90,
+        190,
+        255
+      ],
+      "fillColor": [
+        80,
+        150,
+        255,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": true,
+      "nodes": [
+        {
+          "p": [
+            360.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            320.0,
+            220.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            280.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            320.0,
+            140.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "breathbox",
+      "closed": false,
+      "width": 2.0,
+      "color": [
+        150,
+        150,
+        160,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            320.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            400.0,
+            260.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "type": "group",
+      "box": "breathbox",
+      "members": [
+        "ball"
+      ],
+      "visible": true
+    },
+    {
+      "id": "r2",
+      "type": "oscillate",
+      "target": "breathbox",
+      "node": 1,
+      "attr": "position",
+      "axis": [
+        1.0,
+        1.0,
+        0.0
+      ],
+      "wave": 1,
+      "period": 254016000000,
+      "phase": 0,
+      "amplitude": 20.0
+    }
+  ]
+}

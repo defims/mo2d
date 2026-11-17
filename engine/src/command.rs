@@ -88,7 +88,7 @@ pub fn registry() -> Vec<CmdSpec> {
         CmdSpec { name: "node.append", args: "{line, p, w?, pr?, c?, hi?, ho?, v?}", doc: "Append a node to a line." },
         CmdSpec { name: "node.delete", args: "{line, index}", doc: "Delete a node (and its keyframe if it lives on a track line)." },
         CmdSpec { name: "seg.set", args: "{line, index, type?, visible?, interp?}", doc: "Merge segment attributes (straight/curve, visibility, interp for track segments)." },
-        CmdSpec { name: "relation.create", args: "{id?, type: bind|share|track|gradient|group|sim|particles, ...}", doc: "bind: {target, skeleton, falloff?, stretch?}; share: {driver: {line,node}, driven: {line,node}}; track: {trackLine, target: {line, node?, attr: position|width|color}}; gradient (B3): {bar, target, role?: fill|stroke}; group (B4): {box, members, visible?} — transform-box line; sim (B6): {line, anchors: [{node, driver: {line,node}}], gravity?, damping?, iterations?, collideWith?, radius?, selfCollide?} — deterministic trailing rope with optional collisions; particles (B6): {emitter, node?, rate?, speed?, dir?, spread?, life?, gravity?, damping?, size?, color?, len?, seed?, collideWith?, bounce?, radius?}. Auto id r<N>." },
+        CmdSpec { name: "relation.create", args: "{id?, type: bind|share|track|gradient|group|sim|particles|oscillate, ...}", doc: "bind: {target, skeleton, falloff?, stretch?}; share: {driver: {line,node}, driven: {line,node}}; track: {trackLine, target: {line, node?, attr: position|width|color}}; gradient (B3): {bar, target, role?: fill|stroke}; group (B4): {box, members, visible?} — transform-box line; sim (B6): {line, anchors: [{node, driver: {line,node}}], gravity?, damping?, iterations?, collideWith?, radius?, selfCollide?} — deterministic trailing rope with optional collisions; particles (B6): {emitter, node?, rate?, speed?, dir?, spread?, life?, gravity?, damping?, size?, color?, len?, seed?, collideWith?, bounce?, radius?}; oscillate (C7): {target, node?, attr?: position|width, axis?, wave?: 0|1|2, period?, phase?, amplitude?} — deterministic periodic driver (breathe/sway/float). Auto id r<N>." },
         CmdSpec { name: "relation.delete", args: "{id}", doc: "Delete a relation." },
         CmdSpec { name: "track.create", args: "{line, node, attr?: position|width, tick?, value?}", doc: "Create a track line (auto id trk_<line>_<node>_<attr>) + its track relation + the first keyframe (defaults: tick 0, value = the node's current value). This is the gesture command for node→timeline connect; AI uses it too, so both channels produce identical documents." },
         CmdSpec { name: "style.create", args: "{id?, width?, color?, fillColor?, strokeOn?, fillOn?, brush?}", doc: "Define a named line-attribute template (B2 styles). Auto id st<N>." },
@@ -518,6 +518,7 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                             || r.sim_collide_with.iter().any(|l| l == &id)
                     }
                     RelationKind::Particles => r.part_emitter == id || r.part_collide_with.iter().any(|l| l == &id),
+                    RelationKind::Oscillate => r.osc_target == id,
                 };
                 if touches {
                     doc.relations.remove(i);
@@ -947,6 +948,33 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                     }
                     r
                 }
+                "oscillate" => {
+                    let target = need_str(cmd, "target")?.to_string();
+                    let node = cmd.arg("node").and_then(|x| x.as_i64()).map(|n| n as usize);
+                    let attr = match cmd.arg("attr").and_then(|x| x.as_str()) {
+                        Some("position") | None => TrackAttr::Position,
+                        Some("width") => TrackAttr::Width,
+                        o => return Err(format!("relation.create: oscillate attr must be position|width, got {:?}", o)),
+                    };
+                    let mut r = Relation::new_oscillate("", &target, node, attr);
+                    if let Some(v) = cmd.arg("axis") {
+                        r.osc_axis = parse_json_vec3(v, "relation.create: oscillate axis")?;
+                    }
+                    if let Some(x) = cmd.arg("wave").and_then(|x| x.as_i64()) {
+                        r.osc_wave = Wave::from_code(x)
+                            .ok_or("relation.create: oscillate wave must be 0 sine|1 triangle|2 saw")?;
+                    }
+                    if let Some(x) = cmd.arg("period").and_then(|x| x.as_i64()) {
+                        r.osc_period_ticks = x;
+                    }
+                    if let Some(x) = cmd.arg("phase").and_then(|x| x.as_i64()) {
+                        r.osc_phase_ticks = x;
+                    }
+                    if let Some(x) = cmd.arg("amplitude").and_then(|x| x.as_f64()) {
+                        r.osc_amplitude = x;
+                    }
+                    r
+                }
                 o => return Err(format!("relation.create: unknown type '{}'", o)),
             };
             r.id = match cmd.arg("id").and_then(|v| v.as_str()) {
@@ -1092,6 +1120,29 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                     }
                     if r.part_radius < 0.0 {
                         return Err("relation.create particles: radius must be >= 0".into());
+                    }
+                }
+                RelationKind::Oscillate => {
+                    let t = doc.line(&r.osc_target).map_err(|e| format!("relation.create oscillate: {}", e))?;
+                    if t.is_track() {
+                        return Err("relation.create oscillate: target must be a geometric line".into());
+                    }
+                    if let Some(n) = r.osc_node {
+                        if n >= t.nodes.len() {
+                            return Err(format!("relation.create oscillate: target node {} out of range", n));
+                        }
+                    }
+                    if matches!(r.osc_attr, TrackAttr::Color) {
+                        return Err("relation.create oscillate: attr color is meaningless for a periodic driver".into());
+                    }
+                    if r.osc_period_ticks <= 0 {
+                        return Err(format!("relation.create oscillate: period must be > 0 ticks, got {}", r.osc_period_ticks));
+                    }
+                    if r.osc_amplitude < 0.0 {
+                        return Err("relation.create oscillate: amplitude must be >= 0".into());
+                    }
+                    if matches!(r.osc_attr, TrackAttr::Position) && r.osc_axis.len() <= 1e-12 {
+                        return Err("relation.create oscillate: axis must be non-zero for position oscillation".into());
                     }
                 }
             }

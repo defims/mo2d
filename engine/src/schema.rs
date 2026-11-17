@@ -75,7 +75,7 @@ pub fn schema_v1() -> &'static str {
         "interp": {
           "type": "object",
           "properties": {
-            "im": {"type": "integer", "enum": [0, 9], "description": "0=Linear, 9=Bezier"},
+            "im": {"type": "integer", "enum": [0, 3, 9], "description": "0=Linear, 3=Step (discrete channels), 9=Bezier"},
             "b": {"type": "array", "items": {"type": "object", "properties": {
               "ao": {"type": "number"}, "ai": {"type": "number"},
               "po": {"type": "number", "minimum": 0, "maximum": 1},
@@ -137,7 +137,12 @@ pub fn schema_v1() -> &'static str {
           "life": {"type": "number", "exclusiveMinimum": 0}, "gravity": {"$ref": "#/definitions/vec3"},
           "damping": {"type": "number", "minimum": 0, "maximum": 1}, "size": {"type": "number", "minimum": 0},
           "color": {"$ref": "#/definitions/color"}, "len": {"type": "number", "minimum": 0},
-          "seed": {"type": "integer", "description": "explicit deterministic seed"}}}
+          "seed": {"type": "integer", "description": "explicit deterministic seed"}}},
+        {"properties": {"type": {"const": "oscillate"}, "target": {"type": "string"}, "node": {"type": "integer", "minimum": 0},
+          "attr": {"enum": ["position", "width"]}, "axis": {"$ref": "#/definitions/vec3"},
+          "wave": {"type": "integer", "enum": [0, 1, 2], "description": "0 sine / 1 triangle / 2 saw"},
+          "period": {"type": "integer"}, "phase": {"type": "integer"},
+          "amplitude": {"type": "number", "minimum": 0}}}
       ]
     },
     "nodeRef": {

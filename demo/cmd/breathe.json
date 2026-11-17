@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "cmds": [
+    {"op": "doc.setRoot", "width": 640, "height": 360, "fps": 24},
+    {"op": "line.create", "id": "ball", "closed": true, "width": 3, "strokeOn": true, "color": [40, 90, 190, 255], "fillOn": true, "fillColor": [80, 150, 255, 255], "nodes": [
+      {"p": [360, 180, 0]},
+      {"p": [320, 220, 0]},
+      {"p": [280, 180, 0]},
+      {"p": [320, 140, 0]}
+    ]},
+    {"op": "line.create", "id": "breathbox", "closed": false, "width": 2, "strokeOn": true, "color": [150, 150, 160, 255], "nodes": [
+      {"p": [320, 180, 0]},
+      {"p": [400, 260, 0]}
+    ]},
+    {"op": "relation.create", "type": "group", "box": "breathbox", "members": ["ball"], "visible": true},
+    {"op": "relation.create", "type": "oscillate", "target": "breathbox", "node": 1, "attr": "position", "axis": [1, 1, 0], "wave": 1, "period": 254016000000, "amplitude": 20}
+  ]
+}

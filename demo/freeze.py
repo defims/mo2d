@@ -65,6 +65,19 @@ def main() -> None:
         run("render", "--doc", str(doc_path), "--tick", str(TPS // 2), "--out", str(png_path))
         frozen_b[key] = {"docSha256": sha(doc_path), "frameSha256": sha(png_path), "midTick": TPS // 2}
 
+    # Phase C7 interactivity demos (roadmap C7: oscillate breathe/sway;
+    # tap_jump joins at the respond + event-stream step).
+    c_demos = {
+        "breathe": "breathe.json",
+        "sway": "sway.json",
+    }
+    for key, name in c_demos.items():
+        doc_path = out / f"{key}.mo2d"
+        png_path = out / f"{key}.png"
+        run("replay", "--stream", str(ROOT / "demo/cmd" / name), "--out", str(doc_path))
+        run("render", "--doc", str(doc_path), "--tick", str(TPS // 2), "--out", str(png_path))
+        frozen_b[key] = {"docSha256": sha(doc_path), "frameSha256": sha(png_path), "midTick": TPS // 2}
+
     # B5+B7 mesh demo: the media project in BOTH container forms — the
     # project directory (document.mo2d.json + assets/) and the single-file
     # package (JSON header + tail BLOB area). Acceptance: the package renders

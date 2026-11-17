@@ -1,0 +1,125 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "ground",
+      "closed": false,
+      "width": 3.0,
+      "color": [
+        150,
+        150,
+        160,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            220.0,
+            300.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            420.0,
+            300.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "pendulum",
+      "closed": false,
+      "width": 5.0,
+      "color": [
+        60,
+        170,
+        110,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            320.0,
+            300.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            320.0,
+            210.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            320.0,
+            120.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "type": "oscillate",
+      "target": "pendulum",
+      "node": 2,
+      "attr": "position",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "wave": 1,
+      "period": 254016000000,
+      "phase": 0,
+      "amplitude": 60.0
+    }
+  ]
+}

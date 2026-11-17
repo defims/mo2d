@@ -63,7 +63,9 @@ impl BezierHandle {
 /// Segment-level interpolation attribute (only meaningful on track lines).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Interp {
-    /// 0 = Linear, 9 = Bezier (MVP minimal set, moho-mapping.md §5.2 im codes).
+    /// Moho interpolation codes (moho-mapping.md §5.2 / maohou interp-modes):
+    /// 0 = Linear, 3 = Step (discrete channels — Switch/state machines, C7),
+    /// 9 = Bezier with per-component `b` handles. (1 = Smooth is deferred.)
     pub im: i64,
     /// Per-component bezier handles; length must equal the component count of
     /// the track value (1 for scalars, 3 for Vec3). Missing → default handles.
@@ -370,6 +372,43 @@ impl GradientRole {
     }
 }
 
+/// Oscillate waveform (C7): codes follow the `wave` parameter.
+/// 0 = sine (default), 1 = triangle, 2 = sawtooth.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Wave {
+    Sine,
+    Triangle,
+    Saw,
+}
+
+impl Wave {
+    pub fn code(&self) -> i64 {
+        match self {
+            Wave::Sine => 0,
+            Wave::Triangle => 1,
+            Wave::Saw => 2,
+        }
+    }
+    pub fn from_code(code: i64) -> Option<Wave> {
+        match code {
+            0 => Some(Wave::Sine),
+            1 => Some(Wave::Triangle),
+            2 => Some(Wave::Saw),
+            _ => None,
+        }
+    }
+    /// The wave function over phase ∈ [0, 1), range [−1, 1].
+    /// sine: 0 at phase 0, peaks at 0.25; triangle: +1 → −1 → +1;
+    /// saw: ramps −1 → +1 (drops at the period boundary).
+    pub fn eval(&self, phase: f64) -> f64 {
+        match self {
+            Wave::Sine => (2.0 * std::f64::consts::PI * phase).sin(),
+            Wave::Triangle => 4.0 * (phase - 0.5).abs() - 1.0,
+            Wave::Saw => 2.0 * phase - 1.0,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RelationKind {
     /// bind: body line follows skeleton polyline (linear weights via
@@ -405,6 +444,12 @@ pub enum RelationKind {
     /// mapping 9). Particles materialize as generated EvalLines; the seed is
     /// an explicit parameter (same document + same seed → same particles).
     Particles,
+    /// oscillate (C7): the deterministic periodic driver — writes base +
+    /// amplitude × wave(tick) into a target attribute (position along an
+    /// axis, or width). Reads no lines (pure function of tick); the everyday
+    /// verbs breathe/sway/float/spin compile to this (vernacular.md §2.1).
+    /// Physical sway stays with `sim`.
+    Oscillate,
 }
 
 impl RelationKind {
@@ -417,6 +462,7 @@ impl RelationKind {
             RelationKind::Group => "group",
             RelationKind::Sim => "sim",
             RelationKind::Particles => "particles",
+            RelationKind::Oscillate => "oscillate",
         }
     }
 }
@@ -480,6 +526,22 @@ pub struct Relation {
     pub part_collide_with: Vec<String>,
     pub part_bounce: f64,
     pub part_radius: f64,
+    // oscillate (C7)
+    pub osc_target: String,
+    /// None = the whole line (position: every node; width: line level).
+    pub osc_node: Option<usize>,
+    /// Position (offset along `axis`) or width. Color is meaningless here
+    /// and rejected by the parser/validator.
+    pub osc_attr: TrackAttr,
+    /// Direction of the positional offset (world units after scaling).
+    pub osc_axis: Vec3,
+    pub osc_wave: Wave,
+    /// Period length in ticks (> 0).
+    pub osc_period_ticks: i64,
+    /// Phase shift in ticks.
+    pub osc_phase_ticks: i64,
+    /// Oscillation amplitude (world units / width units), >= 0.
+    pub osc_amplitude: f64,
     pub unknown: Vec<(String, Value)>,
 }
 
@@ -528,6 +590,14 @@ impl Relation {
             part_collide_with: Vec::new(),
             part_bounce: 0.5,
             part_radius: 4.0,
+            osc_target: String::new(),
+            osc_node: None,
+            osc_attr: TrackAttr::Position,
+            osc_axis: Vec3::new(0.0, 1.0, 0.0),
+            osc_wave: Wave::Sine,
+            osc_period_ticks: TICKS_PER_SECOND,
+            osc_phase_ticks: 0,
+            osc_amplitude: 20.0,
             unknown: Vec::new(),
         }
     }
@@ -584,6 +654,14 @@ impl Relation {
         r.part_node = node;
         r
     }
+    pub fn new_oscillate(id: &str, target: &str, node: Option<usize>, attr: TrackAttr) -> Relation {
+        let mut r = Relation::base(id);
+        r.kind = RelationKind::Oscillate;
+        r.osc_target = target.to_string();
+        r.osc_node = node;
+        r.osc_attr = attr;
+        r
+    }
 
     /// Lines this relation reads from (inputs).
     pub fn reads(&self) -> Vec<&str> {
@@ -608,6 +686,8 @@ impl Relation {
                 .map(|l| l.as_str())
                 .chain(std::iter::once(self.part_emitter.as_str()))
                 .collect(),
+            // oscillate is a pure function of tick — it reads no lines.
+            RelationKind::Oscillate => vec![],
         }
     }
 
@@ -625,6 +705,7 @@ impl Relation {
             // Particles write only generated (virtual) lines — no document
             // line is claimed, so there is no primary write target.
             RelationKind::Particles => &self.part_emitter,
+            RelationKind::Oscillate => &self.osc_target,
         }
     }
 

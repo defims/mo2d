@@ -125,8 +125,8 @@ fn validate_lines(doc: &Document, p: &mut Vec<Problem>) {
             }
             for (si, s) in l.segs.iter().enumerate() {
                 if let Some(interp) = &s.interp {
-                    if interp.im != 0 && interp.im != 9 {
-                        p.push(Problem::new(&format!("{}.segs[{}].interp.im", base, si), format!("MVP interp modes are 0=Linear and 9=Bezier, got {}", interp.im)));
+                    if interp.im != 0 && interp.im != 3 && interp.im != 9 {
+                        p.push(Problem::new(&format!("{}.segs[{}].interp.im", base, si), format!("supported interp modes are 0=Linear, 3=Step and 9=Bezier, got {}", interp.im)));
                     }
                     if let Some(b) = &interp.b {
                         let comps = first.unwrap_or(1);
@@ -407,6 +407,31 @@ fn validate_relations(doc: &Document, p: &mut Vec<Problem>) {
                     p.push(Problem::new(&format!("{}.radius", base), "radius must be >= 0"));
                 }
             }
+            RelationKind::Oscillate => {
+                check_line(doc, &r.osc_target, &format!("{}.target", base), p);
+                if let Ok(t) = doc.line(&r.osc_target) {
+                    if t.is_track() {
+                        p.push(Problem::new(&format!("{}.target", base), "cannot oscillate a track line"));
+                    }
+                    if let Some(n) = r.osc_node {
+                        if n >= t.nodes.len() {
+                            p.push(Problem::new(&format!("{}.node", base), format!("index {} out of range ({} nodes)", n, t.nodes.len())));
+                        }
+                    }
+                }
+                if matches!(r.osc_attr, TrackAttr::Color) {
+                    p.push(Problem::new(&format!("{}.attr", base), "color is meaningless for a periodic driver"));
+                }
+                if r.osc_period_ticks <= 0 {
+                    p.push(Problem::new(&format!("{}.period", base), format!("period must be > 0 ticks, got {}", r.osc_period_ticks)));
+                }
+                if r.osc_amplitude < 0.0 {
+                    p.push(Problem::new(&format!("{}.amplitude", base), "negative amplitude"));
+                }
+                if matches!(r.osc_attr, TrackAttr::Position) && r.osc_axis.len() <= 1e-12 {
+                    p.push(Problem::new(&format!("{}.axis", base), "axis must be non-zero for position oscillation"));
+                }
+            }
         }
     }
 }
@@ -449,6 +474,19 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
                 RelationKind::Sim => vec![Claim::SimLine(r.sim_line.clone())],
                 // Particles claim no document line (B6).
                 RelationKind::Particles => vec![],
+                // Oscillate (C7) claims exactly like a track on the same
+                // line+attr (single-writer rule): position-per-node when the
+                // node is unset (whole line), width at node/line level.
+                RelationKind::Oscillate => match r.osc_attr {
+                    TrackAttr::Position => match r.osc_node {
+                        Some(n) => vec![Claim::TrackNode(r.osc_target.clone(), Some(n), TrackAttr::Position)],
+                        None => (0..doc.line(&r.osc_target).map(|l| l.nodes.len()).unwrap_or(0))
+                            .map(|i| Claim::TrackNode(r.osc_target.clone(), Some(i), TrackAttr::Position))
+                            .collect(),
+                    },
+                    TrackAttr::Width => vec![Claim::TrackNode(r.osc_target.clone(), r.osc_node, TrackAttr::Width)],
+                    TrackAttr::Color => vec![],
+                },
             };
             base.into_iter().map(move |c| (r, c))
         })
