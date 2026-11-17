@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "cmds": [
+    {"op": "doc.setRoot", "width": 640, "height": 360, "fps": 24},
+    {"op": "line.create", "id": "stick", "width": 5, "strokeOn": true, "color": [60, 170, 110, 255], "nodes": [
+      {"p": [320, 120, 0]},
+      {"p": [320, 200, 0]},
+      {"p": [320, 280, 0]}
+    ]},
+    {"op": "track.create", "line": "stick", "node": 2, "tick": 0},
+    {"op": "node.set", "line": "stick", "index": 2, "p": [380, 260, 0], "atTick": 0},
+    {"op": "node.set", "line": "stick", "index": 2, "p": [430, 240, 0], "atTick": 63504000000},
+    {"op": "node.set", "line": "stick", "index": 2, "p": [400, 200, 0], "atTick": 127008000000},
+    {"op": "node.set", "line": "stick", "index": 2, "p": [270, 220, 0], "atTick": 190512000000},
+    {"op": "node.set", "line": "stick", "index": 2, "p": [250, 265, 0], "atTick": 254016000000}
+  ]
+}

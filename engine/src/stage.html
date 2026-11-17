@@ -12,11 +12,13 @@
 <canvas id="stage"></canvas>
 <script type="module">
 "use strict";
-// mo2d minimal stage — four operations, zero standard controls.
+// mo2d minimal stage — five operations, zero standard controls.
 //   1. draw: drag on empty canvas → line.create
-//   2. drag node: pointer on a node → node.set (auto-key when tracked)
+//   2. drag node: pointer on a node → node.set (auto-key when tracked;
+//      dragging while playing records keys along time = perform-record)
 //   3. connect: line→line = bind, node→node = share, node→timeline = track.create
 //   4. play: the time baseline (a line) — drag playhead to scrub, tap to play
+//   5. tap: tap a line (no drag) → event.fire — respond relations react in-file
 // Every interaction is a protocol command POSTed to /cmd.
 
 const canvas = document.getElementById("stage");
@@ -169,6 +171,12 @@ canvas.addEventListener("pointermove", (e) => {
   } else if (gesture.kind === "dragNode") {
     const [wx, wy] = s2w(sx, sy);
     gesture.node.wx = wx; gesture.node.wy = wy;
+    // Perform-record: dragging while playing keys the motion at the current
+    // tick (auto-key) — capture-then-edit, one key per distinct tick.
+    if (playing && tick !== gesture.lastKeyTick) {
+      gesture.lastKeyTick = tick;
+      post("node.set", { line: gesture.node.line, index: gesture.node.index, p: [round(wx), round(wy), 0], atTick: tick });
+    }
   } else if (gesture.kind === "connect") {
     gesture.x = sx; gesture.y = sy;
     const node = pickNode(sx, sy);
@@ -223,7 +231,12 @@ canvas.addEventListener("pointerup", async (e) => {
       }
     }
   } else if (g.kind === "connect") {
-    if (g.toBaseline && g.fromNode) {
+    if (!g.moved) {
+      // Operation 5 — TAP (no drag): the line hears the event; respond
+      // relations in the document react deterministically, offline.
+      const [wx, wy] = s2w(sx, sy);
+      await post("event.fire", { name: "tap", tick, target: g.from, x: round(wx), y: round(wy) });
+    } else if (g.toBaseline && g.fromNode) {
       // node → timeline: create a track for that node (first key = now)
       await post("track.create", { line: g.fromNode.line, node: g.fromNode.index, tick });
     } else if (g.toNode && g.fromNode && g.toNode.line !== g.fromNode.line) {
@@ -326,7 +339,7 @@ function draw() {
   // hint (drawn, not a control)
   ctx.fillStyle = "#6a6a78";
   ctx.font = "11px ui-monospace, monospace";
-  ctx.fillText("drag empty: draw · drag node: move/auto-key · drop node on node: share · drop node on timeline: track · line→line: bind · tap timeline: play", 12, 16);
+  ctx.fillText("drag empty: draw · drag node: move/auto-key (while playing: perform-record) · drop node on node: share · drop node on timeline: track · line→line: bind · tap timeline: play · tap line (no drag): event", 12, 16);
   ctx.fillText(`tick ${tick}`, 12, 32);
 
   requestAnimationFrame(draw);

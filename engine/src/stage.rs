@@ -1,11 +1,12 @@
 //! A6 minimal stage: a thin viewport around the headless kernel.
 //!
-//! Four operations only (mvp.md D8 hard boundary): draw line / drag node /
-//! connect-line-to-build-relation / play. Zero standard controls — the time
-//! baseline and playhead are themselves lines (ai-interaction.md §3).
-//! Every interaction is a protocol command: document commands mutate the doc
-//! (validated, saved); session commands (session.play / session.seek) drive
-//! playback without touching document history.
+//! Five operations (mvp.md D8 as revised 2026-11-17, owner approved): draw
+//! line / drag node / connect-line-to-build-relation / play / **tap** (tap a
+//! line = `event.fire`; respond relations react in-file, roadmap C7). Zero
+//! standard controls — the time baseline and playhead are themselves lines
+//! (ai-interaction.md §3). Every interaction is a protocol command: document
+//! commands mutate the doc (validated, saved); session commands (session.play /
+//! session.seek) drive playback without touching document history.
 
 use crate::command::{self, Command};
 use crate::eval;

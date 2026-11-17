@@ -66,11 +66,13 @@ def main() -> None:
         frozen_b[key] = {"docSha256": sha(doc_path), "frameSha256": sha(png_path), "midTick": TPS // 2}
 
     # Phase C7 interactivity demos (roadmap C7: oscillate breathe/sway +
-    # the respond/event-stream tap_jump — the N3 gate, offline no-AI playback).
+    # the respond/event-stream tap_jump — the N3 gate, offline no-AI playback
+    # + record_wave, the perform-record transcript: gesture commands → track keys).
     c_demos = {
         "breathe": "breathe.json",
         "sway": "sway.json",
         "tapJump": "tap_jump.json",
+        "recordWave": "record_wave.json",
     }
     for key, name in c_demos.items():
         doc_path = out / f"{key}.mo2d"

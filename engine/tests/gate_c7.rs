@@ -167,7 +167,7 @@ fn step_interp_holds_the_key_value() {
 
 #[test]
 fn c7_frozen_demos() {
-    for (key, stream) in [("breathe", "breathe.json"), ("sway", "sway.json")] {
+    for (key, stream) in [("breathe", "breathe.json"), ("sway", "sway.json"), ("recordWave", "record_wave.json")] {
         let frozen = load_frozen();
         let sec = frozen
             .raw
@@ -184,7 +184,7 @@ fn c7_frozen_demos() {
 
 #[test]
 fn c7_frozen_streams_live_in_the_demo_dir() {
-    for name in ["breathe.json", "sway.json"] {
+    for name in ["breathe.json", "sway.json", "tap_jump.json", "record_wave.json"] {
         assert!(demo_dir().join("cmd").join(name).is_file(), "missing demo/cmd/{}", name);
         assert!(Path::new(&demo_dir()).exists());
     }

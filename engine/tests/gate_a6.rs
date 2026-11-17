@@ -1,9 +1,10 @@
-//! Gate A6 — the minimal stage (mvp.md §3, D8 hard boundary).
+//! Gate A6 — the minimal stage (mvp.md §3, D8 as revised 2026-11-17).
 //!
-//! Four operations, zero standard controls; every interaction is a protocol
-//! command; the hand-built tentacle's command stream and the AI path are
-//! isomorphic: same protocol vocabulary, same relation structure, and the
-//! recorded hand stream replays byte-identically (completion definition 7).
+//! Five operations (four + tap), zero standard controls; every interaction is
+//! a protocol command; the hand-built tentacle's command stream and the AI
+//! path are isomorphic: same protocol vocabulary, same relation structure,
+//! and the recorded hand stream replays byte-identically (completion
+//! definition 7).
 
 mod common;
 
@@ -74,7 +75,7 @@ fn registry_ops() -> Vec<String> {
 }
 
 #[test]
-fn a6_stage_four_operations_all_commands() {
+fn a6_stage_five_operations_all_commands() {
     let (port, doc_path) = spawn_stage();
 
     // ── Operation 1: DRAW a line (pointer drag → one line.create command,
@@ -110,6 +111,19 @@ fn a6_stage_four_operations_all_commands() {
     post_cmd(port, r#"{"v":1,"cmds":[{"op":"session.seek","tick":127008000000}]}"#);
     post_cmd(port, r#"{"v":1,"cmds":[{"op":"session.play","tick":127008000000}]}"#);
 
+    // ── Operation 5 (D8 revision, 2026-11-17): TAP — tap a line (no drag) =
+    //    event.fire; a respond relation reacts in-file, deterministically.
+    //    (The page posts exactly this when a line tap does not become a drag.)
+    post_cmd(
+        port,
+        r#"{"v":1,"cmds":[{"op":"relation.create","type":"respond","trigger":"l1","event":"tap","radius":200,
+           "actions":[{"write":{"line":"l1","attr":"width","mode":"add","value":4.0}}]}]}"#,
+    );
+    post_cmd(
+        port,
+        r#"{"v":1,"cmds":[{"op":"event.fire","name":"tap","tick":127008000000,"target":"l1","x":260,"y":210}]}"#,
+    );
+
     // The rendered frame must exist and be non-trivial.
     let (status, png) = http(port, "GET", "/frame?tick=127008000000", None);
     assert_eq!(status, 200);
@@ -125,6 +139,18 @@ fn a6_stage_four_operations_all_commands() {
     let nodes = body.get("nodes").and_then(mo2d::json::Value::as_arr).unwrap();
     let mid_y = nodes[2].as_arr().unwrap()[1].as_f64().unwrap();
     assert!(mid_y > 200.0, "bound body must follow the keyed skeleton pose (y={})", mid_y);
+
+    // The tap landed: the staged document carries the recorded event (N3 —
+    // offline interactive playback works from the document alone).
+    let (_, doc_bytes) = http(port, "GET", "/doc", None);
+    let staged_doc = mo2d::format::parse_doc(&String::from_utf8_lossy(&doc_bytes)).unwrap();
+    assert_eq!(staged_doc.events.len(), 1, "the recorded tap must persist in the document");
+    assert_eq!(staged_doc.events[0].name, "tap");
+    assert_eq!(staged_doc.events[0].tick, 127008000000);
+    // Evaluating the staged doc at the tap tick lifts the skeleton's width.
+    let lifted = mo2d::eval::evaluate(&staged_doc, 127008000000).unwrap();
+    let skeleton = lifted.iter().find(|l| l.id == "l1").unwrap();
+    assert!((skeleton.width - 8.0).abs() < 1e-9, "the tap respond must widen the skeleton line (4+4), got {}", skeleton.width);
 
     // ── Every interaction is a command: the recorded history replays to the
     //    staged document, byte-identically.

@@ -1,0 +1,170 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "stick",
+      "closed": false,
+      "width": 5.0,
+      "color": [
+        60,
+        170,
+        110,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            320.0,
+            120.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            320.0,
+            200.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            320.0,
+            280.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "trk_stick_2_position",
+      "tags": [
+        "track"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            0
+          ],
+          "v": [
+            380.0,
+            260.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            63504000000
+          ],
+          "v": [
+            430.0,
+            240.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            127008000000
+          ],
+          "v": [
+            400.0,
+            200.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            190512000000
+          ],
+          "v": [
+            270.0,
+            220.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            254016000000
+          ],
+          "v": [
+            250.0,
+            265.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "type": "track",
+      "trackLine": "trk_stick_2_position",
+      "target": {
+        "line": "stick",
+        "node": 2,
+        "attr": "position"
+      }
+    }
+  ]
+}
