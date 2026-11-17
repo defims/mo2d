@@ -25,7 +25,7 @@ const canvas = document.getElementById("stage");
 const ctx = canvas.getContext("2d");
 const frameImg = new Image();
 
-let scene = { width: 640, height: 360, tps: 254016000000, fps: 24, lines: [], relations: [] };
+let scene = { width: 640, height: 360, tps: 254016000000, fps: 24, lines: [], relations: [], gestures: [] };
 let tick = 0;
 let playing = false;
 let playAnchor = null;          // {wall: ms, tick}
@@ -100,6 +100,7 @@ function distSeg(px, py, ax, ay, bx, by) {
 function pickNode(sx, sy) {
   let best = null;
   for (const line of scene.lines) {
+    if (line.id.startsWith("gesture/")) continue;
     line.nodes.forEach((n, i) => {
       const [nx, ny] = w2s(n[0], n[1]);
       const d = Math.hypot(sx - nx, sy - ny);
@@ -112,6 +113,7 @@ function pickNode(sx, sy) {
 function pickLine(sx, sy) {
   let best = null;
   for (const line of scene.lines) {
+    if (line.id.startsWith("gesture/")) continue; // materialized events are read-only
     if (line.nodes.length < 2) continue;
     const n = line.nodes.length;
     const count = line.closed ? n : n - 1;
@@ -151,7 +153,13 @@ canvas.addEventListener("pointerdown", (e) => {
   }
   const line = pickLine(sx, sy);
   if (line) {
-    gesture = { kind: "connect", from: line.line, fromNode: null, x0: sx, y0: sy, x: sx, y: sy, moved: false };
+    gesture = { kind: "connect", from: line.line, fromNode: null, x0: sx, y0: sy, x: sx, y: sy, moved: false, lastEvtTick: tick };
+    // Perform-interaction recording (C8): while playing, pressing on a line
+    // records a press event; the materialized gesture lane grows with it.
+    if (playing) {
+      const [wx, wy] = s2w(sx, sy);
+      post("event.fire", { name: "press", tick, target: line.line, x: round(wx), y: round(wy) });
+    }
     return;
   }
   // empty canvas → draw
@@ -179,6 +187,12 @@ canvas.addEventListener("pointermove", (e) => {
     }
   } else if (gesture.kind === "connect") {
     gesture.x = sx; gesture.y = sy;
+    // C8: while playing, movement records move events (one per distinct tick).
+    if (playing && tick !== gesture.lastEvtTick) {
+      gesture.lastEvtTick = tick;
+      const [wx, wy] = s2w(sx, sy);
+      post("event.fire", { name: "move", tick, target: gesture.from, x: round(wx), y: round(wy) });
+    }
     const node = pickNode(sx, sy);
     gesture.toNode = node ? { line: node.line, index: node.index } : null;
     const line = pickLine(sx, sy);
@@ -231,6 +245,12 @@ canvas.addEventListener("pointerup", async (e) => {
       }
     }
   } else if (g.kind === "connect") {
+    if (playing) {
+      // Close the recorded gesture: release pairs the press (hold = the
+      // pressed segment's length on the gesture lane).
+      const [wx, wy] = s2w(sx, sy);
+      await post("event.fire", { name: "release", tick, target: g.from, x: round(wx), y: round(wy) });
+    }
     if (!g.moved) {
       // Operation 5 — TAP (no drag): the line hears the event; respond
       // relations in the document react deterministically, offline.
@@ -327,6 +347,18 @@ function draw() {
       ctx.fillText(`${s}s`, x - 6, baseline.y + 20);
     }
   }
+  // C8 gesture lanes: faint phase marks on the baseline (read-only)
+  if (scene.gestures) {
+    const colors = { 0: "#55555f", 1: "#7dffb0", 2: "#ff7d7d" };
+    for (const gline of scene.gestures) {
+      for (const [gt, phase] of gline.keys) {
+        const x = t2s(gt);
+        ctx.fillStyle = colors[Math.round(phase)] || "#55555f";
+        ctx.fillRect(x - 3, baseline.y - 30, 6, 4);
+      }
+    }
+  }
+
   // the playhead — a short vertical line on the baseline
   const px = t2s(tick);
   ctx.strokeStyle = playing ? "#7dffb0" : "#ff9d5c";
@@ -339,7 +371,7 @@ function draw() {
   // hint (drawn, not a control)
   ctx.fillStyle = "#6a6a78";
   ctx.font = "11px ui-monospace, monospace";
-  ctx.fillText("drag empty: draw · drag node: move/auto-key (while playing: perform-record) · drop node on node: share · drop node on timeline: track · line→line: bind · tap timeline: play · tap line (no drag): event", 12, 16);
+  ctx.fillText("drag empty: draw · drag node: move/auto-key (while playing: perform-record) · drop node on node: share · drop node on timeline: track · line→line: bind · tap timeline: play · tap line (no drag): event · while playing: press/move/release record the gesture lane", 12, 16);
   ctx.fillText(`tick ${tick}`, 12, 32);
 
   requestAnimationFrame(draw);

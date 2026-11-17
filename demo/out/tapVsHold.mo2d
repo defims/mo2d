@@ -1,0 +1,248 @@
+{
+  "format": "mo2d",
+  "version": 1,
+  "minReader": 1,
+  "generator": "mo2d 0.1.0",
+  "root": {
+    "width": 640,
+    "height": 360,
+    "ticksPerSecond": 254016000000,
+    "fps": 24.0
+  },
+  "lines": [
+    {
+      "id": "floor",
+      "closed": false,
+      "width": 3.0,
+      "color": [
+        150,
+        150,
+        160,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            360.0,
+            140.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            600.0,
+            140.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "ball",
+      "closed": true,
+      "width": 3.0,
+      "color": [
+        190,
+        90,
+        40,
+        255
+      ],
+      "fillColor": [
+        240,
+        130,
+        60,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": true,
+      "nodes": [
+        {
+          "p": [
+            480.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            510.0,
+            160.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            480.0,
+            140.0,
+            0.0
+          ]
+        },
+        {
+          "p": [
+            450.0,
+            160.0,
+            0.0
+          ]
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        },
+        {
+          "type": "straight",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "gesture/ball",
+      "tags": [
+        "track",
+        "gesture"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            63504000000
+          ],
+          "v": 1.0
+        },
+        {
+          "p": [
+            127008000000
+          ],
+          "v": 2.0
+        },
+        {
+          "p": [
+            254016000000
+          ],
+          "v": 1.0
+        }
+      ],
+      "segs": [
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 3
+          }
+        },
+        {
+          "type": "straight",
+          "visible": true,
+          "interp": {
+            "im": 3
+          }
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "type": "respond",
+      "trigger": "ball",
+      "event": "tap",
+      "radius": 60.0,
+      "actions": [
+        {
+          "write": {
+            "line": "ball",
+            "attr": "position",
+            "mode": "add",
+            "value": [
+              0.0,
+              50.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "respond",
+      "trigger": "ball",
+      "event": "release",
+      "radius": 60.0,
+      "minHold": 101606400000,
+      "actions": [
+        {
+          "write": {
+            "line": "ball",
+            "attr": "width",
+            "mode": "add",
+            "value": 3.0
+          }
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "tap",
+      "tick": 63504000000,
+      "seq": 0,
+      "target": "ball",
+      "x": 480.0,
+      "y": 160.0
+    },
+    {
+      "name": "press",
+      "tick": 127008000000,
+      "seq": 1,
+      "target": "ball",
+      "x": 480.0,
+      "y": 160.0
+    },
+    {
+      "name": "release",
+      "tick": 254016000000,
+      "seq": 2,
+      "target": "ball",
+      "x": 480.0,
+      "y": 160.0
+    }
+  ]
+}

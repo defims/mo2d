@@ -267,7 +267,12 @@ fn respond_fold_is_order_normalized() {
     ));
     let f1 = eval::evaluate(&d1, TPS).unwrap();
     let f2 = eval::evaluate(&d2, TPS).unwrap();
-    assert_eq!(f1, f2, "fold must be order-normalized by (tick, seq)");
+    // The fold (channel semantics) is order-normalized — compare the target
+    // line. The materialized gesture/g lines legitimately differ (recording
+    // order is a fact), so whole-frame equality no longer applies.
+    let g1 = f1.iter().find(|l| l.id == "g").unwrap();
+    let g2 = f2.iter().find(|l| l.id == "g").unwrap();
+    assert_eq!(g1, g2, "fold must be order-normalized by (tick, seq)");
     assert!((f1[0].width - (6.0 + 5.0 - 1.0)).abs() < 1e-9, "tap then land, got {}", f1[0].width);
     // Mid-way: only the tap has happened.
     let mid = eval::evaluate(&d1, 30000000000).unwrap();

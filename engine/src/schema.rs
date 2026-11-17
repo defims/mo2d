@@ -148,6 +148,8 @@ pub fn schema_v1() -> &'static str {
           "event": {"enum": ["tap", "press", "release", "hoverIn", "hoverOut", "overlap", "timePoint", "named"]},
           "at": {"type": "integer", "minimum": 0}, "eventName": {"type": "string"},
           "other": {"type": "string"}, "radius": {"type": "number", "minimum": 0},
+          "minHold": {"type": "integer", "minimum": 0, "description": "release hold minimum (ticks, C8)"},
+          "maxHold": {"type": "integer", "minimum": 0, "description": "release hold maximum (ticks, C8)"},
           "guard": {"type": "object", "properties": {"line": {"type": "string"}, "node": {"type": "integer", "minimum": 0},
             "op": {"enum": ["<", "<=", "=", ">=", ">"]}, "value": {"type": "number"}}},
           "actions": {"type": "array", "items": {"type": "object", "properties": {

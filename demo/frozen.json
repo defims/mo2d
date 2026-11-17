@@ -57,13 +57,18 @@
     "midTick": 127008000000
   },
   "tapJump": {
-    "docSha256": "274c821f1460399912440fa1c1bbb7ea535a10560c2b43178dbe96530dc0edf7",
+    "docSha256": "ee6f74d4648e96c7181858c09f62ad608adb3927fb70d5eb7f68bc5d2966d123",
     "frameSha256": "f1965c307e03e7fff28d0420ce20407ae1846d747baf02116bd17496f291c4a0",
     "midTick": 127008000000
   },
   "recordWave": {
     "docSha256": "177fa651803c94203448c30a392de660358dce3ee6f6d49455524f8358bdb0c0",
     "frameSha256": "b6a51086bf096c85cb508d1c4fb87f5dc2dbe693df0fc540c1d6be5767a2ed9c",
+    "midTick": 127008000000
+  },
+  "tapVsHold": {
+    "docSha256": "0b414ea146df612c3701d7a1698b2dbf09d99c6061f60c8bc5023cb79c01c6b7",
+    "frameSha256": "7440fea9c1ccef81f4f62c8bff17ce18dc922e86fe6a978d04e77021723d14ac",
     "midTick": 127008000000
   },
   "mesh": {

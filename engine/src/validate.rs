@@ -28,6 +28,7 @@ pub fn validate(doc: &Document) -> Vec<Problem> {
     let mut p = Vec::new();
     validate_root(doc, &mut p);
     validate_lines(doc, &mut p);
+    validate_gesture_namespace(doc, &mut p);
     validate_relations(doc, &mut p);
     validate_events(doc, &mut p);
     validate_writers(doc, &mut p);
@@ -211,6 +212,40 @@ fn validate_lines(doc: &Document, p: &mut Vec<Problem>) {
     for (si, s) in doc.styles.iter().enumerate() {
         if !seen_styles.insert(s.id.clone()) {
             p.push(Problem::new(&format!("styles[{}] ('{}')", si, s.id), "duplicate style id"));
+        }
+    }
+}
+
+/// C8: `gesture/` lines are read-only materialized event timelines — they
+/// must be step track lines tagged `track`+`gesture`, and no relation may
+/// claim (write) them.
+fn validate_gesture_namespace(doc: &Document, p: &mut Vec<Problem>) {
+    for (li, l) in doc.lines.iter().enumerate() {
+        if l.id.starts_with("gesture/") {
+            let base = format!("lines[{}] ('{}')", li, l.id);
+            if !l.is_track() {
+                p.push(Problem::new(&base, "gesture/ lines must be track lines (Tick nodes)"));
+            }
+            if !l.tags.iter().any(|t| t == "gesture") || !l.tags.iter().any(|t| t == "track") {
+                p.push(Problem::new(&base, "gesture/ lines must carry tags [track, gesture]"));
+            }
+            for (si, sg) in l.segs.iter().enumerate() {
+                if let Some(interp) = &sg.interp {
+                    if interp.im != 3 {
+                        p.push(Problem::new(&format!("{}.segs[{}].interp.im", base, si), "gesture/ lines must use step interpolation (im=3)"));
+                    }
+                }
+            }
+        }
+    }
+    for (ri, r) in doc.relations.iter().enumerate() {
+        for w in r.writes_all() {
+            if w.starts_with("gesture/") {
+                p.push(Problem::new(
+                    &format!("relations[{}] ('{}')", ri, r.id),
+                    "no relation may write a gesture/ line (materialized events are read-only)",
+                ));
+            }
         }
     }
 }
@@ -478,9 +513,19 @@ fn validate_relations(doc: &Document, p: &mut Vec<Problem>) {
                     }
                 }
                 if let Some(g) = &r.resp_guard {
-                    check_line(doc, &g.line, &format!("{}.guard.line", base), p);
+                    // Gesture lines materialize lazily as events arrive — a
+                    // guard may reference one before it exists.
+                    if !g.line.starts_with("gesture/") {
+                        check_line(doc, &g.line, &format!("{}.guard.line", base), p);
+                    }
                     if let Ok(gl) = doc.line(&g.line) {
-                        if let Some(n) = g.node {
+                        if g.line.starts_with("gesture/") {
+                            // v1 guards may read only gesture lines — phase is
+                            // line-level, no node addressing.
+                            if g.node.is_some() {
+                                p.push(Problem::new(&format!("{}.guard.node", base), "gesture-line guards read the whole phase (no node)"));
+                            }
+                        } else if let Some(n) = g.node {
                             if n >= gl.nodes.len() {
                                 p.push(Problem::new(&format!("{}.guard.node", base), format!("index {} out of range ({} nodes)", n, gl.nodes.len())));
                             }
@@ -489,6 +534,14 @@ fn validate_relations(doc: &Document, p: &mut Vec<Problem>) {
                 }
                 if r.resp_actions.is_empty() {
                     p.push(Problem::new(&base, "respond needs at least one action"));
+                }
+                if r.resp_min_hold.map(|m| m < 0).unwrap_or(false) || r.resp_max_hold.map(|m| m < 0).unwrap_or(false) {
+                    p.push(Problem::new(&format!("{}.minHold/maxHold", base), "hold bounds must be >= 0 ticks"));
+                }
+                if let (Some(min), Some(max)) = (r.resp_min_hold, r.resp_max_hold) {
+                    if min > max {
+                        p.push(Problem::new(&format!("{}.minHold", base), format!("minHold {} > maxHold {}", min, max)));
+                    }
                 }
                 for (ai, a) in r.resp_actions.iter().enumerate() {
                     if let RespondAction::WriteWidth { line, node, .. } | RespondAction::WritePosition { line, node, .. } = a {

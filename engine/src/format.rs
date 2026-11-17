@@ -579,6 +579,12 @@ fn relation_to_value(r: &Relation) -> Value {
                 o.set("other", Value::Str(r.resp_other.clone()));
             }
             o.set("radius", Value::Num(r.resp_radius));
+            if let Some(m) = r.resp_min_hold {
+                o.set("minHold", Value::Int(m));
+            }
+            if let Some(m) = r.resp_max_hold {
+                o.set("maxHold", Value::Int(m));
+            }
             if let Some(g) = &r.resp_guard {
                 let mut gv = Value::obj();
                 gv.set("line", Value::Str(g.line.clone()));
@@ -1106,6 +1112,12 @@ fn relation_from_value(v: &Value) -> Result<Relation, String> {
             if let Some(x) = v.get("radius").and_then(|x| x.as_f64()) {
                 r.resp_radius = x;
             }
+            if let Some(x) = v.get("minHold").and_then(|x| x.as_i64()) {
+                r.resp_min_hold = Some(x);
+            }
+            if let Some(x) = v.get("maxHold").and_then(|x| x.as_i64()) {
+                r.resp_max_hold = Some(x);
+            }
             if let Some(g) = v.get("guard") {
                 let line = g.get("line").and_then(|x| x.as_str()).ok_or_else(|| format!("relation '{}': guard.line missing", id))?.to_string();
                 let node = g.get("node").and_then(|x| x.as_i64()).map(|n| n as usize);
@@ -1166,7 +1178,7 @@ fn relation_from_value(v: &Value) -> Result<Relation, String> {
         RelationKind::Sim => &["id", "type", "line", "anchors", "gravity", "damping", "iterations", "collideWith", "radius", "selfCollide"],
         RelationKind::Particles => &["id", "type", "emitter", "node", "rate", "speed", "dir", "spread", "life", "gravity", "damping", "size", "color", "len", "seed", "collideWith", "bounce", "radius"],
         RelationKind::Oscillate => &["id", "type", "target", "node", "attr", "axis", "wave", "period", "phase", "amplitude"],
-        RelationKind::Respond => &["id", "type", "trigger", "event", "at", "eventName", "other", "radius", "guard", "actions"],
+        RelationKind::Respond => &["id", "type", "trigger", "event", "at", "eventName", "other", "radius", "minHold", "maxHold", "guard", "actions"],
     };
     r.unknown = unknown_of(v, consumed);
     Ok(r)

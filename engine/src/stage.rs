@@ -96,6 +96,24 @@ impl StageState {
             arr.push(lo);
         }
         out.set("lines", Value::Arr(arr));
+        // C8 gesture lanes: read-only phase keys for the stage timeline.
+        let mut gestures = Vec::new();
+        for l in &doc.lines {
+            if !l.tags.iter().any(|t| t == "gesture") {
+                continue;
+            }
+            let mut go = Value::obj();
+            go.set("id", Value::Str(l.id.clone()));
+            let mut keys = Vec::new();
+            for n in &l.nodes {
+                if let Ok(t) = n.pos.tick() {
+                    keys.push(Value::Arr(vec![Value::Num(t as f64), n.value.clone().unwrap_or(Value::Num(0.0))]));
+                }
+            }
+            go.set("keys", Value::Arr(keys));
+            gestures.push(go);
+        }
+        out.set("gestures", Value::Arr(gestures));
         let mut rels = Vec::new();
         for r in &doc.relations {
             let mut ro = Value::obj();

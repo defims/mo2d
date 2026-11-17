@@ -4,7 +4,7 @@ title: "MVP 定稿(v5):触手 + 3D 场景,命令协议全程构建"
 description: MVP v5 整理稿——六件范围(线内核 3D 就绪/关系热路径/Tick 时间/命令协议+校验器/格式+导出/最小舞台),六步验收门(A1 含 3D 场景哈希门,A6 手搓与 AI 命令流同构),八条完成定义,十项已冻结决策清单,基础 3D 硬边界与防蔓延条款。
 tags: [mvp, scope, stage, mcp, ticks, 3d]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:25:00Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -155,6 +155,6 @@ BLOB 区、工程目录形态、协作;**3D 侧**:灯光、材质、3D 导航、
 | D7 | 时间=**Tick 裸整数**(254,016,000,000/s) | file-format §2 |
 | D8 | 最小舞台 A6 提前,~~四操作硬边界~~ **2026-11-17 修订(owner 批准):五操作**——画线/拖节点/连线/scrub/**点它 tap**(tap = `event.fire` 命令;仍零按钮零面板) | owner 决定 B1 提前;修订随路线图 C7 交互切片 |
 | D9 | 演示物含闭合吸盘(填充验收物)+ z≠0 静态场景(3D 验收物) | P0-3 / D6 |
-| D10 | **交互事件是时间线**:一次手势的相位边沿(悬停/按下/抬起/移出)是手势时间线上的关键帧,与动画共用同一 tick 轴;手势的时长=按下段的长度;经 `event.fire` 原子双写物化为**只读**的步进(im=3)轨道线 `gesture/<target>`(广播事件落 `gesture/pointer`);时长判别=press→release 事件对测距(`minHold`/`maxHold`,fold 回看) | Owner 设计会话 2026-11-17("交互事件其实也是时间线……点击事件的时间长短对应时间线的长短");落位=路线图 C8 |
+| D10 | **交互事件是时间线**:一次手势的相位边沿(悬停/按下/抬起/移出)是手势时间线上的关键帧,与动画共用同一 tick 轴;手势的时长=按下段的长度;经 `event.fire` 原子双写物化为**只读**的步进(im=3)轨道线 `gesture/<target>`(广播事件落 `gesture/pointer`);时长判别=press→release 事件对测距(`minHold`/`maxHold`,fold 回看) | Owner 设计会话 2026-11-17("交互事件其实也是时间线……点击事件的时间长短对应时间线的长短");已落地(C8,2026-11-17) |
 
 **本文档冻结即可开工 A1。**

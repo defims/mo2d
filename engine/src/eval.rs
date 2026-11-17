@@ -289,7 +289,7 @@ fn rest_width(doc: &Document, line: &str, node: Option<usize>) -> f64 {
 
 /// Deterministic 2D distance from p to the rest segments of `line`
 /// (closed lines include the closing segment).
-fn distance_to_line(line: &Line, p: Vec3) -> f64 {
+pub fn distance_to_line(line: &Line, p: Vec3) -> f64 {
     let pts: Vec<Vec3> = line.nodes.iter().filter_map(|n| n.pos.geom().ok()).collect();
     if pts.len() < 2 {
         return f64::INFINITY;
@@ -343,12 +343,37 @@ fn lines_intersect(a: &Line, b: &Line) -> bool {
 }
 
 /// The guard reads the fold's width channel; an unwritten channel reads as
-/// the rest width.
-fn guard_ok(doc: &Document, fold: &Fold, r: &Relation) -> bool {
+/// the rest width. A guard on a `gesture/` line reads that line's step phase
+/// at the fold moment (C8: v1 guards may read only gesture lines — event
+/// derived, so the "respond reads no lines" acyclicity is preserved).
+fn guard_ok(doc: &Document, fold: &Fold, r: &Relation, moment: i64) -> bool {
     let Some(g) = &r.resp_guard else { return true };
-    let key = (g.line.clone(), g.node);
-    let cur = fold.channels.get(&key).and_then(|c| c.width).unwrap_or_else(|| rest_width(doc, &g.line, g.node));
+    let cur = if g.line.starts_with("gesture/") {
+        match doc.line(&g.line) {
+            Ok(l) if !l.nodes.is_empty() => {
+                sample_track(l, moment).map(|v| v.first().copied().unwrap_or(0.0)).unwrap_or(0.0)
+            }
+            _ => 0.0,
+        }
+    } else {
+        let key = (g.line.clone(), g.node);
+        fold.channels.get(&key).and_then(|c| c.width).unwrap_or_else(|| rest_width(doc, &g.line, g.node))
+    };
     g.op.test(cur, g.value)
+}
+
+/// Hold discrimination (C8): a respond carrying minHold/maxHold fires only
+/// when the delivered event pairs with a press in the prefix and the hold
+/// length lies within the range. Responds without a hold predicate are
+/// unaffected; with one, a missing press means no fire.
+fn hold_ok(r: &Relation, hold: Option<i64>) -> bool {
+    if r.resp_min_hold.is_none() && r.resp_max_hold.is_none() {
+        return true;
+    }
+    match hold {
+        Some(h) => r.resp_min_hold.map(|m| h >= m).unwrap_or(true) && r.resp_max_hold.map(|m| h <= m).unwrap_or(true),
+        None => false,
+    }
 }
 
 /// Does recorded event `e` wake respond `r`?
@@ -442,46 +467,55 @@ fn fold_events(doc: &Document, target: i64, extra: &[MoEvent]) -> Fold {
     moments.sort_unstable();
     moments.dedup();
 
+    // Per-target press→release pairing stacks (C8 hold discrimination);
+    // BTree-keyed, so iteration order stays deterministic.
+    let mut press_stacks: BTreeMap<String, Vec<i64>> = BTreeMap::new();
+
+    // Deliver one event at moment `m`: bookkeep the pairing stack, compute
+    // the hold, then wake matching responds (document order) and drain the
+    // chain-reaction queue (FIFO, same moment).
+    fn deliver(doc: &Document, fold: &mut Fold, stacks: &mut BTreeMap<String, Vec<i64>>, e: &MoEvent, m: i64) {
+        let stack_key = e.target.clone().unwrap_or_else(|| "*".into());
+        let hold = if e.name == "release" {
+            stacks.entry(stack_key).or_default().pop().map(|p| m - p)
+        } else {
+            if e.name == "press" {
+                stacks.entry(stack_key).or_default().push(m);
+            }
+            None
+        };
+        let mut queue = std::collections::VecDeque::new();
+        for r in &doc.relations {
+            if let RelationKind::Respond = r.kind {
+                if event_matches(doc, r, e) && guard_ok(doc, fold, r, m) && hold_ok(r, hold) {
+                    execute_respond(doc, fold, r, m, &mut queue);
+                }
+            }
+        }
+        // Chain reactions: FIFO within the same moment (fires can themselves
+        // be press/release — the same bookkeeping applies).
+        while let Some(e2) = queue.pop_front() {
+            deliver(doc, fold, stacks, &e2, m);
+        }
+    }
+
     let mut idx = 0usize;
     for &m in &moments {
         // 1) stored events at this moment, in (tick, seq) order.
         while idx < stored.len() && stored[idx].tick == m {
             let e = stored[idx].clone();
             idx += 1;
-            let mut queue = std::collections::VecDeque::new();
-            for r in &doc.relations {
-                if let RelationKind::Respond = r.kind {
-                    if event_matches(doc, r, &e) && guard_ok(doc, &fold, r) {
-                        execute_respond(doc, &mut fold, r, m, &mut queue);
-                    }
-                }
-            }
-            // Chain reactions: FIFO within the same moment.
-            while let Some(e2) = queue.pop_front() {
-                for r in &doc.relations {
-                    if let RelationKind::Respond = r.kind {
-                        if event_matches(doc, r, &e2) && guard_ok(doc, &fold, r) {
-                            execute_respond(doc, &mut fold, r, m, &mut queue);
-                        }
-                    }
-                }
-            }
+            deliver(doc, &mut fold, &mut press_stacks, &e, m);
         }
         // 2) declared TimePoint responds at this moment (document order).
         for r in &doc.relations {
             if let RelationKind::Respond = r.kind {
                 if let RespondEvent::TimePoint(t) = r.resp_event {
-                    if t == m && guard_ok(doc, &fold, r) {
+                    if t == m && guard_ok(doc, &fold, r, m) {
                         let mut queue = std::collections::VecDeque::new();
                         execute_respond(doc, &mut fold, r, m, &mut queue);
                         while let Some(e2) = queue.pop_front() {
-                            for r2 in &doc.relations {
-                                if let RelationKind::Respond = r2.kind {
-                                    if event_matches(doc, r2, &e2) && guard_ok(doc, &fold, r2) {
-                                        execute_respond(doc, &mut fold, r2, m, &mut queue);
-                                    }
-                                }
-                            }
+                            deliver(doc, &mut fold, &mut press_stacks, &e2, m);
                         }
                     }
                 }
@@ -495,17 +529,11 @@ fn fold_events(doc: &Document, target: i64, extra: &[MoEvent]) -> Fold {
                     if let (Ok(a), Ok(b)) = (doc.line(&r.resp_trigger), doc.line(&r.resp_other)) {
                         let now = lines_intersect(a, b);
                         let was = fold.overlapping.contains(&r.id);
-                        if now && !was && guard_ok(doc, &fold, r) {
+                        if now && !was && guard_ok(doc, &fold, r, m) {
                             let mut queue = std::collections::VecDeque::new();
                             execute_respond(doc, &mut fold, r, m, &mut queue);
                             while let Some(e2) = queue.pop_front() {
-                                for r2 in &doc.relations {
-                                    if let RelationKind::Respond = r2.kind {
-                                        if event_matches(doc, r2, &e2) && guard_ok(doc, &fold, r2) {
-                                            execute_respond(doc, &mut fold, r2, m, &mut queue);
-                                        }
-                                    }
-                                }
+                                deliver(doc, &mut fold, &mut press_stacks, &e2, m);
                             }
                         }
                         if now {

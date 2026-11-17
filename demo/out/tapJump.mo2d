@@ -117,6 +117,38 @@
           "visible": true
         }
       ]
+    },
+    {
+      "id": "gesture/ball",
+      "tags": [
+        "track",
+        "gesture"
+      ],
+      "closed": false,
+      "width": 4.0,
+      "color": [
+        30,
+        30,
+        30,
+        255
+      ],
+      "fillColor": [
+        200,
+        200,
+        200,
+        255
+      ],
+      "strokeOn": true,
+      "fillOn": false,
+      "nodes": [
+        {
+          "p": [
+            63504000000
+          ],
+          "v": 1.0
+        }
+      ],
+      "segs": []
     }
   ],
   "relations": [

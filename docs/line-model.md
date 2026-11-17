@@ -4,7 +4,7 @@ title: "Everything is Lines: The Unified Model of Lines, Nodes, and Relations"
 description: mo2d core concept document — a line = an ordered sequence of nodes, with three-level attributes (line-level defaults / node-level overrides with interpolation / segment-level direct storage); bones/skeletons/timelines/gradients/layers/meshes/simulation are all projections of lines; the non-line boundary (three categories after the 2026-11-17 revisions) with criteria; plus a Moho concept mapping and absorption table.
 tags: [line-model, node, segment, attribute, core-concepts]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:51:12Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:25:00Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -119,7 +119,7 @@ Each traditional concept = a projection of lines (or relations). The first four 
 | 7 | Layer/group | **A set of lines** (predefined relation); nesting/parent-child = relation mapping; depth/occlusion = ordering parameters on the relation | Normative statement; **landed (B4)**: `group` relation with transform-box line + visibility |
 | 8 | Layer transform | **Box = a 4-node closed line**; [derived] dragging the box's nodes/edges applies scaling and rotation — the transform is an operation on the box line | Normative statement + derived |
 | 9 | Simulation | **Dynamic relations between lines** (springs/forces/collisions/particles); a particle = a short directed segment emitted by an emitter line (position + velocity vector) | Normative statement; **landed (B6)**: `sim` (Verlet chain, 240 Hz substeps, replay-from-seed) + seeded `particles` |
-| 10 | Interactive event (a click etc.) | A **gesture timeline**: a gesture's phase edges (hover/press/release/leave) are keyframes on a **step track line (im=3)** — materialized by `event.fire` dual-write as a **read-only** reference line `gesture/<target>` (broadcast events → `gesture/pointer`); the gesture's duration = the pressed segment's length; skipped by the offline renderer (a read-only reference lane on the stage's time axis) | Normative statement (established 2026-11-17); landing = roadmap C8 ([relations.md](relations.md) §1.2) |
+| 10 | Interactive event (a click etc.) | A **gesture timeline**: a gesture's phase edges (hover/press/release/leave) are keyframes on a **step track line (im=3)** — materialized by `event.fire` dual-write as a **read-only** reference line `gesture/<target>` (broadcast events → `gesture/pointer`); the gesture's duration = the pressed segment's length; skipped by the offline renderer (a read-only reference lane on the stage's time axis) | Normative statement (established 2026-11-17); **landed (C8, 2026-11-17)**: `event.fire` atomic dual-write + hold discrimination ([relations.md](relations.md) §1.2, gate_c8 + the tap_vs_hold frozen demo) |
 
 ### 3.1 Things That Don't Look Like Lines but Reduce Naturally
 

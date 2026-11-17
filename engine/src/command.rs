@@ -88,7 +88,8 @@ pub fn registry() -> Vec<CmdSpec> {
         CmdSpec { name: "node.append", args: "{line, p, w?, pr?, c?, hi?, ho?, v?}", doc: "Append a node to a line." },
         CmdSpec { name: "node.delete", args: "{line, index}", doc: "Delete a node (and its keyframe if it lives on a track line)." },
         CmdSpec { name: "seg.set", args: "{line, index, type?, visible?, interp?}", doc: "Merge segment attributes (straight/curve, visibility, interp for track segments)." },
-        CmdSpec { name: "relation.create", args: "{id?, type: bind|share|track|gradient|group|sim|particles|oscillate|respond, ...}", doc: "bind: {target, skeleton, falloff?, stretch?}; share: {driver: {line,node}, driven: {line,node}}; track: {trackLine, target: {line, node?, attr: position|width|color}}; gradient (B3): {bar, target, role?: fill|stroke}; group (B4): {box, members, visible?} — transform-box line; sim (B6): {line, anchors: [{node, driver: {line,node}}], gravity?, damping?, iterations?, collideWith?, radius?, selfCollide?} — deterministic trailing rope with optional collisions; particles (B6): {emitter, node?, rate?, speed?, dir?, spread?, life?, gravity?, damping?, size?, color?, len?, seed?, collideWith?, bounce?, radius?}; oscillate (C7): {target, node?, attr?: position|width, axis?, wave?: 0|1|2, period?, phase?, amplitude?} — deterministic periodic driver (breathe/sway/float); respond (C7): {trigger, event: tap|press|release|hoverIn|hoverOut|overlap|timePoint|<named>, at? (timePoint tick), other? (overlap), radius?, guard?: {line, node?, op?: <|<=|=|>=|>, value}, actions: [{write: {line, node?, attr: width|position, mode?: set|add, value}} | {fire: {name}}]}. Auto id r<N>." },
+        CmdSpec { name: "relation.create", args: "{id?, type: bind|share|track|gradient|group|sim|particles|oscillate|respond, ...}", doc: "bind: {target, skeleton, falloff?, stretch?}; share: {driver: {line,node}, driven: {line,node}}; track: {trackLine, target: {line, node?, attr: position|width|color}}; gradient (B3): {bar, target, role?: fill|stroke}; group (B4): {box, members, visible?} — transform-box line; sim (B6): {line, anchors: [{node, driver: {line,node}}], gravity?, damping?, iterations?, collideWith?, radius?, selfCollide?} — deterministic trailing rope with optional collisions; particles (B6): {emitter, node?, rate?, speed?, dir?, spread?, life?, gravity?, damping?, size?, color?, len?, seed?, collideWith?, bounce?, radius?}; oscillate (C7): {target, node?, attr?: position|width, axis?, wave?: 0|1|2, period?, phase?, amplitude?} — deterministic periodic driver (breathe/sway/float); respond (C7): {trigger, event: tap|press|release|hoverIn|hoverOut|overlap|timePoint|<named>, at? (timePoint tick), other? (overlap), radius?, minHold?, maxHold? (release hold discrimination, C8), guard?: {line, node?, op?: <|<=|=|>=|>, value} — line may be a gesture/<target> phase line, actions: [{write: {line, node?, attr: width|position, mode?: set|add, value}} | {fire: {name}}]}. Auto id r<N>." },
+        CmdSpec { name: "event.fire", args: "{name, tick, target?, x?, y?, radius?}", doc: "Record an interaction event (C7/C8): appended to the document's event prefix AND atomically materialized as a phase key on the gesture line gesture/<target> (broadcast → gesture/pointer) — a read-only step track line (im=3, phases 0 out/1 hover/2 pressed). Events are irreversible facts (inverse noop); evaluation folds events up to the queried tick (relations.md §4)." },
         CmdSpec { name: "event.fire", args: "{name, tick, target?, x?, y?}", doc: "Record an interaction event (C7): appended to the document's event prefix; evaluation folds events up to the queried tick (relations.md §4). Events are irreversible facts — the inverse is noop." },
         CmdSpec { name: "relation.delete", args: "{id}", doc: "Delete a relation." },
         CmdSpec { name: "track.create", args: "{line, node, attr?: position|width, tick?, value?}", doc: "Create a track line (auto id trk_<line>_<node>_<attr>) + its track relation + the first keyframe (defaults: tick 0, value = the node's current value). This is the gesture command for node→timeline connect; AI uses it too, so both channels produce identical documents." },
@@ -351,6 +352,7 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                 Some(s) => s.to_string(),
                 None => next_auto_id(doc, "l"),
             };
+            ensure_gesture_readonly(&id, "line.create")?;
             if doc.line(&id).is_ok() {
                 return Err(format!("line '{}' already exists", id));
             }
@@ -539,6 +541,7 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
 
         "node.set" => {
             let line_id = need_str(cmd, "line")?.to_string();
+            ensure_gesture_readonly(&line_id, "node.set")?;
             let index = cmd.arg("index").and_then(|v| v.as_i64()).ok_or("node.set: 'index' must be an integer")? as usize;
             let l = doc.line(&line_id)?;
             if index >= l.nodes.len() {
@@ -682,6 +685,7 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
 
         "node.append" => {
             let line_id = need_str(cmd, "line")?.to_string();
+            ensure_gesture_readonly(&line_id, "node.append")?;
             let pv = cmd.arg("p").ok_or("node.append: 'p' required")?;
             let pos = parse_pos_arg(pv, "node.append p")?;
             let mut n = match pos {
@@ -722,6 +726,7 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
 
         "node.delete" => {
             let line_id = need_str(cmd, "line")?.to_string();
+            ensure_gesture_readonly(&line_id, "node.delete")?;
             let index = cmd.arg("index").and_then(|v| v.as_i64()).ok_or("node.delete: 'index' must be an integer")? as usize;
             let l = doc.line_mut(&line_id)?;
             if index >= l.nodes.len() {
@@ -757,6 +762,7 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
 
         "seg.set" => {
             let line_id = need_str(cmd, "line")?.to_string();
+            ensure_gesture_readonly(&line_id, "seg.set")?;
             let index = cmd.arg("index").and_then(|v| v.as_i64()).ok_or("seg.set: 'index' must be an integer")? as usize;
             let l = doc.line_mut(&line_id)?;
             if index >= l.segs.len() {
@@ -1008,6 +1014,12 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                     if let Some(x) = cmd.arg("radius").and_then(|x| x.as_f64()) {
                         r.resp_radius = x;
                     }
+                    if let Some(x) = cmd.arg("minHold").and_then(|x| x.as_i64()) {
+                        r.resp_min_hold = Some(x);
+                    }
+                    if let Some(x) = cmd.arg("maxHold").and_then(|x| x.as_i64()) {
+                        r.resp_max_hold = Some(x);
+                    }
                     if let Some(g) = cmd.arg("guard") {
                         let line = g.get("line").and_then(|x| x.as_str()).ok_or("relation.create: guard.line missing")?.to_string();
                         let node = g.get("node").and_then(|x| x.as_i64()).map(|n| n as usize);
@@ -1238,15 +1250,34 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
                         }
                     }
                     if let Some(g) = &r.resp_guard {
-                        let gl = doc.line(&g.line).map_err(|e| format!("relation.create respond guard: {}", e))?;
-                        if let Some(n) = g.node {
-                            if n >= gl.nodes.len() {
-                                return Err(format!("relation.create respond guard: node {} out of range", n));
+                        if g.line.starts_with("gesture/") {
+                            // Gesture lines materialize lazily as events arrive
+                            // — a guard may reference one before it exists.
+                            if g.node.is_some() {
+                                return Err("relation.create respond guard: gesture-line guards read the whole phase (no node)".into());
+                            }
+                        } else {
+                            let gl = doc.line(&g.line).map_err(|e| format!("relation.create respond guard: {}", e))?;
+                            if let Some(n) = g.node {
+                                if n >= gl.nodes.len() {
+                                    return Err(format!("relation.create respond guard: node {} out of range", n));
+                                }
                             }
                         }
                     }
                     if r.resp_actions.is_empty() {
                         return Err("relation.create respond: needs at least one action".into());
+                    }
+                    if r.resp_min_hold.map(|m| m < 0).unwrap_or(false) || r.resp_max_hold.map(|m| m < 0).unwrap_or(false) {
+                        return Err("relation.create respond: minHold/maxHold must be >= 0 ticks".into());
+                    }
+                    if let (Some(min), Some(max)) = (r.resp_min_hold, r.resp_max_hold) {
+                        if min > max {
+                            return Err(format!("relation.create respond: minHold {} > maxHold {}", min, max));
+                        }
+                    }
+                    for l in r.respond_target_lines() {
+                        ensure_gesture_readonly(l, "relation.create respond write")?;
                     }
                     for a in &r.resp_actions {
                         if let RespondAction::WriteWidth { line, node, .. } | RespondAction::WritePosition { line, node, .. } = a {
@@ -1270,6 +1301,7 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
 
         "track.create" => {
             let line_id = need_str(cmd, "line")?.to_string();
+            ensure_gesture_readonly(&line_id, "track.create")?;
             let node = cmd.arg("node").and_then(|v| v.as_i64()).ok_or("track.create: 'node' must be an integer")? as usize;
             let attr = match cmd.arg("attr").and_then(|v| v.as_str()) {
                 Some("position") | None => TrackAttr::Position,
@@ -1406,10 +1438,54 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
             };
             let x = cmd.arg("x").and_then(|v| v.as_f64());
             let y = cmd.arg("y").and_then(|v| v.as_f64());
+            // Optional materialization radius (transient — not stored on the
+            // MoEvent; the command args replay, so determinism holds).
+            let radius = cmd.arg("radius").and_then(|v| v.as_f64()).unwrap_or(12.0);
+            // C8 atomic dual-write (relations.md §1.2): ① append the
+            // irreversible MoEvent (shape unchanged), ② materialize the phase
+            // key on the gesture line `gesture/<target>` — a step track line
+            // (im=3) whose value is the pointer phase (0 out / 1 hover / 2
+            // pressed). Keys land only on phase changes.
+            let containment = match (&target, x, y) {
+                (Some(t), Some(xx), Some(yy)) => Some(match doc.line(t) {
+                    Ok(l) => crate::eval::distance_to_line(l, Vec3::new(xx, yy, 0.0)) <= radius,
+                    Err(_) => false,
+                }),
+                // No coordinates: trust the recorded target (event_matches rule).
+                (Some(_), _, _) => Some(true),
+                // Broadcast: the pointer line has no containment notion.
+                (None, _, _) => None,
+            };
+            let gid = format!("gesture/{}", target.as_deref().unwrap_or("pointer"));
+            let prev = doc
+                .line(&gid)
+                .ok()
+                .and_then(|l| l.nodes.last().and_then(|n| n.value.as_ref()))
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0);
+            let phase = match (target.as_deref(), containment) {
+                // Pointer line: press/release only (no containment notion).
+                (None, _) => match name.as_str() {
+                    "press" => 2,
+                    "release" => 1,
+                    _ => prev as i64,
+                },
+                (_, Some(c)) => match name.as_str() {
+                    "press" => if c { 2 } else { 0 },
+                    "release" => if c { 1 } else { 0 },
+                    // hover/move/tap/named: containment with press continuity
+                    _ => if c { if prev == 2.0 { 2 } else { 1 } } else { 0 },
+                },
+                (_, None) => unreachable!("containment is always Some for targeted events"),
+            };
+            if phase as f64 != prev {
+                gesture_upsert(doc, &gid, tick, phase);
+            }
             let seq = doc.events.len() as i64;
             doc.events.push(MoEvent { name, tick, seq, target, x, y });
             // Events are irreversible facts (relations.md §1.2): deleting one
-            // would change everything folded after it — the inverse is noop.
+            // would change everything folded after it (including the
+            // materialized gesture line) — the inverse is noop.
             let inv = obj_command("noop", &[]);
             Ok(Effect { inverse: inv, summary: "fire event".into() })
         }
@@ -1743,5 +1819,55 @@ mod tests {
         let tl = doc.line("trk_skel_2_position").unwrap();
         let ticks: Vec<i64> = tl.nodes.iter().map(|n| n.pos.tick().unwrap()).collect();
         assert_eq!(ticks, vec![0, 127008000000, 254016000000], "keyframes stay tick-ascending after upsert");
+    }
+}
+
+// ---------------------------------------------------------------------------
+// C8 gesture lines — materialized event timelines (read-only)
+// ---------------------------------------------------------------------------
+
+/// `gesture/` lines are read-only: they are materialized event timelines and
+/// no command may create/edit them directly (only `event.fire` writes them).
+pub fn ensure_gesture_readonly(id: &str, op: &str) -> Result<(), String> {
+    if id.starts_with("gesture/") {
+        Err(format!(
+            "{}: gesture/ lines are read-only materialized events ('{}')",
+            op, id
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+/// Create-if-absent the gesture line and upsert the phase key at `tick`
+/// (nodes stay strictly ascending by tick; same-tick re-fires overwrite).
+/// Every segment is step-interpolated (im=3) — phases hold until the next.
+fn gesture_upsert(doc: &mut Document, line_id: &str, tick: i64, phase: i64) {
+    if doc.line(line_id).is_err() {
+        let mut tl = Line::new(line_id);
+        tl.tags = vec!["track".to_string(), "gesture".to_string()];
+        tl.nodes.push(Node::track(tick, Value::Num(phase as f64)));
+        tl.sync_segs();
+        for sg in &mut tl.segs {
+            sg.interp = Some(Interp { im: 3, b: None });
+        }
+        doc.lines.push(tl);
+        return;
+    }
+    let li = doc.lines.iter().position(|l| l.id == line_id).unwrap();
+    let l = &mut doc.lines[li];
+    if let Some(n) = l.nodes.iter_mut().find(|n| n.pos.tick() == Ok(tick)) {
+        n.value = Some(Value::Num(phase as f64));
+        return;
+    }
+    let pos = l
+        .nodes
+        .iter()
+        .position(|n| n.pos.tick().map(|t| t > tick).unwrap_or(false))
+        .unwrap_or(l.nodes.len());
+    l.nodes.insert(pos, Node::track(tick, Value::Num(phase as f64)));
+    l.sync_segs();
+    for sg in &mut l.segs {
+        sg.interp = Some(Interp { im: 3, b: None });
     }
 }

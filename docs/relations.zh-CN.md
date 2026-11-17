@@ -4,7 +4,7 @@ title: "关系即函数:预定义关系库与自定义关系"
 description: mo2d 的行为模型——关系=函数(输入线与参数,输出派生结构与值);集合/层/群组=预定义关系,关系参数=集合参数;预定义关系标准库(2026-11-17 新增交互类:respond+oscillate)、自定义关系、DAG 求值、事件前缀折叠与冲突处理。
 tags: [relation, function, linkage, evaluation, interaction, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:47:04Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:25:00Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -126,7 +126,7 @@ group/sim 认领其成员/整线位置;同一认领上的第二写者被校验�
   多个带守卫的 respond 可以**共同合成一个通道**(状态机模式):fold 按
   (时刻,文档序)编排它们的写入,由首个认领者每帧恰好应用一次合成后的状态。
 
-#### 手势时间线(2026-11-17 owner 确立——line-model §0 规范表述;落位=路线图 C8)
+#### 手势时间线(2026-11-17 owner 确立——line-model §0 规范表述;**已落地(C8),2026-11-17**)
 
 **交互事件是时间线**:一次手势的相位边沿(`hoverIn` / `press` / `release` /
 `hoverOut`)是**手势线**上的关键帧——手势线是名为 `gesture/<target>` 的**步进轨道线

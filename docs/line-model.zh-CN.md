@@ -4,7 +4,7 @@ title: "万物皆线:线、节点与关系的统一模型"
 description: mo2d 核心概念文档——线=有序节点序列,三级属性(线级默认/节点级覆盖插值/段级直存);骨骼/骨架/时间轴/渐变/层/网格/模拟皆为线的投影;非线边界(2026-11-17 两次修订后为三类)与判定标准;附 Moho 概念对照吸收表。
 tags: [line-model, node, segment, attribute, core-concepts]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:51:12Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:25:00Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -105,7 +105,7 @@ mo2d 的核心主张:**一切结构与控制皆可归约为线**(Line)。骨骼�
 | 7 | 层/群组 | **线的集合**(预定义关系);嵌套/父子=关系映射;深度/遮挡=关系上的排序参数 | 规范表述;**已落地(B4)**:`group` 关系 + 变换框线 + 可见性 |
 | 8 | 层变换 | **方框=4 节点闭合线**;[推导] 拖方框的节点/边即施加缩放旋转,变换是对方框这条线的操作 | 规范表述 + 推导;**已落地(B3)**:`gradient` 关系 + 颜色轨道 |
 | 9 | 模拟 | **线与线的动态关系**(弹簧/力/碰撞/粒子);粒子=发射线发出的有向短线段(位置+速度向量) | 规范表述;**已落地(B6)**:`sim`(Verlet 链,240Hz 子步,种子重放)+ 显式种子 `particles` |
-| 10 | 交互事件(点击等) | **手势时间线**:一次手势的相位边沿(悬停/按下/抬起/移出)是**步进轨道线(im=3)**上的关键帧——由 `event.fire` 双写物化为**只读**参考线 `gesture/<target>`(广播事件落 `gesture/pointer`);手势的时长=按下段的长度;离线渲染跳过(仅舞台上时间轴的只读参考泳道) | 规范表述(2026-11-17 确立);落位=roadmap C8([relations.md](relations.zh-CN.md) §1.2) |
+| 10 | 交互事件(点击等) | **手势时间线**:一次手势的相位边沿(悬停/按下/抬起/移出)是**步进轨道线(im=3)**上的关键帧——由 `event.fire` 双写物化为**只读**参考线 `gesture/<target>`(广播事件落 `gesture/pointer`);手势的时长=按下段的长度;离线渲染跳过(仅舞台上时间轴的只读参考泳道) | 规范表述(2026-11-17 确立);**已落地(C8,2026-11-17)**:`event.fire` 原子双写+时长判别([relations.md](relations.zh-CN.md) §1.2,gate_c8+tap_vs_hold 冻结 demo) |
 
 ### 3.1 看似不是线、其实归约自然
 

@@ -4,7 +4,7 @@ title: "Relations are Functions: The Predefined Relation Library and Custom Rela
 description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the predefined relation standard library (now incl. interaction: respond + oscillate, established 2026-11-17), custom relations, DAG evaluation, event-prefix folding and conflict handling.
 tags: [relation, function, linkage, evaluation, interaction, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:47:04Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:25:00Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -143,7 +143,7 @@ an essential capability. It lands entirely inside "relations are functions":
   pattern): the fold sequences their writes by (moment, document order), and
   the first claimant applies the composed state exactly once per frame.
 
-#### Gesture timelines (established 2026-11-17 by the owner — line-model §0 statement; landing = roadmap C8)
+#### Gesture timelines (established 2026-11-17 by the owner — line-model §0 statement; **landed (C8), 2026-11-17**)
 
 **Interactive events are timelines**: a gesture's phase edges (`hoverIn` / `press` /
 `release` / `hoverOut`) are keyframes on a **gesture line** — a **step track line

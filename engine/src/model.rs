@@ -559,6 +559,11 @@ pub struct Relation {
     pub resp_other: String,
     /// Pointer hit radius in world units (engine-side deterministic test).
     pub resp_radius: f64,
+    /// Hold discrimination (C8, release-class): minimum/maximum press→release
+    /// hold in ticks — a length predicate on the gesture timeline. None =
+    /// unbounded.
+    pub resp_min_hold: Option<i64>,
+    pub resp_max_hold: Option<i64>,
     /// Optional condition on a width channel (guarded transitions).
     pub resp_guard: Option<RespondGuard>,
     /// Ordered actions (write a channel / fire a named event).
@@ -775,6 +780,8 @@ impl Relation {
             resp_event: RespondEvent::Tap,
             resp_other: String::new(),
             resp_radius: 12.0,
+            resp_min_hold: None,
+            resp_max_hold: None,
             resp_guard: None,
             resp_actions: Vec::new(),
             unknown: Vec::new(),
