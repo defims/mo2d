@@ -4,7 +4,7 @@ title: "Roadmap: Three-Phase Advance (2026-11-11 v4, stage pulled forward into t
 description: Phase A = MVP tentacle v4 (AI compiles, engine executes + A6 minimal stage = first example of a generatable view); Phase B = performance and vocabulary rollout (rendering & invalidation formalization / brush strokes / gradients / layers & groups / bitmap mesh / simulation / format formalization); Phase C = AI ecosystem (relation IR / controls-as-lines / import / audio / collaboration / wasm); six-components → phase mapping and performance metrics.
 tags: [roadmap, phases, mvp, long-term, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:25:00Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-18T03:15:26Z }
 sources:
   - id: mvp-doc
     resource: /mvp.md
@@ -68,7 +68,7 @@ validator on duty, **direct-manipulation equivalence**.
 
 | Item | Content | Acceptance demo |
 |---|---|---|
-| B1 Rendering & invalidation formalization (component 5) | GPU workhorse: instanced uber-shader (segment/node patches = instances), damage rendering (tile 64×32 + dirty rectangles), **DAG reverse-dependency invalidation** (channels = signals), CPU/GPU pixel parity gate | 100k-node class at 60fps; edit viewport idle at 0% CPU |
+| B1 Rendering & invalidation formalization (component 5) | GPU workhorse: instanced uber-shader (segment/node patches = instances), damage rendering (tile 64×32 + dirty rectangles), **DAG reverse-dependency invalidation** (parameters = signals), CPU/GPU pixel parity gate | 100k-node class at 60fps; edit viewport idle at 0% CPU |
 | B2 Brush-stroke style library | Line-level brush 15-parameter family + node-level pressure; styles = attribute template library | The same line switching between brush strokes; pressure-sensitive width |
 | B3 Gradient control bars | Control-bar line segments + color-stop nodes; bound to fill | A color-changing tentacle (animatable gradient) |
 | B4 Multi-layer/groups | Layer/group predefined relations + transform-box lines | Multiple characters on one stage; box scaling and rotation |
@@ -88,7 +88,7 @@ Dependencies: B1 depends on A's SoA layout; B2–B6 are mutually independent and
 | C4 Audio | Audio-track layer: media payload + level/jump tracks; Tick dividing 44.1k/48k evenly exists exactly for this | Lip-sync/beat-driven animation |
 | C5 Collaboration & versioning | Command-stream merging, change records, reference layers | Multi-session collaboration without conflicts |
 | C6 WebAssembly + frame streaming | wasm release + MCP over WebSocket + **streaming rendering** (architecture §3.2: frame-stream protocol; pixel streams for export, display-list streams for remote stages) | tentacle demo in the browser, zero install; remote stage renders progressively |
-| C7 **Interactivity** (established 2026-11-17 by the owner; [relations.md](relations.md) §1.2, architecture §3.3) | **respond** relation family (event × guard → write channel/fire; state machine = discrete channel + guarded respond), **oscillate** periodic driver, **step interpolation im=3** (discrete channels — the Switch basis), events enter the command stream (**`event.fire`**, irreversible facts), stage tap (D8 amended: five operations), minimal **perform-record** (gesture → track keys via auto-key); evaluation = pure `f(doc, tick, event-prefix)`, empty prefix = existing behavior | "Tap it and it jumps": **tap_jump demo replays byte-identically offline, no AI, no code** (the novice gate N3); breathe/sway oscillate demos; same stream + same events → same bytes |
+| C7 **Interactivity** (established 2026-11-17 by the owner; [relations.md](relations.md) §1.2, architecture §3.3) | **respond** relation family (event × guard → write parameter/fire; state machine = discrete parameter + guarded respond), **oscillate** periodic driver, **step interpolation im=3** (discrete parameters — the Switch basis), events enter the command stream (**`event.fire`**, irreversible facts), stage tap (D8 amended: five operations), minimal **perform-record** (gesture → track keys via auto-key); evaluation = pure `f(doc, tick, event-prefix)`, empty prefix = existing behavior | "Tap it and it jumps": **tap_jump demo replays byte-identically offline, no AI, no code** (the novice gate N3); breathe/sway oscillate demos; same stream + same events → same bytes |
 | C8 **Interactive gesture timelines** (established 2026-11-17 by the owner; line-model §0 statement, [relations.md](relations.md) §1.2, mvp §8 D10) | **gesture lines materialized from the event stream**: `event.fire` atomic dual-write → read-only step (im=3) track lines `gesture/<target>` / `gesture/pointer` (keys on phase changes only; `gesture/` namespace reserved); recorder phase edges (press/release/hoverIn/hoverOut detectors join tap); **hold-aware responds** — `minHold`/`maxHold` = press→release pair measurement (fold lookback, browser click semantics; the line itself tracks physical containment, browser hover semantics); read-only reference-lane rendering on the stage's time axis (offline renderer skips `gesture`-tagged lines like `track` ones — `MoEvent` unchanged, events stay single-tick facts) | "tap_vs_hold" demo: a short tap jumps, a long press (hold ≥ 0.4 s) grows — replays byte-identically offline, no AI, no code (N3-style); gesture-line keys byte-stable from the same script — **landed (C8 P1, 2026-11-17)**: gate_c8 + the tap_vs_hold frozen demo |
 
 Dependencies: C1 depends on the A4 validator and B1 (hot-path fallback); C3's .moho depends on B4 (layers/groups) + B5 (bitmap mesh); C4 depends on B7 (format formalization); C7 depends on the A4 protocol/validator (events are commands) and the D8 revision (owner approved 2026-11-17); C8 depends on C7 (event stream + step im=3) and the D10 decision (owner approved 2026-11-17).
@@ -113,7 +113,14 @@ Dependencies: C1 depends on the A4 validator and B1 (hot-path fallback); C3's .m
 Final tech-stack decision (leaning Rust+wgpu, [architecture.md](architecture.md) §5), product branding,
 and the mo2d–maohou engineering merge strategy — they enter the map only after the owner makes the call.
 
-**Phase D (3D deepening, long-term, not yet chartered)**: for the extension path see [3d-extension.md](3d-extension.md) —
-**engine-side basic 3D has entered MVP v4.1** (renderer-is-3D/Vec3/triangular faces/3D scene gate; the AI can build z≠0 scenes command-style);
-what remains for Phase D are only the deepening items: 3D interaction (navigation/work planes/depth picking), lights/materials/shadows, glTF;
-trigger conditions to be set once 2D is on solid ground.
+**Phase D (~~3D deepening, long-term, not yet chartered~~ dissolved 2026-11-18 by D11)**: owner decision —
+"既然3d可以由2d表示和操控，那3d就不用单独支持，而是转为2d支持" (since 3D can be represented and manipulated
+through 2D, 3D is never supported separately; it converts into 2D support, [mvp.md](mvp.md) §8 D11).
+The engine side keeps its basic 3D dividend (renderer-is-3D/Vec3/triangular faces/3D scene gate — D3/D6 unchanged,
+occlusion and cameras stay correct for free). What was the Phase D deepening list converts into small **2D-native slices**:
+① generation-relation lift/view (the hull probe is the existence proof, log 2026-11-17); ② surface stamp
+(internal lines anchored onto surfaces); ③ camera rig as lines (orbit/zoom = 2D-driven parameters — no 3D navigation);
+④ ray-snap manipulation (drag a projection point → ray → surface, no work planes/depth picking as 3D concepts);
+lights/materials/shadows are deleted as engine features (replacement candidate: tone lines stamped on surfaces —
+pending owner confirmation); glTF fate pending owner confirmation (delete vs demote-to-baked-artifact).
+The extension math remains recorded in [3d-extension.md](3d-extension.md).

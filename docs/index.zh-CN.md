@@ -34,6 +34,7 @@ mo2d——AI 原生的 2D 矢量动画引擎(万物皆线)——的正式文档�
 * [mvp.md](mvp.zh-CN.md) - MVP 定稿 v5:触手+3D 场景,六件范围/六步门/八条完成定义/九项冻结决策
 * [roadmap.md](roadmap.zh-CN.md) - 路线图 v4:六部件→阶段映射;A MVP(含舞台)/B 性能与词表/C AI 生态
 * [3d-extension.md](3d-extension.zh-CN.md) - 3D 扩展路径:四条语义规则+六项预防决策(Vec3 从第一天);Phase D 远期
+* [lines.md](lines.zh-CN.md) - 线到底:空间、时间、生成、流——fold 与 slice 两个普适算子;为将来生成关系切片铺垫
 * [legal-risks.md](legal-risks.zh-CN.md) - 法务风险登记册:GPL 隔离/商标/净室/语料红线/许可证待办(八项行动清单)
 * [glossary.md](glossary.zh-CN.md) - 术语表(中英对照)
 

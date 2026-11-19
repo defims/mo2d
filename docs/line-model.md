@@ -84,7 +84,7 @@ bitmap meshes, gradients, layers — concepts that are mutually heterogeneous in
 | Segment-level attributes | **Direct state values** for each segment, not interpolated between segments (they are the segment's own values) | Segment type (straight/curved), segment visibility, segment interpolation mode (track), segment fill participation |
 
 - Resolution order: **segment-level → node-level (interpolated between both ends) → line-level**; lower levels fall back upward when absent.
-- Attributes are themselves **channels (Channel)**: samplable, animatable over time (see [relations.md](relations.md) § Track).
+- Attributes are themselves **drivable parameters**: samplable, animatable over time (see [relations.md](relations.md) § Track).
 - Brush = line-level style + node-level pressure/width variation — a line of uniform brush is pressed into a thick-thin rhythm at its nodes.
   **Landed (B2, 2026-11-12)**: the 15-parameter brush family lives on the line (`brush{…}`, moho-mapping §7.1); node `pressure` multiplies
   the line width (explicit node width wins); the CPU oracle consumes `sizeAmp`/`sizeScale`/`tint` deterministically, the texture-stamp
@@ -110,12 +110,12 @@ Each traditional concept = a projection of lines (or relations). The first four 
 
 | # | Traditional concept | mo2d formulation | Basis |
 |---|---|---|---|
-| 1 | Vector graphics | **Line**: open line → stroke, closed line → fill region; variable width = node width channel; brush = line-level style + node-level pressure | Normative statement |
+| 1 | Vector graphics | **Line**: open line → stroke, closed line → fill region; variable width = node width parameter; brush = line-level style + node-level pressure | Normative statement |
 | 2 | Bone | **A segment of 2 nodes**; joints are nodes | Normative statement |
 | 3 | Skeleton | **A polyline**; bone chains connect end to end; branching (e.g. two arms) = multiple polylines **sharing nodes** | Normative statement |
 | 4 | Timeline | **Multiple straight lines containing multiple nodes**; each straight line = a track, **node = keyframe** (position = tick, value = node-level attribute); **interpolation/easing = segment-level attribute** (per-component handles); the track predefined relation = wiring the track line to the attribute being animated for reference/sampling; the (t,v) easing curve = a derived view of the track | Normative statement + resolved ([mvp.md](mvp.md) §2.2 P0-1) |
 | 5 | Bitmap mesh | **Two interwoven sets of warp and weft lines**; nodes are texture anchors; [derived] crossing points are nodes shared by the warp and weft lines; deformation = the lines move and the texture follows | Derived; **landed (B5)**: line `texture` ref (blob area or document-relative) + node `uv` anchors; textured patches bound to a skeleton deform with it — the mesh demo freezes both container forms |
-| 6 | Gradient | **Control bar = segment** (2 nodes); color stops = nodes on the bar (position channel = stop position, color channel = stop color); [derived] nodes are animatable ⇒ gradients are naturally animatable | Normative statement + derived; **landed (B3)**: `gradient` relation + color tracks |
+| 6 | Gradient | **Control bar = segment** (2 nodes); color stops = nodes on the bar (position parameter = stop position, color parameter = stop color); [derived] nodes are animatable ⇒ gradients are naturally animatable | Normative statement + derived; **landed (B3)**: `gradient` relation + color tracks |
 | 7 | Layer/group | **A set of lines** (predefined relation); nesting/parent-child = relation mapping; depth/occlusion = ordering parameters on the relation | Normative statement; **landed (B4)**: `group` relation with transform-box line + visibility |
 | 8 | Layer transform | **Box = a 4-node closed line**; [derived] dragging the box's nodes/edges applies scaling and rotation — the transform is an operation on the box line | Normative statement + derived |
 | 9 | Simulation | **Dynamic relations between lines** (springs/forces/collisions/particles); a particle = a short directed segment emitted by an emitter line (position + velocity vector) | Normative statement; **landed (B6)**: `sim` (Verlet chain, 240 Hz substeps, replay-from-seed) + seeded `particles` |
@@ -130,7 +130,7 @@ Each traditional concept = a projection of lines (or relations). The first four 
 | Playhead | A short vertical line on the time baseline |
 | Motion path | A line on the stage (objects travel along it) |
 | Volume envelope | A line |
-| Brush scattering | Stamping along a line at intervals of a spacing channel |
+| Brush scattering | Stamping along a line at intervals of a spacing parameter |
 | Lipsync/Switch | Nodes carrying discrete values on a track's straight line |
 
 ## 4. The Non-Line Boundary (Three Categories)
@@ -176,7 +176,7 @@ Relation {                       // relation = function
   kind: "predefined" | "custom"
   type: RelationType             // layer/group/bind/constraint/propagate/derive/track/simulate/…
   inputs: [LineRef | NodeRef | RelationRef]
-  params: Params                 // the relation's parameters = the set's parameters; parameters are channels, animatable
+  params: Params                 // the relation's parameters = the set's parameters; animatable parameters (legacy alias: channels)
   body?: LogicPayload            // function body of a custom relation (logical payload)
 }
 
@@ -195,7 +195,7 @@ Facts in the table below are taken from first-hand archives of the maohou knowle
 
 | Moho concept | Moho facts | mo2d mapping | Decision |
 |---|---|---|---|
-| Curve | 5 channels per point (smoothness/offset_in/out/weight_in/out) + trim start/end percentages (animatable) + variable-width profile profile_curve_id[^mohoproj-format] | Line + node handles/width channels; trim = start/end channels on a track | Absorb (nearly isomorphic) |
+| Curve | 5 channels per point (smoothness/offset_in/out/weight_in/out) + trim start/end percentages (animatable) + variable-width profile profile_curve_id[^mohoproj-format] | Line + node handles/width parameters; trim = start/end parameters on a track | Absorb (nearly isomorphic) |
 | Point | position/width/color/color_strength channels (all animatable) + parent bone index[^mohoproj-format] | Node + node-level attributes + the input end of a bind relation | Absorb (two-level attributes isomorphic) |
 | Bone | fLength/fAngle/fPos (static) + AnimChannel: angle/pos/scale; angle constraints fConstraints/fMin/fMax; dynamics fBoneDynamics + spring/damping/force families; smart bone Action weights[^m-bone] | A 2-node segment; angle/position/scale = tracks; angle constraints → constraint relations; dynamics → dynamic relations; smart bones → propagate relations | Absorb (semantics), simplify (length = distance between the two points, not an independent field) |
 | mesh (vector mesh) | Three layers: points/curves/shapes; a Shape's edges reference curve segments, has_fill/has_outline decide the same curve's line/face role[^mohoproj-format] | A set of lines; closed lines enclose fills; stroke/fill are rendering interpretations of a line | Absorb + simplify (drop the three-layer containers; lines + relations directly) |

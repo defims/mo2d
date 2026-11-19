@@ -4,7 +4,7 @@ title: "3D Extension Path: What to Adjust and What to Do Now"
 description: Conclusions of the 3D extension — all primitives survive (3D bone = line segment / skeleton = polyline / surface = line net); only four semantic rules are adjusted (closed-line fill generalized to triangular faces / surface = line net / occlusion becomes depth testing / camera = frustum wireframe) plus three new relations (projection/aim/pole vector); six preemptive decisions (Vec3 from day one, rotation representation, etc.) are made now; 3D does not enter the current three phases and is recorded as long-term Phase D.
 tags: [3d, extension, vec3, line-net, roadmap-d]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-18T03:15:26Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -23,6 +23,17 @@ sources:
 **English** | [简体中文](3d-extension.zh-CN.md)
 
 # 3D Extension Path
+
+> **Revised 2026-11-18 (D11)**: the owner decided — "既然3d可以由2d表示和操控，那3d就不用单独支持，
+> 而是转为2d支持" (since 3D can be represented and manipulated through 2D, 3D is never supported
+> separately; it converts into 2D support, [mvp.md](mvp.md) §8 D11). Consequences: §5's Phase D
+> (3D interaction deepening / lights-materials / glTF) is dissolved — no 3D authoring or interaction
+> surface is ever built; what was scheduled there becomes small 2D-native slices (generation-relation
+> lift/view, surface stamp, camera rig as lines, ray-snap manipulation — see roadmap). §1–§4 remain
+> valid as the extension **math** record (the renderer stays 3D per D6; Vec3/triangular faces/cameras
+> unchanged); the "AI command-style 3D modeling" advantage of §4 now applies through 2D drawings
+> (turnarounds → lift) instead of a 3D viewport. The renaming question in §5 is moot: mo2d stays
+> 2D in name and in fact.
 
 The owner asked: what needs adjusting to extend to 3D later. Conclusion: **the paradigm does not change — lines live even better in 3D**
 (3D bones are line segments to begin with, and Maya/Blender bones are wireframes; skeletons = polyline chains; NURBS control nets = line nets).
@@ -58,13 +69,13 @@ aim, and pole vector (a 3D IK supplement).
   (rotation + translation in one) serve only as a **runtime intermediate** for skinning blending (usable internally when the bind
   implementation upgrades LBS→DQS) and do not enter the format;
 - **Rotation: the format stores Euler xyz, the runtime converts to quaternion/matrix** — the storage representation serves
-  AI readability / per-component tracks / byte determinism (three Euler channels, the Moho rotation_x/y/z precedent [^mohoproj-format]; angles
+  AI readability / per-component tracks / byte determinism (three Euler parameters, the Moho rotation_x/y/z precedent [^mohoproj-format]; angles
   normalized to (−π,π] on write); the runtime representation serves the math (quaternions/matrices used inside the transform chain, an
-  implementation detail); glTF chose quaternion storage because its consumers are engines, while mo2d's consumers are the AI + the channel
+  implementation detail); glTF chose quaternion storage because its consumers are engines, while mo2d's consumers are the AI + the parameter
   model, hence it sides with Moho;
 - **Gimbal-lock fallback**: mo2d bone orientation is **derived** from the positions of the two end nodes rather than stored, so hinge-style
-  animation naturally dodges most of the problem; if a free-tumbling requirement truly appears (Phase D), add an **optional quaternion channel
-  value type** (Vec4 + unit constraint + q/−q canonicalization with w≥0) as a channel-type extension, without overturning Euler.
+  animation naturally dodges most of the problem; if a free-tumbling requirement truly appears (Phase D), add an **optional quaternion parameter
+  value type** (Vec4 + unit constraint + q/−q canonicalization with w≥0) as a parameter-type extension, without overturning Euler.
 
 ## 3. Preventive decisions (do them now, nearly zero cost, no migration later)
 
@@ -75,13 +86,13 @@ aim, and pole vector (a 3D IK supplement).
 | 3 | The renderer abstraction keeps a **depth switch** (the CPU oracle takes the planar path during the 2D period) | architecture L3 |
 | 4 | The bind weight formula = **projected distance** from point to segment (same formula in 2D/3D) | A2 implementation choice |
 | 5 | Camera-line nodes carry z (placeholders for perspective parameters) | [line-model.md](line-model.md) §3.1 |
-| 6 | **Rotation: format = Euler xyz per-component channels (normalized on write); runtime = quaternion/matrix** | This document §2.1 |
+| 6 | **Rotation: format = Euler xyz per-component parameters (normalized on write); runtime = quaternion/matrix** | This document §2.1 |
 
 ## 4. Honest difficulties
 
 - **3D modeling interaction** (depth picking/multiple views) is the traditional disaster area — "AI-native + command protocol" happens to be
   the solution: the AI doing command-style modeling in 3D beats dragging (an unexpected advantage of the mo2d paradigm in 3D);
-- Lighting/materials/shadows: split per the division-of-labor iron rules — material parameters = channels; the lighting hot path stays in the
+- Lighting/materials/shadows: split per the division-of-labor iron rules — material parameters = parameters; the lighting hot path stays in the
   engine; advanced effects are AI-generated;
 - **Depth-precision consistency** between the CPU oracle and the GPU is harder than in 2D; the parity gate needs to be finer.
 

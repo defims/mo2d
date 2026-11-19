@@ -316,7 +316,7 @@ connect data to properties bidirectionally — "once bound, the hierarchy no lon
 
 **Interactivity**: the full loop in-file — listener (perceive) → condition on input/view-model (decide) →
 state switch + crossfade (respond) → events back to the host. **Judgment**: essential — artboard,
-timeline+keys, state machine, one symbolic input channel, listeners; incidental — bones/constraints
+timeline+keys, state machine, one symbolic input parameter, listeners; incidental — bones/constraints
 (optional depth), events-as-URL/audio, nested artboards. Rive deprecated bespoke inputs in favor of
 typed data binding — hierarchy-free named data is easier for code *and AI agents* to target.
 
@@ -445,20 +445,20 @@ references the nine mappings of [line-model.md](line-model.md) §3 (N1–N9) and
 | Keyframe (value at time) | Animate·AE·Harmony·Krita·Dreams·Moho | sparse authored states | E | N4 node (position=tick, value=node attribute) |
 | Interpolation / tween / inbetween | all | synthesize between states | E | N4 segment attribute |
 | Easing / curve editor | Animate·AE·Harmony·Krita·Dreams | rate of change | E | N4 segment attribute (per-component handles) |
-| Layer / column / track | all | parallel z-ordered streams | E | N7 set relation + zOrder channel |
+| Layer / column / track | all | parallel z-ordered streams | E | N7 set relation + zOrder parameter |
 | Onion skin | frame-by-frame family | see neighboring states | D | session-layer overlay (lines) |
 | Reuse (symbol/library/instance) | Animate·TVPaint·Harmony·Scratch | define once, place many | E | one curve, N shape relations (relations.md §1.0.1) |
 | Transform hierarchy (parent/peg/pegsbar) | AE·Harmony·OpenToonz·Moho | motion inheritance | E | bind + node sharing (N2/N3) |
 | Deformer / bone / puppet | Harmony·Animate·AE·Moho·OpenToonz·Spine·Live2D·Rive | non-rigid reshaping | E(char) | N2/N3 (bone=segment, skeleton=polyline) |
 | Mesh + weights | Spine·Live2D·Rive·DragonBones·Creature | smooth multi-bone bend | D | N5 warp/weft lines + bind weights |
-| Artwork substitution / switch | Harmony·Moho·Scratch | discrete state swap | E | discrete channel on track (§3.1 line-model) |
+| Artwork substitution / switch | Harmony·Moho·Scratch | discrete state swap | E | discrete parameter on track (§3.1 line-model) |
 | Mask / matte / cutter | Animate·AE·Harmony | clip by another's shape | E | shape relation + fill rule (a relation parameter) |
-| Draw order (z) | Live2D·all layers | occlusion | E | zOrder channel (moho-mapping §7.1) |
-| Parameter space (param→pose) | Live2D·Unity·Godot·Rive | pose decoupled from time | E | **channels** (first-class already) |
-| Blend space (N poses ↔ params) | Unity·Godot·Rive·Live2D | continuous pose blending | E | channels + relations sampling multiple tracks |
+| Draw order (z) | Live2D·all layers | occlusion | E | zOrder parameter (moho-mapping §7.1) |
+| Parameter space (param→pose) | Live2D·Unity·Godot·Rive | pose decoupled from time | E | **parameters** (first-class already) |
+| Blend space (N poses ↔ params) | Unity·Godot·Rive·Live2D | continuous pose blending | E | parameters + relations sampling multiple tracks |
 | Physics / pendulum | Moho·Live2D·Spine·Creature | autonomous secondary motion | D | N9 sim relation (landed B6) |
 | Events (time markers → host) | Spine·Rive·Unity·Godot | sync with app logic | E | **respond** relation family (roadmap C7, confirmed 2026-11-17) |
-| State machine (guarded transitions) | Rive·Unity·Godot | discrete behavior selection | E | **discrete channel + guarded respond** (C7, confirmed 2026-11-17) |
+| State machine (guarded transitions) | Rive·Unity·Godot | discrete behavior selection | E | **discrete parameter + guarded respond** (C7, confirmed 2026-11-17) |
 | Listeners (input → action) | Rive | in-file interaction binding | E | **respond** relation on a target line (C7, confirmed 2026-11-17) |
 | Node graph (rig/FX/composite) | Harmony·OpenToonz | declarative wiring | I | relations (but as *functions*, not a GUI) |
 | Precomp / nesting | AE·OpenToonz | encapsulate a group | E(fn) | group relation (N7, landed B4) |
@@ -471,7 +471,7 @@ references the nine mappings of [line-model.md](line-model.md) §3 (N1–N9) and
 | Paper heritage (xsheet/pegbar/table/stopwatch) | OpenToonz·TVPaint | digitize classical workflow | I | keep function, never the name |
 
 **Reading of the table**: every essential row already reduces to the mo2d kernel (lines/nodes/three-level
-attributes/relations/channels) — the kernel needs **no format change** to express anything the industry
+attributes/relations/parameters) — the kernel needs **no format change** to express anything the industry
 considers essential. Two capability clusters are not yet first-class in the relation library: the
 **interaction cluster** (events, state machines, listeners) and the **capture cluster** (perform-record).
 Both are addressed in §6.
@@ -530,13 +530,13 @@ Both are addressed in §6.
   essential for the vision ("交互动画") but absent from the standard relation library and roadmap.
   **Confirmed by the owner 2026-11-17: the respond relation family** —
   (event source: tap·touch·release·hover·drag·key·time-point·animation-end) × (condition) →
-  (action: write a channel / switch a discrete track / fire another event); a "state machine" is then a
-  discrete channel + guarded respond relations; a "listener" is a respond relation on a target line.
+  (action: write a parameter / switch a discrete track / fire another event); a "state machine" is then a
+  discrete parameter + guarded respond relations; a "listener" is a respond relation on a target line.
   Fits "relations are functions" unchanged; **lands as roadmap C7** (vocabulary in
   relations.md §1.2, event-driven evaluation in architecture §3.3, plain-player deterministic
   event handling).
 - **R3 — Gap: periodic drivers.** Everyday verbs (sway/breathe/float/bob) want a cyclic track mode or an
-  `oscillate` hot-path relation (period/amplitude/phase channels) — **confirmed 2026-11-17**: the
+  `oscillate` hot-path relation (period/amplitude/phase parameters) — **confirmed 2026-11-17**: the
   `oscillate` relation (roadmap C7).
 - **R4 — Auto-rig with a visible confirm checkpoint** (Mixamo/Animated Drawings pattern): AI capability
   (already assigned to AI in vision §6) gains the requirement: the proposed rig lands as ordinary lines +
@@ -544,7 +544,7 @@ Both are addressed in §6.
 - **R5 — Generated motion lands as tracks/keys, never pixels**: text/sketch/perform inputs compile to
   track lines + segment easing (capability-as-data, vision rule 3); ToonCrafter-style in-betweening only
   via the stroke-geometric branch [derived].
-- **R6 — Perform-record as a capture channel** (Dreams Perform pattern): record gestures → track keys
+- **R6 — Perform-record as a capture parameter** (Dreams Perform pattern): record gestures → track keys
   — **confirmed 2026-11-17**: minimal perform-record in roadmap C7 (gesture → track keys via
   auto-key).
 - **R7 — The novice surface is a separate concern from the kernel**: the everyday-concept layer — which

@@ -48,7 +48,7 @@ and turns the five principles of [architecture.md](architecture.md) §4 into exe
 ## 1. Requirements (dictated by the mo2d model)
 
 The format must carry: a line collection (nodes/segments/three-level attributes), the relation graph
-(predefined + custom, including function-body payloads), channels and tracks, root parameters, media/logic
+(predefined + custom, including function-body payloads), parameters and tracks, root parameters, media/logic
 payloads, external-asset references, and command history. Constraints:
 
 1. **AI-readable and AI-writable**: an AI-native engine — the format is the agent's "source code"; it must be
@@ -166,7 +166,7 @@ cannot be SVG** — SVG is "the image of one frame", while the project is "the c
 ```
 
 Five hard flaws of SVG as a project format: ① stroke-width is a single value per path — **no per-node width
-channel** (variable-width lines must be expanded into filled outlines, losing the structure), let alone
+parameter** (variable-width lines must be expanded into filled outlines, losing the structure), let alone
 per-point colors / segment-level attributes; ② path `d` is an instruction string, not a node table — node
 IDs/handles/segment boundaries cannot round-trip, while binding/tracks/commands rely on **addressing by node
 ID**; ③ no bones/binding/constraints/tracks — two-thirds of the document model has nowhere to live; ④ no time

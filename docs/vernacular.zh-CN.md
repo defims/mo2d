@@ -62,7 +62,7 @@ sources:
 
 ## 2. 生活概念字典(生活词→引擎编译)
 
-这一层的产品就是这个字典:**用户说生活,AI 编译到命令协议。** 每条编译都落在既有内核词汇里——轨道线/节点/段缓动(line-model N4)、标准关系库的关系([relations.zh-CN.md](relations.zh-CN.md) §1)、通道、控制棒即线([ai-interaction.zh-CN.md](ai-interaction.zh-CN.md) §3)。标 ⓓ 的是调研时的提案——**owner 已于
+这一层的产品就是这个字典:**用户说生活,AI 编译到命令协议。** 每条编译都落在既有内核词汇里——轨道线/节点/段缓动(line-model N4)、标准关系库的关系([relations.zh-CN.md](relations.zh-CN.md) §1)、参数、控制棒即线([ai-interaction.zh-CN.md](ai-interaction.zh-CN.md) §3)。标 ⓓ 的是调研时的提案——**owner 已于
 2026-11-17 确认**(respond 关系族、`oscillate`、step 插值、表演录制;落路线图 C7,契约见
 [relations.zh-CN.md](relations.zh-CN.md) §1.2)——它们只扩展、绝不妨碍模型。
 
@@ -90,11 +90,11 @@ sources:
 
 | 生活词 | 用户意图 | mo2d 编译 | 替代 |
 |---|---|---|---|
-| 出现 / 消失 | 某刻可见性 | 可见度/不透明度通道关键帧(N7/N4) | opacity 关键帧 |
+| 出现 / 消失 | 某刻可见性 | 可见度/不透明度参数关键帧(N7/N4) | opacity 关键帧 |
 | 变色 X | 改颜色 | 样式/渐变停靠点的颜色轨道(B3/N6) | color 关键帧 |
 | 变成 Y 形状 | 形状变化 | 节点位置的轨道(AI 摆对应关系) | shape 补间 |
-| 换装 / 换表情 | 离散换样 | 共享曲线上的离散通道(moho switch 归约) | switch layers / skins |
-| 盖在…上面 / 藏到…后面 | 叠放 | zOrder 通道(可打关键帧) | 图层排序 |
+| 换装 / 换表情 | 离散换样 | 共享曲线上的离散参数(moho switch 归约) | switch layers / skins |
+| 盖在…上面 / 藏到…后面 | 叠放 | zOrder 参数(可打关键帧) | 图层排序 |
 | 只露出这部分 | 裁剪 | shape 遮罩关系 | mask/matte/cutter |
 
 ### 2.3 交互词(让它响应)
@@ -106,13 +106,13 @@ sources:
 | 点它 / 戳它 | 响应点击 | respond 关系:事件 `tap(目标线)`→动作 | listener+trigger 输入 |
 | 悬停 / 移开 | 指针在它上面 | 手势线 `hoverIn`/`hoverOut` 边沿(相位 1/0)+ hover 事件的 respond | mouseenter/mouseleave 监听器 |
 | 碰到 / 撞上 | 响应接触 | respond 关系:事件 `overlap(线A, 线B)` | 碰撞事件 |
-| 按住 / 松开 | 按压两态 | 手势线:press/release 边沿物化为逐目标的手势时间线(im=3);`press` / `release` 事件的 respond 关系写一个开关通道 | boolean 输入 |
+| 按住 / 松开 | 按压两态 | 手势线:press/release 边沿物化为逐目标的手势时间线(im=3);`press` / `release` 事件的 respond 关系写一个开关参数 | boolean 输入 |
 | 长按 / 按久一点 | 持续按着一段时间 | release respond 带 `minHold`(时长=press→release 事件对测距=手势线按下段的长度) | long-press 事件 |
 | 一碰就跳 / 害羞地躲开 | 事件→动作 | respond→切换/启动轨道(AI 顺便写轨道) | 状态机+过渡 |
 | 等一下再… | 延迟响应 | `time-point(t)` / `track-end(轨道)` 事件的 respond | exit time / delay |
 | 动一下就停下 | 一次性行为 | 触发语义:发一次即复位 | trigger 输入 |
 
-**安放之处**:事件是单 tick 的不可逆事实;**手势是时间线**——它的相位边沿物化为时间轴上的**只读参考泳道**(`gesture/<目标线>`,step im=3,路线图 C8),按下段的长度就是按了多久。respond 关系是从(事件×守卫,含时长)到通道写入/触发的函数——正是"关系即函数"([relations.zh-CN.md](relations.zh-CN.md) §1.2)。纯播放器确定性地求值 respond 关系(同事件→同行为)——离线播放交互不丢,能力即数据(vision 规则 3)。
+**安放之处**:事件是单 tick 的不可逆事实;**手势是时间线**——它的相位边沿物化为时间轴上的**只读参考泳道**(`gesture/<目标线>`,step im=3,路线图 C8),按下段的长度就是按了多久。respond 关系是从(事件×守卫,含时长)到参数写入/触发的函数——正是"关系即函数"([relations.zh-CN.md](relations.zh-CN.md) §1.2)。纯播放器确定性地求值 respond 关系(同事件→同行为)——离线播放交互不丢,能力即数据(vision 规则 3)。
 
 ### 2.4 流程词(拼起来)
 
@@ -163,7 +163,7 @@ sources:
 | 级 | 用户看见 | 所需新概念 | 在跑的内核 |
 |---|---|---|---|
 | 0——舞台+说话 | 画面、聊天框、播放 | 0 | 命令 |
-| 1——手 | 拖动部件;它跟着手;"回到原位"锚点 | 0 | bind/propagate+通道(无时间姿势,F12) |
+| 1——手 | 拖动部件;它跟着手;"回到原位"锚点 | 0 | bind/propagate+参数(无时间姿势,F12) |
 | 2——动作 | "走到那边""弹一下""晃一晃" | 0 | 轨道+缓动+sim |
 | 3——响应 | "点它就跳""按住不动就眨眼" | 0 | respond 关系 |
 | 4——高阶(可选) | 手柄、轨道以线的形式可见、专业标签 | 自选 | 全内核 |
@@ -182,7 +182,7 @@ sources:
 
 ## 7. 对既有文档与 roadmap 的影响(owner 2026-11-17 确认;落地=路线图 C7)
 
-- **relations.zh-CN.md §1**:新增 **respond** 关系族(交互:事件×条件→通道写/轨道切换/触发)与可选的 `oscillate`(周期驱动:周期/振幅/相位)——来自 landscape §6 R2/R3;
+- **relations.zh-CN.md §1**:新增 **respond** 关系族(交互:事件×条件→参数写/轨道切换/触发)与可选的 `oscillate`(周期驱动:周期/振幅/相位)——来自 landscape §6 R2/R3;
 - **roadmap.zh-CN.md Phase C**:交互词表+纯播放器确定性事件处理成为显式 C 项(以 N3 为门);表演录制(F6/R6)作为捕获通道;
 - **ai-interaction.zh-CN.md §2**:双通道补上其小白形态——两通道*对等*同样适用于零词汇用户(语言侧只收字典词);
 - **vision.zh-CN.md §7**:成功标准增补小白门 N1–N5(愿景早已要求"凭直觉、零菜单操作"——N1–N5 让它可测);

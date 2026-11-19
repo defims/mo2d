@@ -4,7 +4,7 @@ title: "MVP Final (v5): Tentacle + 3D Scene, Built End-to-End via the Command Pr
 description: MVP v5 consolidated draft — six items in scope (3D-ready line kernel / hot-path relations / Tick time / command protocol + validator / format + export / minimal stage), six gated acceptance steps (A1 includes the 3D scene hash gate, A6 hand-built and AI command streams isomorphic), an eight-item Definition of Done, a nine-item frozen decision list, and the basic-3D hard boundary plus anti-scope-creep clauses.
 tags: [mvp, scope, stage, mcp, ticks, 3d]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-18T03:15:26Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -81,7 +81,7 @@ AI and hand as two isomorphic channels, deterministic engine execution, playable
 
 **All out**: bitmap mesh, simulation, gradients, custom relations, brush-stroke style library, importers, multi-layer/groups,
 BLOB area, project-directory layout, collaboration; **3D side**: lights, materials, 3D navigation, work planes, depth picking, glTF
-(all in Phase D — the cost is in the interaction, not the math).
+(all in Phase D — the cost is in the interaction, not the math; *revised 2026-11-18, D11: 3D is never supported separately — these convert into 2D mechanisms or are deleted, roadmap updated*).
 
 ## 3. Six gated steps (no passing the gate, no moving on; driven by the command stream end-to-end from A1 on)
 
@@ -110,12 +110,12 @@ BLOB area, project-directory layout, collaboration; **3D side**: lights, materia
 
 - **Headless first, A6 wraps a thin viewport**: strictly the five operations (four + tap since the 2026-11-17 D8 revision); **whatever is missing, have the AI emit commands — add no controls to the viewport**;
 - **No GPU in the MVP**: CPU oracle single-track; SoA layout keeps the path open (roadmap B1);
-- **Minimal interpolation set**: Linear/Bezier (im 0/9); **step (im=3) added with the C7 interactivity slice (2026-11-17)** — discrete channels; Smooth and the rest deferred (moho-mapping §5.2);
+- **Minimal interpolation set**: Linear/Bezier (im 0/9); **step (im=3) added with the C7 interactivity slice (2026-11-17)** — discrete parameters; Smooth and the rest deferred (moho-mapping §5.2);
 - **Simplest linear bind**: single bone + projected-distance weights; multi-bone blending / weight painting deferred;
 - **Invalidation strategy deferred**: full recomputation; damage rendering / DAG reverse invalidation goes into roadmap B1;
 - **Command normalization across different paths is not in the MVP**: only same-path replay is verified (known boundary);
 - **Basic-3D hard boundary**: flat color, no lighting + perspective camera + z≠0 buildable and renderable; lights/materials/navigation/work planes/
-  depth picking/glTF are all Phase D;
+  depth picking/glTF are all Phase D *(revised 2026-11-18, D11: 3D converts into 2D support — Phase D dissolves into 2D-native slices, see roadmap)*;
 - **Start with three MCP commands**: if Definition of Done item 1 fails, supplement (supplement = add a new version, never change an old one).
 
 ## 6. Known Issues & Mitigations (status overview)
@@ -137,7 +137,7 @@ BLOB area, project-directory layout, collaboration; **3D side**: lights, materia
 | Risk | Mitigation |
 |---|---|
 | No MCP host environment | A1–A3 driven by local command-stream files (same protocol); real host from A4 on |
-| Bezier handle semantics | Segment shape = in/out handles at both ends (empirically verified in moho-mapping §5.2); a 1D angle channel first, Vec2 later |
+| Bezier handle semantics | Segment shape = in/out handles at both ends (empirically verified in moho-mapping §5.2); a 1D angle parameter first, Vec2 later |
 | Byte determinism broken by timestamps/hashes | No timestamps in the envelope; preview not in the MVP; atomic writes + canonical field order |
 | A4 (protocol + validator + MCP) most likely to slip | Split into order: command-stream file → schema → determinism gate → MCP shell last |
 | A6/3D scope creep | Two hard boundaries in §5 (five operations / 3D list); whatever is missing, have the AI emit commands |
@@ -149,12 +149,13 @@ BLOB area, project-directory layout, collaboration; **3D side**: lights, materia
 | D1 | **Track = line** (nodes = keyframes: position = Tick, value = node-level attributes; interp = segment-level attributes); the track relation = a reference/sampling wire | Owner asked "track as line or as relation — which is better" |
 | D2 | The command stream carries a **protocol version field**; supplement = add a new version, never change an old one | P0-2 |
 | D3 | Node position = **Vec3** (2D always z=0) | 3D-extension resolution |
-| D4 | Rotation: **format = Euler xyz per-component channels** (normalized on write to (−π,π]); runtime = quaternion/matrix | Owner asked "quaternion or Vec3" |
+| D4 | Rotation: **format = Euler xyz per-component parameters** (normalized on write to (−π,π]); runtime = quaternion/matrix | Owner asked "quaternion or Vec3" |
 | D5 | **3-node closed line = triangular face** (fill generalization) | 3D-extension resolution |
 | D6 | The renderer **is 3D**: z-buffer/perspective/back-face culling/flat color with no lighting, 2D through the same pipeline | Owner decided to directly support basic 3D |
 | D7 | Time = **raw Tick integers** (254,016,000,000/s) | file-format §2 |
 | D8 | Minimal stage pulled forward as A6, ~~four-operation hard boundary~~ **revised 2026-11-17 (owner approved): five operations** — draw / drag / connect / scrub / **tap** (tap = the `event.fire` command; still zero buttons, zero panels) | Owner decided to pull B1 forward; revision comes with the C7 interactivity slice (roadmap) |
 | D9 | Demo artifact includes a closed sucker (fill acceptance artifact) + a static z≠0 scene (3D acceptance artifact) | P0-3 / D6 |
 | D10 | **Interactive events are timelines**: a gesture's phase edges (hover/press/release/leave) are keyframes on a gesture timeline sharing the animation tick axis; the gesture's duration = the pressed segment's length; materialized as **read-only** step (im=3) track lines `gesture/<target>` (broadcast → `gesture/pointer`) via `event.fire` atomic dual-write; hold discrimination = press→release pair measurement (`minHold`/`maxHold`, fold lookback) | Owner design session 2026-11-17 ("交互事件其实也是时间线……点击事件的时间长短对应时间线的长短"); landing = roadmap C8 |
+| D11 | **3D is never supported separately — it converts into 2D support**: since 3D can be represented and manipulated through 2D (projection lines / apparent contours / turnarounds; parameter lines & drawings as commands; drag-on-projection resolved by the model), no 3D authoring or interaction surface is ever built — no 3D navigation, no work planes, no depth picking as 3D-native concepts, no lights/materials as engine features. The renderer stays 3D internally (D6 unchanged — occlusion and cameras stay correct for free); what was Phase D dissolves into small 2D-native slices (generation-relation lift/view; surface stamp; camera rig as lines; ray-snap manipulation) | Owner 2026-11-18 ("既然3d可以由2d表示和操控，那3d就不用单独支持，而是转为2d支持"); dissolves roadmap Phase D |
 
 **Once this document is frozen, A1 can start.**

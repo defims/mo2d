@@ -80,7 +80,7 @@ already applies to determinism and throughput.
 
 The dictionary is the product of this layer: **users speak life; AI compiles to the command protocol.**
 Every compilation lands in existing kernel vocabulary — track lines/nodes/segment easing (line-model N4),
-relations from the standard library ([relations.md](relations.md) §1), channels, controls-as-lines
+relations from the standard library ([relations.md](relations.md) §1), parameters, controls-as-lines
 ([ai-interaction.md](ai-interaction.md) §3). Items marked ⓓ were proposals at survey time —
 **the owner confirmed them on 2026-11-17** (the respond family, `oscillate`, step interpolation,
 perform-record; landing as roadmap C7, contract in [relations.md](relations.md) §1.2) — they extend,
@@ -110,11 +110,11 @@ never bend, the model.
 
 | Life word | User intent | mo2d compilation | Replaces |
 |---|---|---|---|
-| 出现 / 消失 appear / vanish | visibility at a moment | visibility/opacity channel key (N7/N4) | opacity keyframe |
+| 出现 / 消失 appear / vanish | visibility at a moment | visibility/opacity parameter key (N7/N4) | opacity keyframe |
 | 变色 turn color X | recolor | color track on style / gradient stops (B3/N6) | color keyframes |
 | 变成 Y 形状 morph into Y | shape change | track on node positions (AI places correspondences) | shape tween |
-| 换装 / 换表情 change look | discrete swap | discrete channel over shared curves (moho switch reduction) | switch layers / skins |
-| 盖在…上面 / 藏到…后面 in front of / behind | stacking | zOrder channel (animatable) | layer ordering |
+| 换装 / 换表情 change look | discrete swap | discrete parameter over shared curves (moho switch reduction) | switch layers / skins |
+| 盖在…上面 / 藏到…后面 in front of / behind | stacking | zOrder parameter (animatable) | layer ordering |
 | 只露出这部分 show only this part | clip | shape mask relation | mask/matte/cutter |
 
 ### 2.3 Interaction words (make it respond)
@@ -127,7 +127,7 @@ The perceive→decide→respond minimum model (F11). Owner-confirmed mapping (20
 | 点它 / 戳它 tap / poke it | react to click | respond relation: event `tap(target line)` → action | listener + trigger input |
 | 悬停 / 移开 hover / move away | the pointer is over it | gesture-line `hoverIn`/`hoverOut` edges (phase 1/0) + respond on hover events | mouseenter/mouseleave listener |
 | 碰到 / 撞上 touch / bump into | react to contact | respond relation: event `overlap(line A, line B)` | collision event |
-| 按住 / 松开 press / let go | hold states | gesture line: press/release edges materialize a per-target gesture timeline (im=3); respond relations on `press` / `release` write a switch channel | boolean input |
+| 按住 / 松开 press / let go | hold states | gesture line: press/release edges materialize a per-target gesture timeline (im=3); respond relations on `press` / `release` write a switch parameter | boolean input |
 | 长按 / 按久一点 hold it / press longer | keep pressing for a while | release respond with `minHold` (hold = press→release pair measurement = the gesture line's pressed-segment length) | long-press event |
 | 一碰就跳 / 害羞地躲开 jump when touched / shy away | event → motion | respond → switch/start a track (AI also writes the track) | state machine + transitions |
 | 等一下再… after a moment… | delayed response | respond on `time-point(t)` / `track-end(track)` event | exit time / delay |
@@ -136,7 +136,7 @@ The perceive→decide→respond minimum model (F11). Owner-confirmed mapping (20
 **Where it lives**: an event is a single-tick irreversible fact; a **gesture is a timeline** — its
 phase edges materialize as a **read-only reference lane on the time axis** (`gesture/<target>`,
 step im=3, roadmap C8), and the pressed segment's length *is* how long it was held. A respond
-relation is a function from (event × guard, incl. hold length) to channel writes / fires —
+relation is a function from (event × guard, incl. hold length) to parameter writes / fires —
 squarely "relations are functions" ([relations.md](relations.md) §1.2). The plain player evaluates
 respond relations deterministically (same events → same behavior) — offline playback with
 interactivity intact, capability-as-data (vision rule 3).
@@ -217,7 +217,7 @@ Distilled from landscape §3.4/§3.6/F13 — every trusted AI tool shares this s
 | Level | User sees | New concepts needed | Kernel in play |
 |---|---|---|---|
 | 0 — stage + talk | the picture, a chat box, play | 0 | commands |
-| 1 — hands | drag parts; it follows the hand; "回到原位" anchor | 0 | bind/propagate + channels (pose w/o time, F12) |
+| 1 — hands | drag parts; it follows the hand; "回到原位" anchor | 0 | bind/propagate + parameters (pose w/o time, F12) |
 | 2 — motion | "走到那边""弹一下""晃一晃" | 0 | tracks + easing + sim |
 | 3 — response | "点它就跳""按住不动就眨眼" | 0 | respond relations ⓓ |
 | 4 — power (optional) | handles, tracks visible as lines, professional labels | opt-in | the whole kernel |
@@ -250,7 +250,7 @@ convention: every step ships a visible deliverable accepted via the command stre
 
 ## 7. Impact on existing docs & roadmap (owner-confirmed 2026-11-17; landing = roadmap C7)
 
-- **relations.md §1**: add the **respond** relation family (interaction: event × condition → channel
+- **relations.md §1**: add the **respond** relation family (interaction: event × condition → parameter
   write / track switch / fire) and optionally `oscillate` (cyclic driver: period/amplitude/phase) —
   from landscape §6 R2/R3;
 - **roadmap.md Phase C**: interactivity vocabulary + plain-player deterministic event handling becomes

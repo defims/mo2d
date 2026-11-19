@@ -50,11 +50,11 @@ is a parameter of that relation function; document-level parameters such as "fra
 | Constraint | **constraint** | (line A, line B) → geometric restrictions | Angle min/max, equal length, tangency |
 | Drive | **propagate** | (control line, target line set) → targets follow the control | Drive mapping, value range |
 | Generate | **derive** | (input line set) → an output line | Generation parameters for medial axis/envelope/loft/text→outline |
-| Time | **track relation** | (track line, target attribute) → sampled and written every frame; **the track itself = a line** (nodes = keyframes: position = tick, value = node-level attribute) — the track is data, the track relation is the wiring (decision in [mvp.md](mvp.md) §2.2) | Interpolation/easing = the track line's segment-level attribute (per-component handles); interpolation codes follow Moho (moho-mapping §5.2): **0 linear / 3 step / 9 Bézier** — step (im=3) is the discrete channel, the basis of Switch/state machines (established 2026-11-17, roadmap C7) |
+| Time | **track relation** | (track line, target attribute) → sampled and written every frame; **the track itself = a line** (nodes = keyframes: position = tick, value = node-level attribute) — the track is data, the track relation is the wiring (decision in [mvp.md](mvp.md) §2.2) | Interpolation/easing = the track line's segment-level attribute (per-component handles); interpolation codes follow Moho (moho-mapping §5.2): **0 linear / 3 step / 9 Bézier** — step (im=3) is the discrete parameter, the basis of Switch/state machines (established 2026-11-17, roadmap C7) |
 | Dynamic | **simulate** | (line set, force field) → the line set after frame-by-frame integration | Spring/damping/gravity/wind/collision/particle emission rate; random seed |
 | Drive | **oscillate** | (target attribute) → a periodic value of tick: base + amplitude × wave(tick − phase); the deterministic cyclic driver (breathe/sway/float/spin) — physical sway stays with simulate | Waveform (sine/triangle/saw), period (ticks), phase, base, amplitude (established 2026-11-17) |
-| Interaction | **respond** | (event × guard) → ordered actions: **write** a channel {target line+attr, value \| add} / **fire** an event; events ∈ {tap, press, release, hoverIn, hoverOut, overlap(lineB), timePoint(t)}; **a state machine = a discrete channel + guarded respond relations**; a listener = a respond relation on a target line — no new concept (established 2026-11-17, see §1.2) | Event vocabulary, guard {channel, op, value}, actions list, hit-test radius, `minHold`/`maxHold` (release-class hold discrimination — C8, see §1.2) |
-| Generate | **shape (fill region)** | ([curve-ref | segment-ref (with direction flag)], …) → a renderable region; **one curve may be shared by N shape relations** (relations only read lines; curve reuse = several relations with the same input) | fillOn/strokeOn, fill rule, style, **zOrder (a channel — stacking is animatable)** |
+| Interaction | **respond** | (event × guard) → ordered actions: **write** a parameter {target line+attr, value \| add} / **fire** an event; events ∈ {tap, press, release, hoverIn, hoverOut, overlap(lineB), timePoint(t)}; **a state machine = a discrete parameter + guarded respond relations**; a listener = a respond relation on a target line — no new concept (established 2026-11-17, see §1.2) | Event vocabulary, guard {channel, op, value}, actions list, hit-test radius, `minHold`/`maxHold` (release-class hold discrimination — C8, see §1.2) |
+| Generate | **shape (fill region)** | ([curve-ref | segment-ref (with direction flag)], …) → a renderable region; **one curve may be shared by N shape relations** (relations only read lines; curve reuse = several relations with the same input) | fillOn/strokeOn, fill rule, style, **zOrder (a parameter — stacking is animatable)** |
 | Reference | **external asset reference external-ref** | (out-of-document entity) → an anchorable payload | file:// path, relative base |
 
 ### 1.0.1 Curve reuse and stacking (the shape relation; established 2026-11-13 by the owner)
@@ -66,13 +66,13 @@ relations (edit the curve once, all N shapes change); the curve itself may still
 (line-level `strokeOn`) — Moho's "one curve, two roles" returns.
 
 **Stacking order**:
-- each shape relation and line carries a **zOrder channel** (Moho's `shape_order` is itself
+- each shape relation and line carries a **zOrder parameter** (Moho's `shape_order` is itself
   animatable[^mohoproj-format]) ⇒ **stacking can be keyframed** (card flips, occlusion reversals);
 - three layers of convenience: the command `rel.set zOrder`; AI natural language; direct stage
   manipulation (the AI generates a temporary depth slider on the spot — a control bar is a line);
   semantic commands bringForward/sendBackward/toFront/toBack (= deterministic zOrder arithmetic);
 - **two-level ordering composed lexicographically**: between layers = the ownership relation's
-  ordering parameter; within a layer = the zOrder channel; global render order = `(layerOrder, zOrder)`;
+  ordering parameter; within a layer = the zOrder parameter; global render order = `(layerOrder, zOrder)`;
 - two overlapping fill regions over the same curve both render, ordered by zOrder (well-defined);
   the fill rule is a parameter of the shape relation (logic payload).
 
@@ -97,7 +97,7 @@ the Phase B vocabulary:
 | **sim** | (line, anchors[{node, driver}], gravity, damping, iterations, collideWith?, radius?, selfCollide?) → integrated line | Verlet + distance constraints at fixed 240 Hz substeps; anchors ride their driving position tracks exactly per substep; **replay-from-seed** determinism (§4); collisions: free nodes keep clearance from collider segments and (optionally) non-adjacent chain pairs keep separation — roadmap B6 |
 | **particles** | (emitter line/node, rate, speed, dir, spread, life, gravity, damping, size, color, len, **seed**, collideWith?, bounce?, radius?) → generated segment lines | Each particle = a short directed segment (`<emitter>#p<k>`); scatter angles hash through splitmix64 on the explicit seed — same doc + same seed → byte-identical output; collider segments reflect the inward velocity with restitution `bounce` — roadmap B6 |
 
-One writer per output still governs: gradient claims a recolor channel of a
+One writer per output still governs: gradient claims a recolor parameter of a
 line (fill and stroke roles compose), group/sim claim their members'/line's
 positions; a second writer on the same claim is rejected by the validator.
 The interaction slice (**oscillate**, **step interpolation im=3**, **respond** +
@@ -120,17 +120,17 @@ an essential capability. It lands entirely inside "relations are functions":
   (pointer against a target line, engine-side deterministic hit test = segment
   distance, same criterion as the stage), `overlap(lineB)` (segment intersection
   at the current tick), `timePoint(t)` (a moment arrived);
-- **Guards**: a respond relation may carry a condition on a channel
+- **Guards**: a respond relation may carry a condition on a parameter
   `{channel, op, value}` — guarded transitions, exactly the Rive/Unity/Godot
   convergence (F11);
 - **Actions** (ordered list): `write {target line+attr, value | add}` (a state
-  machine = a **discrete channel** written by guarded respond relations — the
+  machine = a **discrete parameter** written by guarded respond relations — the
   discrete values ride **step interpolation, im=3**, and are the Switch-layer
   equivalent) and `fire {name}` (chain reactions: one event triggering another);
 - **Single-writer discipline holds**: a respond is a *conditional* writer — the
   validator rejects an action target (line+attr) that any unconditional writer
   (track/oscillate/bind/…) already claims. Composition pattern: respond writes
-  a dedicated control channel, time-driven relations consume it;
+  a dedicated control parameter, time-driven relations consume it;
 - **Plain-player interactivity (N3)**: respond relations evaluate
   deterministically in any offline player, no AI, no scripts (capability as
   data, vision rule 3) — evaluation semantics in §4;
@@ -139,7 +139,7 @@ an essential capability. It lands entirely inside "relations are functions":
   cycle-free, which is what makes "tap on X writes X" legal); overlap edges
   are sampled at **fold moments** (recorded event ticks and declared
   timePoints), not every tick — a continuous overlap watch is a v2 refinement;
-  multiple guarded responds may compose **one** channel (the state-machine
+  multiple guarded responds may compose **one** parameter (the state-machine
   pattern): the fold sequences their writes by (moment, document order), and
   the first claimant applies the composed state exactly once per frame.
 
@@ -212,7 +212,7 @@ same document, same input → same output (verifiable by the CPU oracle).
 
 ## 3. Custom Relations
 
-Functions defined by users/AI: the function body is logical payload (expressions/scripts), the parameters are channels.
+Functions defined by users/AI: the function body is logical payload (expressions/scripts), the parameters are drivable parameters (legacy alias: channels).
 This is mo2d's single outlet for extensibility — **add no new kernel primitives, only new relations**.
 The body lives *inside* the relation concept (owner, 2026-11-17: "代码是关系里的,关系即函数" —
 the non-line boundary no longer lists code; see the revised line-model §4).
@@ -224,7 +224,7 @@ the non-line boundary no longer lists code; see the revised line-model §4).
 ## 4. Evaluation Model
 
 - Relations form a **DAG**: topologically sorted, then evaluated layer by layer;
-- **Layered parallelism**: independent relations within the same layer run in parallel; node-level channel sampling is a parallel map —
+- **Layered parallelism**: independent relations within the same layer run in parallel; node-level parameter sampling is a parallel map —
   isomorphic to the GPU execution model (owner: lines and line relations maximize GPU utilization; the concepts fit);
 - **Time dimension**: track relations first sample the current frame's parameters, then geometric/dynamic evaluation proceeds;
   dynamic-relation state integrates over time — **the playback/scrub consistency strategy is resolved (B6): replay-from-seed**.
@@ -233,7 +233,7 @@ the non-line boundary no longer lists code; see the revised line-model §4).
   and scrub-back/replay/offline export are byte-identical by construction;
 - **Event dimension (established 2026-11-17, C7)**: evaluation is a pure function
   **`f(doc, tick, eventPrefix)`** — the recorded `event.fire` prefix up to `tick`, sorted by
-  `(tick, seq)`, is **folded** into channel state (guarded respond relations applying their writes),
+  `(tick, seq)`, is **folded** into parameter state (guarded respond relations applying their writes),
   and the folded state feeds the topological evaluation. The fold is deterministic (same prefix →
   same state) and cheap (O(events)); the empty prefix reduces exactly to the time-driven
   `f(doc, tick)` — every existing gate and frozen hash is untouched. Seek = replay the fold
@@ -245,7 +245,7 @@ the non-line boundary no longer lists code; see the revised line-model §4).
 - **Cycles and conflicts**: cycles are in principle forbidden in the relation graph (detected → error); multiple writing relations on the same node
   are composed by relation priority + a deterministic order (details during engineering; the principles recorded now: **determinism, explainability, parallelizability**);
 - **Reverse-dependency invalidation (landed, B1)**: the DAG doubles as the change-propagation index — an edit to a line dirties exactly its
-  transitive downstream (channels = signals; `engine/src/inval.rs`).
+  transitive downstream (parameters = signals; `engine/src/inval.rs`).
 
 ## 5. Open Questions
 

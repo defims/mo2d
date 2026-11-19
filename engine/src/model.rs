@@ -64,7 +64,7 @@ impl BezierHandle {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Interp {
     /// Moho interpolation codes (moho-mapping.md §5.2 / maohou interp-modes):
-    /// 0 = Linear, 3 = Step (discrete channels — Switch/state machines, C7),
+    /// 0 = Linear, 3 = Step (discrete parameters — Switch/state machines, C7),
     /// 9 = Bezier with per-component `b` handles. (1 = Smooth is deferred.)
     pub im: i64,
     /// Per-component bezier handles; length must equal the component count of
@@ -341,7 +341,7 @@ static FALLBACK_SEG: SegAttrs = SegAttrs {
 pub enum TrackAttr {
     Position,
     Width,
-    /// Node color channel (B3): keyframe value = [r,g,b] (alpha kept) or
+    /// Node color parameter (B3): keyframe value = [r,g,b] (alpha kept) or
     /// [r,g,b,a]; this is what makes gradient color stops animatable.
     Color,
 }
@@ -452,7 +452,7 @@ pub enum RelationKind {
     Oscillate,
     /// respond (C7): interaction — (event × guard) → ordered actions.
     /// Event-sourced: the fold of the recorded `event.fire` prefix decides
-    /// what fires; the eval arm applies the folded channel state (pure
+    /// what fires; the eval arm applies the folded parameter state (pure
     /// function of (doc, tick, eventPrefix), relations.md §4). Reads no lines
     /// (hit/overlap tests use rest geometry), so "tap on X changes X" is a
     /// legal (cycle-free) graph.
@@ -564,15 +564,15 @@ pub struct Relation {
     /// unbounded.
     pub resp_min_hold: Option<i64>,
     pub resp_max_hold: Option<i64>,
-    /// Optional condition on a width channel (guarded transitions).
+    /// Optional condition on a width parameter (guarded transitions).
     pub resp_guard: Option<RespondGuard>,
-    /// Ordered actions (write a channel / fire a named event).
+    /// Ordered actions (write a parameter / fire a named event).
     pub resp_actions: Vec<RespondAction>,
     pub unknown: Vec<(String, Value)>,
 }
 
 impl Relation {
-    /// The channel-write target lines of a respond relation (dedup via
+    /// The parameter-write target lines of a respond relation (dedup via
     /// `writes_all`; borrow-backed, no allocation of ids).
     pub fn respond_target_lines(&self) -> Vec<&str> {
         self.resp_actions
@@ -695,7 +695,7 @@ impl RespondOp {
     }
 }
 
-/// A respond guard: condition on a width channel. Absent channel state reads
+/// A respond guard: condition on a width parameter. Absent parameter state reads
 /// as the rest width (so "only fire if a previous tap widened it" works).
 #[derive(Debug, Clone, PartialEq)]
 pub struct RespondGuard {
@@ -705,16 +705,16 @@ pub struct RespondGuard {
     pub value: f64,
 }
 
-/// Write mode for channel writes.
+/// Write mode for parameter writes.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum WriteMode {
     /// Absolute value.
     Set,
-    /// Relative to the accumulated channel state (rest + Σ deltas).
+    /// Relative to the accumulated parameter state (rest + Σ deltas).
     Add,
 }
 
-/// One respond action (relations.md §1.2): write a channel or fire a named
+/// One respond action (relations.md §1.2): write a parameter or fire a named
 /// event (chain reactions, same fold moment, FIFO order).
 #[derive(Debug, Clone, PartialEq)]
 pub enum RespondAction {
@@ -903,7 +903,7 @@ impl Relation {
             // line is claimed, so there is no primary write target.
             RelationKind::Particles => &self.part_emitter,
             RelationKind::Oscillate => &self.osc_target,
-            // respond: first channel-write target; fire-only responds claim
+            // respond: first parameter-write target; fire-only responds claim
             // nothing (fall back to the trigger line like Particles does).
             RelationKind::Respond => self
                 .respond_target_lines()
@@ -919,7 +919,7 @@ impl Relation {
             RelationKind::Group => self.group_members.iter().map(|s| s.as_str()).collect(),
             // Particles claim no document line.
             RelationKind::Particles => vec![],
-            // respond claims every channel-write target (dedup, document order).
+            // respond claims every parameter-write target (dedup, document order).
             RelationKind::Respond => {
                 let mut seen: Vec<&str> = Vec::new();
                 self.respond_target_lines().into_iter().filter(|l| {

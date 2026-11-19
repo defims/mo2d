@@ -44,7 +44,7 @@ Two structural dilemmas of traditional 2D animation tools (Flash/Animate, Moho, 
 **An AI-era engine is not a feature set, but a minimal semantic language + a deterministic runtime.
 Features are AI's output, not the engine's building blocks.** Six components, none dispensable — and no seventh needed:
 
-1. **Semantic language** (the kernel is the language): minimal, orthogonal, composable primitives (mo2d: lines / nodes / three-level attributes / relations / channels).
+1. **Semantic language** (the kernel is the language): minimal, orthogonal, composable primitives (mo2d: lines / nodes / three-level attributes / relations / parameters).
    AI capability = **coverage of composition**, not the enumeration surface of an API — the smaller and more stable the language, the stronger the AI
    (thousands of APIs are an AI's graveyard; six primitives are an AI's LEGO);
 2. **Deterministic runtime**: AI compiles, the engine executes; the runtime never calls AI; same input, same output (byte-identical).
@@ -88,8 +88,8 @@ the GPU wants an isomorphic data shape; one unification, dividends collected at 
 
 | Stage | Argument |
 |---|---|
-| Rendering | Node channels = SoA arrays → vertex attributes/storage buffers, the whole scene uploaded at once; variable-width lines → unified triangle strips, closed lines → fill tessellation; isomorphic data = very few draw calls, zero state switches |
-| Evaluation | The relation DAG evaluates in parallel by layers: independent relations within a layer run in parallel; node-level channel sampling is a parallel map |
+| Rendering | Node parameters = SoA arrays → vertex attributes/storage buffers, the whole scene uploaded at once; variable-width lines → unified triangle strips, closed lines → fill tessellation; isomorphic data = very few draw calls, zero state switches |
+| Evaluation | The relation DAG evaluates in parallel by layers: independent relations within a layer run in parallel; node-level parameter sampling is a parallel map |
 | Simulation | Particles = directed segments = instanced rendering + compute integration; springs/constraints = PBD-style parallel solving |
 | Skinning/deformation | Binding = vertex blending, a natural workload for the GPU vertex stage |
 
@@ -106,17 +106,17 @@ The direction holds, made precise: **the engine holds "performance + determinism
 
 **Three iron rules**:
 
-1. **AI compiles, the engine executes** — AI compiles intent into deterministic artifacts (lines/relations/channels/commands), and the engine executes the artifacts;
+1. **AI compiles, the engine executes** — AI compiles intent into deterministic artifacts (lines/relations/parameters/commands), and the engine executes the artifacts;
    AI is the compiler, not the runtime;
 2. **AI at authoring time, pure engine at playback** — rigging/animating/writing relation functions go to AI (seconds of latency is tolerable);
    the 60fps evaluation/rendering/simulation of every frame is pure engine math — **the runtime never calls AI**;
-3. **Capability is data** — AI-generated capabilities (auto-rigging/lip sync/cursor following) are solidified as relations and channels in the document;
+3. **Capability is data** — AI-generated capabilities (auto-rigging/lip sync/cursor following) are solidified as relations and parameters in the document;
    the file still opens, plays, and exports without AI (the product is not hostage to AI availability).
 
 | Kept in the engine (more than performance) | Handed to AI (the capability layer) |
 |---|---|
 | Deterministic evaluation (CPU oracle, byte-identical command replay) | Auto-rigging, in-between, lip sync |
-| Semantic language (lines/nodes/segments/relations/channels = AI's compilation target) | Motion synthesis, retargeting, stylized brushes |
+| Semantic language (lines/nodes/segments/relations/parameters = AI's compilation target) | Motion synthesis, retargeting, stylized brushes |
 | Hot paths built in (skinning/simulation solving/track sampling/rendering) | Control generation (controls are lines), format understanding and conversion |
 | Truth and validation (document state/schema/acceptance gates) | Natural language → command translation (existing) |
 | Sandbox (safe execution of AI-generated code) | All "how to do it" knowledge |

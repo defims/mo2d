@@ -1,7 +1,7 @@
 ---
 type: Reference
 title: "Glossary (English–Chinese)"
-description: One-sentence definitions of every mo2d term — line/node/segment/three-level attributes (line-level/node-level/segment-level)/brush stroke/channel/relation/function/predefined & custom relations/nine kinds of relations/track/keyframe/control bar/transform box/three kinds of non-line boundaries (revised 2026-11-17)/GPU-related/command & session state.
+description: One-sentence definitions of every mo2d term — line/node/segment/three-level attributes (line-level/node-level/segment-level)/brush stroke/parameter/relation/function/predefined & custom relations/nine kinds of relations/track/keyframe/control bar/transform box/three kinds of non-line boundaries (revised 2026-11-17)/GPU-related/command & session state.
 tags: [glossary, terminology]
 status: draft
 generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T08:37:30Z }
@@ -29,7 +29,7 @@ sources:
 | Node Attribute | 节点级属性 | A local override with the same name as its line-level counterpart; interpolated across segments; falls back to line level when absent |
 | Segment Attribute | 段级属性 | The direct state value held by each segment (segment type/visibility/interpolation/fill participation); not interpolated across segments |
 | Brush Stroke | 笔触 | Line-level style + node-level pressure/width variation |
-| Pressure | 压力 | Node-level width channel (stylus input): width = line width × pressure; an explicit node width wins (landed in B2) |
+| Pressure | 压力 | Node-level width parameter (stylus input): width = line width × pressure; an explicit node width wins (landed in B2) |
 | Style Template | 样式模板 | A named line-attribute template; `style.apply` copies its defined fields onto a line — switching brush strokes = applying another template (B2) |
 | Fallback | 回落 | The rule that a missing node attribute takes the line-level default value |
 | Parameter (Channel) | 参数（通道） | A parameter in its drivable form — an addressable, animatable quantity at (line, node?, attribute). Three roles stay distinct: the (attribute ↔ line) pairing is its **address**; the parameter itself is the **quantity** being driven; the **mapping** that writes values into it is a relation (track/respond/oscillate/sim — D1: the track is data, the relation is the wire). "Channel" (the Moho/AE term) survives only as the legacy alias |
@@ -58,7 +58,7 @@ sources:
 | Constraint | 约束 | Geometric restrictions such as angle/length/tangency (a static relation) |
 | Propagate | 传导 | One control line drives multiple target lines (a generalization of smart bones) |
 | Derive | 派生 | The output line is computed from input lines (medial axis/envelope/loft/text→outline) |
-| Track | 轨道 | Temporal relation: a straight line + keyframe nodes, carrying the time series of one channel |
+| Track | 轨道 | Temporal relation: a straight line + keyframe nodes, carrying the time series of one parameter |
 | Keyframe | 关键帧 | A node on the track line: time position + animation value |
 | Simulate | 模拟 | Dynamic relation: springs/damping/gravity/wind/collisions/particles, integrated frame by frame by a solver |
 | Spring | 弹簧 | A dynamic constraint acting between two lines |
@@ -76,7 +76,7 @@ sources:
 | Bitmap Mesh | 位图网格 | Two interwoven sets of warp/weft lines; the nodes are the texture anchors |
 | Gradient | 渐变 | A control bar (2-node line segment) + color-stop nodes |
 | Control Bar | 控制棒 | The line segment that defines a gradient's direction and extent |
-| Color Stop | 色标 | A node on the control bar: position channel = stop position, color channel = stop color |
+| Color Stop | 色标 | A node on the control bar: position parameter = stop position, color parameter = stop color |
 | Transform Box | 变换方框 | The operation box for layer scaling/rotation = a 4-node closed line |
 | Fill Region | 填充域 | The region enclosed by a closed line; interpretation rules (non-zero/even-odd) belong to the logic payload |
 | Camera | 摄像机 | A box line; push/pull/pan/truck = its node animation |
@@ -99,7 +99,7 @@ sources:
 | CPU Oracle Renderer/Evaluator | CPU oracle | The deterministic ground-truth source; GPU implementations must match its output |
 | Structure-of-Arrays | SoA 布局 | A memory layout with one array per attribute kind; GPU-friendly |
 | Damage Rendering | 损伤渲染 | Recomposite only the 64×32 tiles touched by changed lines (dirty rectangles); byte-identical to a full re-render (landed in B1) |
-| Reverse-Dependency Invalidation | 反向依赖失效 | An edit dirties exactly its transitive downstream through the relation DAG — channels are signals (landed in B1) |
+| Reverse-Dependency Invalidation | 反向依赖失效 | An edit dirties exactly its transitive downstream through the relation DAG — parameters are signals (landed in B1) |
 | Gradient Relation | 渐变关系 | Recolors a target line by projecting its nodes onto the control bar and sampling the color stops (fill or stroke role); stops are animatable via color tracks (landed in B3) |
 | Group Relation (Transform Box) | 群组关系（变换框） | The box line's rest→current similarity (anchor + diagonal) scales/rotates its member lines; `visible` = the layer visibility parameter; nesting composes (landed in B4) |
 | Sim Relation | 模拟关系 | A Verlet chain with distance constraints, integrated in fixed 240 Hz substeps; anchored nodes ride their driving tracks (landed in B6) |

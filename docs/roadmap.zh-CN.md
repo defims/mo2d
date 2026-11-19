@@ -4,7 +4,7 @@ title: "路线图:三阶段推进(2026-11-11 v4,舞台提前入 MVP)"
 description: Phase A=MVP 触手 v4(AI 编译引擎执行 + A6 最小舞台=生成的视图第一例);Phase B=性能与词表铺开(渲染与失效正式化/笔触/渐变/层群组/位图网格/模拟/格式正式化);Phase C=AI 生态(关系 IR/控件即线/导入/音频/协作/wasm);六部件→阶段映射与性能指标。
 tags: [roadmap, phases, mvp, long-term, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:25:00Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-18T03:15:26Z }
 sources:
   - id: mvp-doc
     resource: /mvp.md
@@ -62,7 +62,7 @@ round-trip 字节相等、求值吞吐、校验器在岗、**直接操纵等价*
 
 | 项 | 内容 | 验收演示 |
 |---|---|---|
-| B1 渲染与失效正式化(部件 5) | GPU 主力:实例化 uber-shader(段/节点补丁=instance)、损伤渲染(tile 64×32+脏矩形)、**DAG 反向依赖失效**(通道=信号)、CPU/GPU 像素奇偶校验门 | 十万节点级 60fps;编辑视口空闲 0% CPU |
+| B1 渲染与失效正式化(部件 5) | GPU 主力:实例化 uber-shader(段/节点补丁=instance)、损伤渲染(tile 64×32+脏矩形)、**DAG 反向依赖失效**(参数=信号)、CPU/GPU 像素奇偶校验门 | 十万节点级 60fps;编辑视口空闲 0% CPU |
 | B2 笔触样式库 | 线级 brush 15 参数族 + 节点级压力;样式=属性模板库 | 同一线切不同笔触;压感变宽 |
 | B3 渐变控制棒 | 控制棒线段 + 色标节点;绑到填充 | 会变色的触手(渐变可动画) |
 | B4 多层/群组 | 层/群组预定义关系 + 变换方框线 | 多角色同台;方框缩放旋转 |
@@ -82,7 +82,7 @@ round-trip 字节相等、求值吞吐、校验器在岗、**直接操纵等价*
 | C4 音频 | 音轨层:媒体载荷+level/jump 轨道;Tick 整除 44.1k/48k 正为此 | 口型/节拍驱动动画 |
 | C5 协作与版本 | 命令流合并、变更记录、引用层 | 多会话协作无冲突 |
 | C6 WebAssembly + 帧流 | wasm 发布 + MCP over WebSocket + **流式渲染**(architecture §3.2:帧流协议,像素流导出/显示列表流远端舞台) | 网页里跑触手 demo,零安装;远端舞台渐进呈现 |
-| C7 **交互**(2026-11-17 owner 确立;[relations.md](relations.zh-CN.md) §1.2、architecture §3.3) | **respond** 关系族(事件×守卫→写通道/触发事件;状态机=离散通道+带守卫的 respond)、**oscillate** 周期驱动器、**step 插值 im=3**(离散通道——Switch 基座)、事件进命令流(**`event.fire`**,不可逆事实)、舞台 tap(D8 修订:五操作)、最小**表演录制**(手势→轨道关键帧,走 auto-key);求值=纯 `f(doc, tick, 事件前缀)`,空前缀=既有行为 | "点它就跳":**tap_jump demo 离线重放逐字节一致,无 AI 无代码**(小白门 N3);呼吸/摆动 oscillate demo;同流+同事件 → 同字节 |
+| C7 **交互**(2026-11-17 owner 确立;[relations.md](relations.zh-CN.md) §1.2、architecture §3.3) | **respond** 关系族(事件×守卫→写参数/触发事件;状态机=离散参数+带守卫的 respond)、**oscillate** 周期驱动器、**step 插值 im=3**(离散参数——Switch 基座)、事件进命令流(**`event.fire`**,不可逆事实)、舞台 tap(D8 修订:五操作)、最小**表演录制**(手势→轨道关键帧,走 auto-key);求值=纯 `f(doc, tick, 事件前缀)`,空前缀=既有行为 | "点它就跳":**tap_jump demo 离线重放逐字节一致,无 AI 无代码**(小白门 N3);呼吸/摆动 oscillate demo;同流+同事件 → 同字节 |
 | C8 **交互手势时间线**(2026-11-17 owner 确立;line-model §0 规范表述、[relations.md](relations.zh-CN.md) §1.2、mvp §8 D10) | **手势线自事件流物化**:`event.fire` 原子双写 → 只读步进(im=3)轨道线 `gesture/<target>` / `gesture/pointer`(仅相位变化落键;`gesture/` 命名空间保留);录制端相位边沿(press/release/hoverIn/hoverOut 检测器加入 tap);**时长感知 respond**——`minHold`/`maxHold`=press→release 事件对测距(fold 回看,浏览器 click 语义;线值本身跟踪物理包含,浏览器 hover 语义);舞台时间轴上的只读参考泳道渲染(离线渲染按 `track` 线同样跳过 `gesture` 线——`MoEvent` 不变,事件仍是单 tick 事实) | "tap_vs_hold" demo:短按跳一下、长按(按住 ≥ 0.4s)变大——离线重放逐字节一致,无 AI 无代码(N3 式);同一脚本下手势线键字节稳定——**已落地(C8 P1,2026-11-17)**:gate_c8+tap_vs_hold 冻结 demo |
 
 依赖:C1 依赖 A4 校验器与 B1(热路径退化);C3 的 .moho 依赖 B4(层/群组)+B5(位图网格);C4 依赖 B7(格式正式化);C7 依赖 A4 协议/校验器(事件即命令)与 D8 修订(owner 2026-11-17 批准);C8 依赖 C7(事件流+step im=3)与 D10 决策(owner 2026-11-17 批准)。
@@ -107,7 +107,11 @@ round-trip 字节相等、求值吞吐、校验器在岗、**直接操纵等价*
 技术栈最终决策(Rust+wgpu 倾向,[architecture.md](architecture.zh-CN.md) §5)、产品品牌、
 mo2d 与 maohou 的工程合并策略——待 owner 拍板后再入图。
 
-**Phase D(3D 深化,远期未立项)**:扩展路径见 [3d-extension.md](3d-extension.zh-CN.md)——
-**引擎侧基础 3D 已入 MVP v4.1**(渲染器即 3D/Vec3/三角形面/3D 场景门,AI 可命令式搭 z≠0 场景);
-Phase D 只剩深化项:3D 交互(导航/工作平面/深度拾取)、灯光/材质/阴影、glTF;
-触发条件待 2D 站稳后定。
+**Phase D(~~3D 深化,远期未立项~~ 2026-11-18 经 D11 撤销)**:owner 决议——
+"既然3d可以由2d表示和操控，那3d就不用单独支持，而是转为2d支持"([mvp.md](mvp.zh-CN.md) §8 D11)。
+引擎侧保留基础 3D 红利(渲染器即 3D/Vec3/三角形面/3D 场景门——D3/D6 不变,遮挡与相机天然正确)。
+原 Phase D 深化清单转为小型 **2D 原生切片**:①生成关系 lift/view(hull 探针即存在性证明,log 2026-11-17);
+②表面盖章(内部线锚定到表面);③相机挂架即线(环绕/缩放=2D 驱动参数——不做 3D 导航);
+④射线吸附操纵(拖投影点→射线→表面,工作平面/深度拾取不再作为 3D 概念存在);
+灯光/材质/阴影作为引擎特性删除(替代候选:色调线盖印在表面上——待 owner 确认);glTF 去留待 owner 确认
+(删除 vs 降级为烘焙工件)。扩展数学仍录于 [3d-extension.md](3d-extension.zh-CN.md)。

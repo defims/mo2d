@@ -1,6 +1,6 @@
 //! Gate C7 — interactivity vocabulary (roadmap C7, established 2026-11-17):
 //! - oscillate: deterministic periodic driver (pure f(tick), period wrap)
-//! - step interpolation im=3: discrete channels hold their key value
+//! - step interpolation im=3: discrete parameters hold their key value
 //! - respond + event stream: the fold of the recorded event prefix decides
 //!   what fires; evaluation = pure f(doc, tick, eventPrefix); events are
 //!   irreversible facts (inverse noop) persisted in the document
@@ -143,7 +143,7 @@ fn oscillate_round_trip_byte_stable() {
 #[test]
 fn step_interp_holds_the_key_value() {
     // 3 keys, im=3 on both segments: mid-segment samples must hold the LEFT
-    // key's value exactly (discrete channels — Switch/state-machine basis).
+    // key's value exactly (discrete parameters — Switch/state-machine basis).
     let text = format!(
         r#"{{"v":1,"cmds":[
           {{"op":"line.create","id":"g","width":6,"color":[10,10,10,255],

@@ -95,7 +95,7 @@ if you can draw a line, you can make a control; AI generating a control = AI dra
 
 Based on [line-model.md](line-model.md) §4, the third class of the non-line boundary:
 
-- **Document state** (persisted): lines, relations, channels, payloads;
+- **Document state** (persisted): lines, relations, parameters, payloads;
 - **Session state** (not persisted): view camera, selection set, undo stack, clipboard, AI conversation context;
 - The command stream records **document changes**; session state is managed by the host itself and is not carried by save/load.
 

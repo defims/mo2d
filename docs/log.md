@@ -9,6 +9,9 @@
 
 ## 2026-11-19
 
+* **换血**: 全库术语换血——"通道"→"参数"(owner 选 1;双语 25 文件+引擎注释/门注释)。**保留类**(逐行审阅豁免):双通道交互(ai-interaction/mvp/vernacular"两通道/通道对")、传输通道(architecture 双向通道/C6 传输通道/file-format 几何交换通道/legal-risks AI 通道)、Moho 格式事实(⟨ch:Vec3⟩/逐分量三通道/多通道查找表/通道码表——moho-mapping 全文保留)、glossary 别名行("参数(通道)")、协议字段名 `{channel, op, value}`(D2 不改旧版)、log 日志(历史原样)、引擎标识符(ChannelState/fold channels——代码层)。**手改五处**:line-model §1 属性句/§5 骨架注释(可驱动参数,旧称通道)、映射表 Curve 行半边(Moho 侧保留 5 channels)、relations §3 结尾、relations respond 行 `{channel…}` 字段名还原。144 测试全绿;check-okf 0 错误。
+
+
 * **修订**: 四原语名单——第三原语主词由"通道"改为"参数"(owner 问"通道是不是用参数表示更好",答复:是;双语同步)。表述:线/关系/**参数**(通道——参数的可驱动、可采样形态)/载荷。保留的区分:关系静态参数(gravity/visible,"关系的参数就是集合的参数")vs 可驱动参数(有地址、有序列、可采样)——后者即旧称"通道";"通道"(Moho/AE 行话)降为别名,仅 Moho 格式对照时使用。glossary 行名改"参数(通道)"、定义主词参数为先;vision §5 同步。
 
 

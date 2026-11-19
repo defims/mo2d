@@ -151,7 +151,7 @@ pub fn evaluate_with_events(doc: &Document, tick: i64, extra: &[MoEvent]) -> Res
         .collect();
     let find_line = |lines: &[EvalLine], id: &str| -> Option<usize> { lines.iter().position(|l| l.id == id) };
 
-    // Fold the recorded event prefix up to `tick` into channel state
+    // Fold the recorded event prefix up to `tick` into parameter state
     // (relations.md §4 event dimension): same prefix → same state, cheap
     // (O(events)); empty prefix → no respond fires.
     let fold = fold_events(doc, tick, extra);
@@ -255,7 +255,7 @@ pub fn evaluate_with_events(doc: &Document, tick: i64, extra: &[MoEvent]) -> Res
 // C7 respond — event-sourced interaction (fold of the recorded event prefix)
 // ---------------------------------------------------------------------------
 
-/// Folded channel state for one (line, node) key.
+/// Folded parameter state for one (line, node) key.
 #[derive(Debug, Default, Clone)]
 struct ChannelState {
     /// Final width (absolute) once any width write has happened.
@@ -265,14 +265,14 @@ struct ChannelState {
     pos: Option<(bool, Vec3)>,
 }
 
-/// The fold result: per-channel state + edge-tracking sets. All maps are
+/// The fold result: per-parameter state + edge-tracking sets. All maps are
 /// BTree — iteration order is deterministic.
 #[derive(Debug, Default, Clone)]
 struct Fold {
     channels: BTreeMap<(String, Option<usize>), ChannelState>,
-    /// Channel key → the first respond relation that wrote it (document
+    /// Parameter key → the first respond relation that wrote it (document
     /// order). Only the owner applies the folded state in eval, so multiple
-    /// guarded responds composing one channel land exactly once per frame.
+    /// guarded responds composing one parameter land exactly once per frame.
     ownership: BTreeMap<(String, Option<usize>), String>,
     /// Overlap respond ids currently in the overlapping state (rising edges).
     overlapping: BTreeSet<String>,
@@ -342,7 +342,7 @@ fn lines_intersect(a: &Line, b: &Line) -> bool {
     false
 }
 
-/// The guard reads the fold's width channel; an unwritten channel reads as
+/// The guard reads the fold's width parameter; an unwritten parameter reads as
 /// the rest width. A guard on a `gesture/` line reads that line's step phase
 /// at the fold moment (C8: v1 guards may read only gesture lines — event
 /// derived, so the "respond reads no lines" acyclicity is preserved).
@@ -447,7 +447,7 @@ fn execute_respond(doc: &Document, fold: &mut Fold, r: &Relation, moment: i64, q
 }
 
 /// Fold the event prefix `doc.events` ++ `extra` up to `target` tick into
-/// channel state. Deterministic: moments ascend, events order by (tick, seq),
+/// parameter state. Deterministic: moments ascend, events order by (tick, seq),
 /// relations apply in document order, all sets/maps are BTree.
 fn fold_events(doc: &Document, target: i64, extra: &[MoEvent]) -> Fold {
     let mut fold = Fold { synthetic_seq: doc.events.len() as i64 + extra.len() as i64, ..Default::default() };
@@ -549,10 +549,10 @@ fn fold_events(doc: &Document, target: i64, extra: &[MoEvent]) -> Fold {
     fold
 }
 
-/// Apply one respond relation's folded channel state to the working copy
+/// Apply one respond relation's folded parameter state to the working copy
 /// (single writer — the folded value replaces what the rest state held).
 fn apply_respond_state(lines: &mut [EvalLine], r: &Relation, fold: &Fold) {
-    // Unique channel keys of this relation (document order, deduped).
+    // Unique parameter keys of this relation (document order, deduped).
     let mut keys: Vec<(String, Option<usize>)> = Vec::new();
     for a in &r.resp_actions {
         if let RespondAction::WriteWidth { line, node, .. } | RespondAction::WritePosition { line, node, .. } = a {
@@ -563,7 +563,7 @@ fn apply_respond_state(lines: &mut [EvalLine], r: &Relation, fold: &Fold) {
         }
     }
     for (line, node) in keys {
-        // Only the owning respond applies this channel's folded state —
+        // Only the owning respond applies this parameter's folded state —
         // later guarded responds composed it in the fold already.
         if fold.ownership.get(&(line.clone(), node)).map(|o| o != &r.id).unwrap_or(true) {
             continue;
@@ -1169,7 +1169,7 @@ pub fn sample_track(track: &Line, tick: i64) -> Result<Vec<f64>, String> {
     match interp {
         Some(Interp { im: 3, .. }) => {
             // Step (im=3, Moho INTERP_STEP): hold key i's value until key i+1
-            // — discrete channels (Switch layers / state machines, C7).
+            // — discrete parameters (Switch layers / state machines, C7).
             for c in 0..comps {
                 out.push(values[i][c]);
             }

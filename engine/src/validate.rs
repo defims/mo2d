@@ -586,15 +586,15 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
         Bind(String),
         ShareNode(String, usize),
         TrackNode(String, Option<usize>, TrackAttr),
-        /// Gradient claims one recolor channel of a whole line (B3).
+        /// Gradient claims one recolor parameter of a whole line (B3).
         Gradient(String, GradientRole),
         /// Group claims every member's positions (B4).
         GroupMember(String),
         /// Sim claims the whole simulated line's positions (B6).
         SimLine(String),
         /// Respond (C7) is a *conditional* writer: it conflicts with every
-        /// unconditional claim on the same channel, but NOT with other
-        /// respond claims — guarded responds composing one discrete channel
+        /// unconditional claim on the same parameter, but NOT with other
+        /// respond claims — guarded responds composing one discrete parameter
         /// is exactly the state-machine pattern (the fold sequences them
         /// deterministically by (moment, document order)).
         RespondChannel(String, Option<usize>, TrackAttr),
@@ -625,7 +625,7 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
                     TrackAttr::Width => vec![Claim::TrackNode(r.osc_target.clone(), r.osc_node, TrackAttr::Width)],
                     TrackAttr::Color => vec![],
                 },
-                // Respond (C7) claims its channel targets as *conditional*
+                // Respond (C7) claims its parameter targets as *conditional*
                 // writes — conflicts with unconditional writers, composes
                 // with other responds (see Claim::RespondChannel).
                 RelationKind::Respond => r
@@ -669,8 +669,8 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
                 (Claim::GroupMember(la), Claim::GroupMember(lb)) => la == lb,
                 (Claim::GroupMember(la), Claim::SimLine(lb)) | (Claim::SimLine(lb), Claim::GroupMember(la)) => la == lb,
                 (Claim::SimLine(la), Claim::SimLine(lb)) => la == lb,
-                // Respond channels (C7, conditional) conflict with unconditional
-                // writers on the same line/channel — but compose with each other
+                // Respond parameters (C7, conditional) conflict with unconditional
+                // writers on the same line/parameter — but compose with each other
                 // (the fold sequences them by (moment, document order)).
                 (Claim::RespondChannel(la, na, wa), Claim::TrackNode(lb, nb, wb))
                 | (Claim::TrackNode(lb, nb, wb), Claim::RespondChannel(la, na, wa)) => {
@@ -687,7 +687,7 @@ fn validate_writers(doc: &Document, p: &mut Vec<Problem>) {
                 (Claim::TrackNode(la, na, attr_a), Claim::TrackNode(lb, nb, attr_b)) => {
                     la == lb && attr_a == attr_b && (na == nb || na.is_none() || nb.is_none())
                 }
-                // Gradients write one color channel of a line — two gradients on
+                // Gradients write one color parameter of a line — two gradients on
                 // the same line+role conflict (different roles compose: fill+stroke).
                 (Claim::Gradient(la, ra_), Claim::Gradient(lb, rb_)) => la == lb && ra_ == rb_,
                 _ => false,

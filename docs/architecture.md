@@ -4,7 +4,7 @@ title: "Architecture Draft: Layering, Document Model, GPU Strategy, and Format P
 description: The mo2d architecture draft — document model = a flat line collection + relation graph (no rigid tree); L0-L4 layering; a dedicated GPU-strategy section (SoA / unified vertex format / DAG parallelism / PBD-compute / CPU oracle + damage rendering / instancing, referencing BUI); storage-format principles; tech stack leaning toward Rust + wgpu/wasm (to be decided).
 tags: [architecture, gpu, damage-rendering, storage-format, layering, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:09:29Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T14:20:00Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -32,7 +32,7 @@ sources:
 
 ## 1. Document model
 
-**A flat line collection + relation graph + channel table + payload library + external-asset reference table.**
+**A flat line collection + relation graph + parameter table + payload library + external-asset reference table.**
 
 - No vectorcraft-style rigid Node tree[^vectorcraft-arch]: layers/groups are merely **organizational predefined
   relations**, and nesting is a mapping of relations ([relations.md](relations.md));
@@ -52,7 +52,7 @@ Key differences from the existing projects:
 | Layer | Responsibility | Notes |
 |---|---|---|
 | L0 geometry | line/node evaluation, Bézier flattening, hit testing | pure functions, no document concepts |
-| L1 document | line collection, relation graph, channel table (three-level attributes), payload library, external references | the document model proper |
+| L1 document | line collection, relation graph, parameter table (three-level attributes), payload library, external references | the document model proper |
 | L2 evaluation engine | topological-order evaluation of the relation DAG, time sampling, dynamics integration | deterministic core; layered parallelism |
 | L3 rendering and compute | CPU oracle reference renderer + GPU (wgpu/WebGPU) | variable-width-line triangle strips, closed-line fill tessellation, binding vertex blending, compute simulation / parallel evaluation |
 | L4 interaction | command registry, JSON command stream, MCP server, AI host | every operation is a command ([ai-interaction.md](ai-interaction.md)) |
@@ -87,7 +87,7 @@ owner: "线和线关系其实就可以最大化地利用 GPU,概念契合,提高
    isomorphic data = very few draw calls, zero pipeline-state switching (versus traditional software toggling
    back and forth among heterogeneous bitmap/vector/text objects);
 3. **Evaluation**: the relation DAG is evaluated in parallel by layers — independent relations within the same
-   layer run in parallel; node-level channel sampling is a parallel map;
+   layer run in parallel; node-level parameter sampling is a parallel map;
 4. **Simulation**: particles = directed segments = instanced rendering + compute integration;
    springs/constraints = PBD-style parallel solving;
 5. **Skinning/mesh deformation**: binding = vertex blending, which the GPU vertex stage is naturally good at.
@@ -106,8 +106,8 @@ UI, GPL-3.0) is highly isomorphic to mo2d's; five points of **clean-room borrowi
    sleeps when nothing is dirty (0% CPU when idle); the CPU rasterizer compares 64×32 tiles against the
    previous frame, and only damaged tiles go to screen — mo2d's editing-viewport presentation layer follows
    this; **the evaluation-side analogue = reverse-dependency invalidation of the relation DAG**:
-   a channel change recomputes only the dependent subgraph (BUI's single-node signal update is the same idea,
-   "channel = signal");
+   a parameter change recomputes only the dependent subgraph (BUI's single-node signal update is the same idea,
+   "parameter = signal");
 2. **Instanced uber-shader**: each primitive = one 128-byte instance of a single shader, and a whole frame
    needs only a few instanced draw calls — the **concrete implementation shape** of "everything is lines ⇒
    isomorphic data ⇒ few draw calls": segment/node patches = instances, fitting the SoA layout exactly;
@@ -188,14 +188,14 @@ The landscape survey's minimal interactive model (`pose = f(params)`,
 in-file interactivity essential. The engine answer keeps the pull model intact:
 
 - **Evaluation widens to a pure function `f(doc, tick, eventPrefix)`** — the prefix of recorded
-  `event.fire` commands up to `tick`, sorted by `(tick, seq)`, is **folded** into channel state
+  `event.fire` commands up to `tick`, sorted by `(tick, seq)`, is **folded** into parameter state
   (guarded respond relations applying their writes), then the topological evaluation runs as
   before ([relations.md](relations.md) §4 event dimension, §1.2). The empty prefix reduces
   exactly to the previous `f(doc, tick)` — **every existing gate and frozen hash is untouched**;
 - **Events are commands**: `event.fire` enters the registry and the command history — replay
   includes behavior, undo keeps working for everything else, and an event is an irreversible
   fact (inverse = `noop`);
-- **State machines are not a new concept**: a discrete channel (step interpolation, im=3 —
+- **State machines are not a new concept**: a discrete parameter (step interpolation, im=3 —
   the Moho `INTERP_STEP` code) + guarded respond relations; a listener is a respond relation
   on a target line; hit tests (tap/press/hover: segment distance; overlap: segment
   intersection) are deterministic engine-side geometry evaluated against **rest geometry**
