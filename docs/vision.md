@@ -4,7 +4,7 @@ title: "Vision: An AI-Native 2D Vector Animation Engine"
 description: mo2d's positioning and the definition of what an AI-era engine is (six components — semantic language / deterministic runtime / command protocol / validator / performance machine / generatable views); four core ideas; division-of-labor principles; success criteria; open decision items.
 tags: [vision, positioning, ai-native, engine-definition, novice-gates]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T12:51:12Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T06:25:23Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -124,6 +124,33 @@ The direction holds, made precise: **the engine holds "performance + determinism
 **One-vote veto**: calling AI per frame at runtime — determinism/performance/cost/reproducibility all collapse.
 **Architecture landing** (see [architecture.md](architecture.md) §2.1): the predefined relation library shrinks to
 a "hot-path kernel + semantic anchors"; AI-generated relation function bodies run through a restricted IR and pass the determinism gate before admission.
+
+**6.1 Precision vs expressiveness — the AI-render reading done right** (owner, 2026-11-19):
+
+> **既然一切皆线，线可以用几何代数来精确计算，也就是参考线可以精确，ai是经验型不精确的，那实际动画交给ai渲染，即可实现ai动画的精确可控，但又富有表现力。**
+> *Since everything is lines, lines can be computed exactly with geometric algebra — reference lines can be exact. AI is empirical, imprecise. So handing the actual animation to AI to render yields AI animation that is precisely controllable, yet expressive.*
+
+The reading that keeps the one-vote veto: **"AI renders" means AI renders the expressive layer at
+authoring time, and its output compiles into lines** — never per-frame inference at runtime. The
+principle then decomposes exactly:
+
+- **Precision lives in the line algebra**: evaluation is a pure function, so reference lines
+  (skeletons, tracks, gesture lanes, guides) are exact and byte-reproducible — already earned
+  (Bézier's fixed 48-step bisection, sim's 240 Hz replay-from-seed, hull's constructive
+  containment guarantee);
+- **Expressiveness lives in AI's empirical generation**, accepted only when compiled into lines:
+  motion → track keys, in-betweens → curve keys (the stroke-geometric branch), style → style
+  templates, organic dynamics → custom relations (C1 sandboxed IR);
+- **Seeds make "empirical" reproducible**: randomness is an explicit parameter (the splitmix64
+  precedent) — the same seed reproduces the same expressiveness. Empiricism becomes *replayable*
+  empiricism;
+- **Reference lines are the rails**: AI generation is confined to guides (the hull probe's
+  carve bounds, Mixamo's marker confirmation, the C8 gesture lanes) — imprecision is contained
+  at choice points (F13), never leaked into playback.
+
+Precision comes from the algebra, expressiveness from AI, reproducibility from byte determinism —
+the three compose because AI output is compiled into lines, which the algebra then owns. "AI
+animation, precisely controllable yet expressive" is not a trade-off; it is two layers.
 
 ## 7. Success Criteria
 
