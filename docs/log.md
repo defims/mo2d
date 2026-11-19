@@ -9,6 +9,9 @@
 
 ## 2026-11-19
 
+* **确立**: vision §6.1 后续表述(owner:"ai全凭经验,没有精确,没有物理定律,但参考线精确,能计算,能有物理定律"——原话录为规范表述,双语同步)。AI 三无(无精确/无物理定律/自身不可复现——经验型生成是统计相似)对参考线三有(精确/能计算/能有物理定律——定律以关系形式住在文档:sim Verlet/约束/oscillate 周期)。**推论:凡需要物理感的表现力必须经线层物理关系表达,不能用 AI 轨迹去"像"物理——像≠是;分工落为 AI 选定律定参数(经验知识用在这里),线执行定律**(Cascadeur 模式)。
+
+
 * **换血**: 全库术语换血——"通道"→"参数"(owner 选 1;双语 25 文件+引擎注释/门注释)。**保留类**(逐行审阅豁免):双通道交互(ai-interaction/mvp/vernacular"两通道/通道对")、传输通道(architecture 双向通道/C6 传输通道/file-format 几何交换通道/legal-risks AI 通道)、Moho 格式事实(⟨ch:Vec3⟩/逐分量三通道/多通道查找表/通道码表——moho-mapping 全文保留)、glossary 别名行("参数(通道)")、协议字段名 `{channel, op, value}`(D2 不改旧版)、log 日志(历史原样)、引擎标识符(ChannelState/fold channels——代码层)。**手改五处**:line-model §1 属性句/§5 骨架注释(可驱动参数,旧称通道)、映射表 Curve 行半边(Moho 侧保留 5 channels)、relations §3 结尾、relations respond 行 `{channel…}` 字段名还原。144 测试全绿;check-okf 0 错误。
 
 

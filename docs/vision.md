@@ -4,7 +4,7 @@ title: "Vision: An AI-Native 2D Vector Animation Engine"
 description: mo2d's positioning and the definition of what an AI-era engine is (six components — semantic language / deterministic runtime / command protocol / validator / performance machine / generatable views); four core ideas; division-of-labor principles; success criteria; open decision items.
 tags: [vision, positioning, ai-native, engine-definition, novice-gates]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T14:40:00Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T16:15:12Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -167,6 +167,27 @@ principle then decomposes exactly:
 Precision comes from the algebra, expressiveness from AI, reproducibility from byte determinism —
 the three compose because AI output is compiled into lines, which the algebra then owns. "AI
 animation, precisely controllable yet expressive" is not a trade-off; it is two layers.
+
+**Follow-up (owner, 2026-11-19):**
+
+> **ai全凭经验，没有精确，没有物理定律，但参考线精确，能计算，能有物理定律。**
+> *AI is entirely experience-based — no precision, no physical laws. But reference lines are precise, computable, and can have physical laws.*
+
+The two layers sharpen further — AI's "three have-nots" against the lines' "three haves":
+
+- AI **has no precision and no physical laws**: empirical generation is statistical similarity —
+  it can imitate a falling leaf, but it does not carry gravity, momentum, or conservation; nothing
+  it produces is reproducible on its own;
+- Reference lines **are precise, computable, and can carry physical laws**: the pure-function
+  evaluation is the computation; the laws live in the document as relations — sim's Verlet
+  integration, constraint relations, oscillate's periods — deterministic by construction;
+- **Therefore: anything that needs a physical feel must be expressed through the line layer's
+  physics** (sim / oscillate / constraint relations), never by AI-generated trajectories that
+  merely *look* like physics — looking ≠ being;
+- **The division lands as: AI chooses the law and sets the parameters (its empirical knowledge is
+  used exactly there); the lines execute the law** — the Cascadeur pattern the survey already
+  validated. AI's imprecision is spent where it is harmless (parameter choices, style); the
+  motion itself comes out of the algebra and the laws.
 
 ## 7. Success Criteria
 
