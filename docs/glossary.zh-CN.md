@@ -4,7 +4,7 @@ title: "术语表(中英对照)"
 description: mo2d 全部术语的一句话定义——线/节点/段/三级属性(线级/节点级/段级)/笔触/通道/关系/函数/预定义与自定义关系/九类关系/轨道/关键帧/控制棒/变换方框/三类非线边界(2026-11-17 修订)/GPU 相关/命令与会话状态。
 tags: [glossary, terminology]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:15:24Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T08:14:06Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -32,7 +32,7 @@ sources:
 | 压力 | Pressure | 节点级宽度通道(笔尖输入):宽度 = 线宽 × 压力;显式节点宽度优先(B2 落地) |
 | 样式模板 | Style Template | 具名的线级属性模板;`style.apply` 把已定义字段复制到线上——切换笔触 = 应用另一个模板(B2) |
 | 回落 | Fallback | 节点属性缺省时取线级默认值的规则 |
-| 通道 | Channel | 可寻址、可动画的参数——(线, 节点?, 属性)处的量;其值序列在关键帧驱动时由轨道线承载,交互驱动由折叠态写入,周期/物理由关系实时算出(载体随驱动器而定) |
+| 通道 | Channel | 可寻址、可动画的参数——(线, 节点?, 属性)处的量。三个角色分开:(属性↔线)的配对是通道的**地址**;通道本身是被驱动的**量**;把值写进来的**映射**是关系(track/respond/oscillate/sim——D1:轨道是数据,关系是导线) |
 | 语义标签 | Semantic Tag | 标在线上的角色标注(bone/skeleton/track/mesh-warp…) |
 
 ## 关系原语
