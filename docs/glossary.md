@@ -4,7 +4,7 @@ title: "Glossary (English–Chinese)"
 description: One-sentence definitions of every mo2d term — line/node/segment/three-level attributes (line-level/node-level/segment-level)/brush stroke/channel/relation/function/predefined & custom relations/nine kinds of relations/track/keyframe/control bar/transform box/three kinds of non-line boundaries (revised 2026-11-17)/GPU-related/command & session state.
 tags: [glossary, terminology]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T08:14:06Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T08:37:30Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -32,7 +32,7 @@ sources:
 | Pressure | 压力 | Node-level width channel (stylus input): width = line width × pressure; an explicit node width wins (landed in B2) |
 | Style Template | 样式模板 | A named line-attribute template; `style.apply` copies its defined fields onto a line — switching brush strokes = applying another template (B2) |
 | Fallback | 回落 | The rule that a missing node attribute takes the line-level default value |
-| Channel | 通道 | An addressable, animatable parameter — the quantity at (line, node?, attribute). Three roles stay distinct: the (attribute ↔ line) pairing is the channel's **address**; the channel itself is the **quantity** being driven; the **mapping** that writes values into it is a relation (track/respond/oscillate/sim — D1: the track is data, the relation is the wire) |
+| Parameter (Channel) | 参数（通道） | A parameter in its drivable form — an addressable, animatable quantity at (line, node?, attribute). Three roles stay distinct: the (attribute ↔ line) pairing is its **address**; the parameter itself is the **quantity** being driven; the **mapping** that writes values into it is a relation (track/respond/oscillate/sim — D1: the track is data, the relation is the wire). "Channel" (the Moho/AE term) survives only as the legacy alias |
 | Semantic Tag | 语义标签 | A role annotation attached to a line (bone/skeleton/track/mesh-warp…) |
 
 ## Relation primitives

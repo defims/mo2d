@@ -4,7 +4,7 @@ title: "Vision: An AI-Native 2D Vector Animation Engine"
 description: mo2d's positioning and the definition of what an AI-era engine is (six components — semantic language / deterministic runtime / command protocol / validator / performance machine / generatable views); four core ideas; division-of-labor principles; success criteria; open decision items.
 tags: [vision, positioning, ai-native, engine-definition, novice-gates]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T06:25:23Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T08:37:30Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -95,7 +95,7 @@ the GPU wants an isomorphic data shape; one unification, dividends collected at 
 
 ## 5. Minimal Kernel
 
-**Lines (with nodes and three-level attributes) + relations (functions) + channels (parameters) + payloads** — four primitives carry all domain concepts;
+**Lines (with nodes and three-level attributes) + relations (functions) + parameters (channels — a parameter in its drivable, samplable form) + payloads** — four primitives carry all domain concepts;
 whatever is not lines honestly stays outside the boundary (symbols & semantics / out-of-document state / external references —
 sampling payloads are like fill, bound by relations; line-model §4, revised 2026-11-17).
 
