@@ -4,7 +4,7 @@ title: "愿景:AI 原生的 2D 矢量动画引擎"
 description: mo2d 定位与 AI 时代引擎的形态定义(六部件:语义语言/确定性运行时/命令协议/校验器/性能机器/可生成视图);四条核心理念;分工原则;成功判据;待定决策项。
 tags: [vision, positioning, ai-native, engine-definition, novice-gates]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T08:37:30Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T14:45:00Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -25,6 +25,20 @@ mo2d 是一个 **AI 原生的 2D 矢量动画引擎**:骨骼动画、矢量图�
 时间轴——这些传统软件里的重型概念,归约为**线与线的关系**;而有了 AI,
 标准 GUI 控件(工具栏/菜单/属性面板)不再是必需品——用户直接在舞台上
 定义线及线间的联动关系即可。
+
+## 0. 零门槛动画的五根支柱(owner,2026-11-19)
+
+> **零门槛动画工具的关键在只有少量原语降低理解成本，灵活扩展能力，人友好的2d操控，直观的查改一体，以及懂人的ai。**
+
+| 支柱 | mo2d 的回答 | 落点 |
+|---|---|---|
+| **少量原语**——降低理解成本 | 四原语:线/关系/参数/载荷——极小且封闭;扩展不加原语只加关系 | [line-model.md](line-model.zh-CN.md)、[relations.md](relations.zh-CN.md) §3;小白概念预算(N5) |
+| **灵活扩展能力** | 特性是 AI 的产出物:自定义关系(受限 IR+确定性门),新能力一律编译为线 | §6;路线图 C1 |
+| **人友好的 2D 操控** | 舞台即界面:五操作(画/拖/连/scrub/点),表演录制,一切操作皆命令 | [ai-interaction.md](ai-interaction.zh-CN.md);A6/D8 |
+| **直观的查改一体** | 展示=编辑:同一渲染核心的多个客户端,无编辑态/播放态两套表示,叠加物也是线 | [ai-interaction.md](ai-interaction.zh-CN.md) §1.5 |
+| **懂人的 AI** | 生活词字典(≤25 词根)+双通道等价+提案-确认检查点;AI 干术语活,人只说生活话 | [vernacular.md](vernacular.zh-CN.md);小白门 N1–N5 |
+
+五根支柱就是可测形式的定位:每行都点名机制与门——不靠形容词立足。
 
 ## 1. 问题诊断
 

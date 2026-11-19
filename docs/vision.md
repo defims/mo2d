@@ -4,7 +4,7 @@ title: "Vision: An AI-Native 2D Vector Animation Engine"
 description: mo2d's positioning and the definition of what an AI-era engine is (six components — semantic language / deterministic runtime / command protocol / validator / performance machine / generatable views); four core ideas; division-of-labor principles; success criteria; open decision items.
 tags: [vision, positioning, ai-native, engine-definition, novice-gates]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T08:37:30Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T14:40:00Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -25,6 +25,22 @@ mo2d is an **AI-native 2D vector animation engine**: skeletal animation, vector 
 timelines — the heavyweight concepts of traditional software are reduced to **lines and relations between lines**; and with AI,
 standard GUI controls (toolbars/menus/property panels) are no longer necessities — users simply define lines
 and the linkage relations between them directly on the stage.
+
+## 0. Zero-Threshold Animation: The Five Pillars (owner, 2026-11-19)
+
+> **零门槛动画工具的关键在只有少量原语降低理解成本，灵活扩展能力，人友好的2d操控，直观的查改一体，以及懂人的ai。**
+> *The keys to a zero-threshold animation tool: only a few primitives, lowering comprehension cost; flexible extensibility; human-friendly 2D manipulation; integrated inspect-and-edit; and an AI that understands people.*
+
+| Pillar | mo2d's answer | Where it lives |
+|---|---|---|
+| **Few primitives** — comprehension cost | Four primitives: lines / relations / parameters / payloads — minimal and closed; extensions add relations, never primitives | [line-model.md](line-model.md), [relations.md](relations.md) §3; the novice concept budget (N5) |
+| **Flexible extensibility** | Features are AI's output: custom relations (restricted IR + determinism gate), every new capability compiled into lines | §6; roadmap C1 |
+| **Human-friendly 2D manipulation** | The stage is the interface: five operations (draw / drag / connect / scrub / tap), perform-record, everything is a command | [ai-interaction.md](ai-interaction.md); A6 / D8 |
+| **Integrated inspect-and-edit** | Display = edit: multiple clients of one rendering core, no edit-mode/playback-mode pair, overlays are lines | [ai-interaction.md](ai-interaction.md) §1.5 |
+| **An AI that understands people** | The everyday-word dictionary (≤25 roots) + dual-channel equivalence + propose-confirm checkpoints; AI does the terminology work, people speak life | [vernacular.md](vernacular.md); novice gates N1–N5 |
+
+The five pillars are the positioning in testable form: each row names its mechanism and its gate —
+nothing rests on adjectives.
 
 ## 1. Problem Diagnosis
 
