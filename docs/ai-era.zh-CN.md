@@ -4,7 +4,7 @@ title: "AI 时代替代审计:动画软件全部概念与环节,按 SVML 模式�
 description: 对动画软件全部概念与环节(14 个流水线阶段+16 个机制)的细致排查,以 Hypit 的 SVML 模式为参照(词锚定声明式源、时间轴降为投影、确定性编译器、agent 写源);每项给出 AI 时代替代候选或保留判定,附 mo2d 状态与路线图提案——全部待 owner 确认。
 tags: [ai-era, svml, hypit, replacement-audit, timeline, authoring, intent, anchors]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-20T15:00:00Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-22T16:30:00Z }
 sources:
   - id: hypit-components
     resource: https://hypit.ai/developers/custom-components
@@ -15,6 +15,9 @@ sources:
   - id: opentrend-hypit
     resource: https://opentrend.org/project/hypit
     title: "Open Trend:Hypit 开源项目(SVML 词锚定)"
+  - id: remotion
+    resource: https://www.remotion.dev
+    title: "Remotion:Make videos programmatically (React)"
   - id: vision-doc
     resource: /vision.zh-CN.md
     title: "本 bundle:vision §6.1 精度与表现力两层+AI 三无"
@@ -55,6 +58,27 @@ Script / Timeline / Canvas / Frame / Style。已核实的机制:
 4. **重写安全**:"台词变长或变短,图形揭示跟着变";
 5. **agent 写源文件**:"你的 agent 写 SVML 源并组合组件";`hypit check` 编译导入/类型/图边**不调任何外部服务**;组件发布 `.schedule`/`.program`/`.visual`;HyperFrames 逐帧绘制;
 6. **可溯源**:Recipe "把每个决定追溯到拥有它的 Source、Recipe 或包"。
+
+### 1.1 第二个参照:Remotion(2026-11-22 核对)
+
+Remotion 是更早的"程序化视频"框架:**视频即 React/TypeScript 代码**——组件逐帧求值,headless
+Chromium 逐帧截图出 MP4。2026 年现状:官方 **agent skill** 给 Claude Code/Codex("use agents,
+render in bulk"),交互式 Studio 预览,开源核心+公司付费授权。
+
+| 轴 | Remotion | Hypit |
+|---|---|---|
+| 源语言 | 通用代码(React/TS——图灵完备) | 受限声明文法(SVML) |
+| 锚单位 | 帧号/props | **词**(Selections/Moments) |
+| 第一作者 | 开发者(官方 skill 让 agent 写) | **AI 代理**(agent 就是第一作者) |
+| 上限 | 近乎无限(整个 web 栈) | 窄的合成模板(字幕/B-roll/口播) |
+| 编辑模型 | 改源→重渲染(Studio 预览) | 改源→重编译(预览) |
+| 渲染栈 | headless Chromium 逐帧 | HyperFrames 逐帧(Chromium) |
+| 授权 | 开源核心+公司付费授权 | Apache-2.0 + BYOK |
+
+**互读**:两者独立验证了 R5(agent 写声明式源,确定性渲染);Remotion 证明通用代码能吸引开发者
+生态,Hypit 证明锚到语义单元的受限文法对 agent 更安全、重写更容忍;两者都是**视频合成而非角色
+动画**——无可编辑几何、无绑定、无曲线、无物理、无直接操纵(编辑=改源重渲染)。它们的共同盲区
+恰是 mo2d 的生态位:确定性**文档**(线/关系/参数)+舞台展示=编辑+agent 命令流。
 
 ## 2. 模式抽象(五条规则)
 

@@ -4,7 +4,7 @@ title: "The AI-era Replacement Audit: Every Animation Concept & Stage, Judged Ag
 description: Careful sweep of all animation software concepts and stages (14 pipeline stages + 16 mechanisms), judged against Hypit's SVML pattern (word-anchored declarative source, timeline demoted to a projection, deterministic compiler, agent-writes-source); each entry gets an AI-era replacement candidate or a keep verdict, with the mo2d status and roadmap proposals — all pending owner confirmation.
 tags: [ai-era, svml, hypit, replacement-audit, timeline, authoring, intent, anchors]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-20T15:00:00Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-22T16:30:00Z }
 sources:
   - id: hypit-components
     resource: https://hypit.ai/developers/custom-components
@@ -15,6 +15,9 @@ sources:
   - id: opentrend-hypit
     resource: https://opentrend.org/project/hypit
     title: "Open Trend:Hypit 开源项目(SVML 词锚定)"
+  - id: remotion
+    resource: https://www.remotion.dev
+    title: "Remotion:Make videos programmatically (React)"
   - id: vision-doc
     resource: /vision.md
     title: "本 bundle:vision §6.1 精度与表现力两层+AI 三无"
@@ -60,6 +63,31 @@ with layers Script / Timeline / Canvas / Frame / Style[^hypit-components]. Verif
    `hypit check` compiles imports/types/graph edges **without calling any external service**;
    components publish `.schedule`/`.program`/`.visual`; HyperFrames draws per frame;
 6. **Traceability**: a Recipe "traces each decision to the Source, Recipe or package that owns it."
+
+### 1.1 Second reference: Remotion (checked 2026-11-22)
+
+Remotion is the older "programmatic video" framework: **video as React/TypeScript code** —
+components evaluate per frame, headless Chromium screenshots each frame, MP4 out. Its 2026 state:
+an official **agent skill** for Claude Code/Codex ("use agents, render in bulk"), an interactive
+Studio preview, and a paid company license on top of the open-source core.
+
+| Axis | Remotion | Hypit |
+|---|---|---|
+| Source language | general-purpose code (React/TS — Turing-complete) | constrained declarative grammar (SVML) |
+| Anchor unit | frame numbers / props | **words** (Selections/Moments) |
+| First author | developers (agents via the official skill) | **AI agents** (the agent is the first author) |
+| Ceiling | near-unlimited (whole web stack) | narrow composition templates (captions/B-roll/口播) |
+| Editing model | edit source → re-render (Studio preview) | edit source → re-compile (preview) |
+| Render stack | headless Chromium per frame | HyperFrames per frame (Chromium) |
+| License | open core + paid company license | Apache-2.0 + BYOK |
+
+**Read-across**: both independently validate R5 (agent writes a declarative source, deterministic
+render); Remotion proves general-purpose code attracts a developer ecosystem, Hypit proves a
+constrained grammar anchored to semantic units is safer for agents and rewrite-tolerant; both are
+**video composition, not character animation** — no editable geometry, no rigs, no curves, no
+physics, no direct manipulation (edit = edit the source and re-render). Their shared blind spot is
+exactly mo2d's position: a deterministic **document** (lines/relations/parameters) + stage
+display=edit + the agent command stream.
 
 ## 2. The pattern, abstracted (five rules)
 
