@@ -21,6 +21,7 @@ editing any .md here) and [log.md](log.md) for the change journal.
 
 * [vision.md](vision.md) - Vision: the AI-native engine — six-component definition, division of labor
 * [landscape.md](landscape.md) - Landscape survey: traditional & AI animation software — concept inventories, essential vs incidental, learning-cost evidence, AI control verdict (F1–F13)
+* [vector-tools.md](vector-tools.md) - Mainstream vector editors: tool inventory comparison and the minimal tool set (six tools + four panels + undo; mo2d mapping with landed/pending)
 * [line-model.md](line-model.md) - **Everything is lines** (core): lines, nodes, three-level attributes, nine mappings, non-line boundary
 * [moho-mapping.md](moho-mapping.md) - Moho concept mapping: complete attribute/relation value inventories
 * [relations.md](relations.md) - Relations are functions: the standard relation library and custom relations

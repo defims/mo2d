@@ -9,6 +9,9 @@
 
 ## 2026-11-22
 
+* **新增**: vector-tools.md(双语,Reference)——主流矢量编辑器工具清单对比与最小工具集(owner 问"仔细对比市面上主流的矢量编辑软件,最小的工具集合是什么")。逐编辑器清单:Illustrator ~35/Inkscape ~22/Affinity·CorelDRAW ~25/Figma ~10/Boxy SVG ~14 工具+6 面板/Vectr ~8;**交集十不变量**(选移/节点编辑/画线/参数形状/文字/视口/填充描边/层/对齐/撤销);**最小工具集=六交互工具(选移/节点/画线/形状/文字/视口)+四面板(填充描边/层/对齐/撤销)**——其余全是宏或参数面板(宽度工具=可拖宽手柄,旋转缩放=变换手势,混合=插值实例,橡皮剪刀=路径分割,吸管=样式复制,符号喷枪=实例副本,画板切片=导出管理)。**mo2d 映射**:~90% 落地;真缺口=布尔/路径运算关系族(可复用 hull.rs 求交代码)、文字→轮廓 derive、混合——全按 relations §3"加关系不加原语"。证据链:Vectr 恰好=最小集且以最简为卖点;Boxy 只加参数形状广度;AI 35 工具全分解于其上。index 双语同步。
+
+
 * **落地**: **C3 几何导入——拖入 SVG 自动转为 mo2d 可编辑曲线,作为一个"层"**(owner 目标:"拖入svg自动转为mo2d可编辑曲线,且为mo2d的层";双语注记同步)。**①新模块 `svgimport.rs`(零依赖)**:手写 XML 扫描器(实体解码/注释/CDATA/DOCTYPE 跳过)+SVG 语义——path 全命令集(M/L/H/V/C/S/Q/T/A/Z,绝对+相对+隐式重复),rect(圆角)/circle/ellipse/line/polygon/polyline,transform 摊平(translate/scale/rotate/matrix/skew,左到右 SVG 组合序),样式继承(fill/stroke/fill-opacity/opacity/stroke-width+inline style),y 翻转经文档高度;全部转三次贝塞尔(弧→≤90° 分段 kappa 逼近,Q→升三次),句柄=节点相对偏移(mo2d 约定,renderer 加法语义);跳过 defs/text/image/use/clipPath/mask/gradients/CSS(v1 记录)。**②`svg.import` 命令**:原子导入为**一个"层"**——隐形变换盒线+group 关系(B4 机制)包全部导入线,拖盒即整体移动缩放;逆命令整层移除;注册表+CLI replay 可用。**③舞台**:拖 .svg 文件进画布=发 svg.import(零控件原则不破);提示行同步。**④可编辑证明**:导入产物即普通线——node.set/舞台拖节点/group 变换盒全部直接可用(gate 断言)。**⑤门与 demo**:gate_svg 六测(曲线导入含句柄与 y 翻转/形状+变换摊平/层包裹+可编辑/弧→三次+defs·text 跳过/确定性+往返/垃圾拒绝)+冻结 **svg_face** demo(自造 SVG 脸:kappa 圆脸+双眼+微笑 Q 曲线+头发,5 线一层)。**排障三课**:①自闭合元素发 Close 事件会把 g 的变换 frame 弹掉(shape 丢失父变换)——自闭合只发 Open;②ellipse/rect 构造器句柄偏移符号错(底节点 h_out 应朝左)造成叶形/扭曲——按 90° 弧 kappa 推导重写;③**渲染器耳切 bug**(顺手修复, longstanding):浅弧 16 步采样的近共线耳被 `<=1e-12` 凸性阈值+边界点计入 contains 拒掉 → 闭合曲线填充只剩碎片——判定改为严格 reflex(<−1e-9)拒绝+contains 只认严格内部(>1e-9),对直线多边形零行为差。**合规边界**(owner 问 Magnific 免费素材):第三方 SVG 素材及其派生物不入仓库(免费档 ND 性质禁再分发),fixtures 一律自造;本机测试可用。151 测试全绿(136+gate_svg 六+svgFace 冻结+render 耳切回归);冻结门纯增量(svgFace 新增);check-okf 0 错误。
 
 ## 2026-11-19
