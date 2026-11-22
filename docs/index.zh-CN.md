@@ -24,6 +24,7 @@ mo2d——AI 原生的 2D 矢量动画引擎(万物皆线)——的正式文档�
 
 * [vision.md](vision.zh-CN.md) - 愿景:AI 原生的 2D 矢量动画引擎,四条核心理念
 * [landscape.md](landscape.zh-CN.md) - 全景调研:传统与 AI 动画软件——概念清单、本质 vs 偶然、学习成本证据、AI 工具可控性判定(F1–F13)
+* [ai-era.md](ai-era.zh-CN.md) - AI 时代替代审计:动画软件全部概念与环节按 SVML 模式逐项判定(词锚定源、时间轴投影化);替换/半替/保持判定+提案 P1-P5(待 owner)
 * [vector-tools.md](vector-tools.zh-CN.md) - 主流矢量编辑器工具清单对比与最小工具集(六工具+四面板+撤销;mo2d 映射含落地状态)
 * [line-model.md](line-model.zh-CN.md) - **万物皆线**(核心):线、节点、三级属性(线/节点/段)、九大映射与非线边界
 * [moho-mapping.md](moho-mapping.zh-CN.md) - Moho 概念逐项映射:点线属性关系全表(完整属性值/关系参数词表)
