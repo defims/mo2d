@@ -136,6 +136,18 @@ function onBaseline(sx, sy) {
 // gestures
 // ---------------------------------------------------------------------------
 
+// C3: drag an .svg file onto the stage → svg.import (one editable layer)
+window.addEventListener("dragover", (e) => e.preventDefault());
+canvas.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  const f = [...(e.dataTransfer?.files || [])].find((x) => x.name.toLowerCase().endsWith(".svg"));
+  if (!f) return;
+  const xml = await f.text();
+  await post("svg.import", { xml, name: f.name.replace(/\.svg$/i, "") });
+  await refreshScene();
+  refreshFrame();
+});
+
 canvas.addEventListener("pointerdown", (e) => {
   canvas.setPointerCapture(e.pointerId);
   const sx = e.clientX, sy = e.clientY;
@@ -371,7 +383,7 @@ function draw() {
   // hint (drawn, not a control)
   ctx.fillStyle = "#6a6a78";
   ctx.font = "11px ui-monospace, monospace";
-  ctx.fillText("drag empty: draw · drag node: move/auto-key (while playing: perform-record) · drop node on node: share · drop node on timeline: track · line→line: bind · tap timeline: play · tap line (no drag): event · while playing: press/move/release record the gesture lane", 12, 16);
+  ctx.fillText("drag empty: draw · drag node: move/auto-key (while playing: perform-record) · drop node on node: share · drop node on timeline: track · line→line: bind · tap timeline: play · tap line (no drag): event · while playing: press/move/release record the gesture lane · drop .svg: import layer", 12, 16);
   ctx.fillText(`tick ${tick}`, 12, 32);
 
   requestAnimationFrame(draw);

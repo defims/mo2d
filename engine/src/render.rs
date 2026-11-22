@@ -428,18 +428,31 @@ fn triangulate(pts: &[FlatPt], _closed: bool) -> Vec<[FlatPt; 3]> {
             let ib = idx[i];
             let ic = idx[(i + 1) % m];
             let (a, b, c) = (pts[ia].p, pts[ib].p, pts[ic].p);
-            if cross_xy(a, b, c) <= 1e-12 {
-                continue; // reflex or degenerate ear tip
+            // C8 术语换血无关——这是闭合填充+曲线段首次组合暴露的耳切 bug:
+            // 浅弧上的近共线耳(三次贝塞尔 16 步采样)cross 极小但仍是凸耳,
+            // 旧阈值 <= 1e-12 把它们当 reflex 拒掉,导致填充只剩碎片。
+            // 判定改为:严格 reflex(< −1e-9)才拒绝;contains 只认严格内部
+            // (边界上的相邻采样点不算 inside)。对直线多边形零行为差。
+            if cross_xy(a, b, c) < -1e-9 {
+                continue; // strictly reflex ear tip
             }
             let mut contains = false;
+            let mut contain_by: Option<usize> = None;
+            const EAR_EPS: f64 = 1e-9;
             for &j in &idx {
                 if j == ia || j == ib || j == ic {
                     continue;
                 }
-                if point_in_tri_xy(pts[j].p, a, b, c) {
+                let p = pts[j].p;
+                if cross_xy(a, b, p) > EAR_EPS && cross_xy(b, c, p) > EAR_EPS && cross_xy(c, a, p) > EAR_EPS {
                     contains = true;
+                    contain_by = Some(j);
                     break;
                 }
+            }
+            #[cfg(test)]
+            if std::env::var("MO2D_DEBUG_TRI").is_ok() && !contains && i == 0 {
+                eprintln!("pass {}: no ear; first candidate cross={:.3e}, uncontained; contains blocked by {:?}", m, cross_xy(a, b, c), contain_by);
             }
             if contains {
                 continue;
@@ -450,6 +463,10 @@ fn triangulate(pts: &[FlatPt], _closed: bool) -> Vec<[FlatPt; 3]> {
             break;
         }
         if !clipped {
+            #[cfg(test)]
+            if std::env::var("MO2D_DEBUG_TRI").is_ok() {
+                eprintln!("stalled at m={} (remaining idx: {:?})", m, idx);
+            }
             break; // degenerate polygon; emit what we have as a fan
         }
     }
@@ -910,7 +927,54 @@ pub const TPS: i64 = TICKS_PER_SECOND;
 /// oracle's own flattened segments and triangles, in the same paint order —
 /// that is what makes the parity gate meaningful.
 pub mod gpu_common {
+    use crate::eval::EvalNode;
+    use crate::model::{SegAttrs, SegType};
     use super::{flatten as flatten_inner, project_keep_vp, px_per_world_vp, triangulate as triangulate_inner, EvalLine, FlatPt};
+
+    #[test]
+    fn debug_kappa_fill_contour() {
+        // kappa circle r=18 centered (160,30): right/top/left/bottom nodes
+        let mk = |p: [f64; 3], hi: Option<[f64; 3]>, ho: Option<[f64; 3]>| EvalLine {
+            id: "n".into(),
+            tags: vec![],
+            closed: true,
+            stroke_on: true,
+            fill_on: true,
+            fill_color: [255, 215, 0, 255],
+            texture: None,
+            width: 1.0,
+            visible: true,
+            nodes: vec![EvalNode { p: Vec3::new(p[0], p[1], 0.0), width: 1.0, color: [0, 0, 0, 255], fill: [255, 215, 0, 255], uv: None, handle_in: hi.map(|h| Vec3::new(h[0], h[1], 0.0)), handle_out: ho.map(|h| Vec3::new(h[0], h[1], 0.0)) }],
+            segs: vec![],
+        };
+        let mut n0 = mk([178.0, 30.0, 0.0], Some([0.0, 9.94, 0.0]), Some([0.0, -9.94, 0.0]));
+        let mut n1 = mk([160.0, 12.0, 0.0], Some([9.94, 0.0, 0.0]), Some([-9.94, 0.0, 0.0]));
+        let mut n2 = mk([142.0, 30.0, 0.0], Some([0.0, -9.94, 0.0]), Some([0.0, 9.94, 0.0]));
+        let mut n3 = mk([160.0, 48.0, 0.0], Some([9.94, 0.0, 0.0]), Some([-9.94, 0.0, 0.0]));
+        let mut l = n0;
+        l.nodes.push(n1.nodes.pop().unwrap());
+        l.nodes.push(n2.nodes.pop().unwrap());
+        l.nodes.push(n3.nodes.pop().unwrap());
+        let seg = |t: &str| SegAttrs { seg_type: SegType::Curve, visible: true, interp: None, unknown: vec![] };
+        l.segs = vec![seg("c"), seg("c"), seg("c"), seg("c")];
+        let _ = &mut l;
+        let flat = flatten(&l);
+        println!("flat pts: {}", flat.len());
+        for (i, f) in flat.iter().enumerate() {
+            print!("({:.1},{:.1}) ", f.p.x, f.p.y);
+        }
+        println!();
+        let tris = triangulate(&flat);
+        let area: f64 = tris
+            .iter()
+            .map(|t| {
+                let (a, b, c) = (&t[0].0, &t[1].0, &t[2].0);
+                ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)).abs() / 2.0
+            })
+            .sum();
+        println!("tris: {} area: {:.1} (expected pi*r^2 = {:.1})", tris.len(), area, std::f64::consts::PI * 18.0 * 18.0);
+        assert!(area > 900.0, "fill area too small: {}", area);
+    }
     use crate::math::{Mat4, Vec3};
 
     pub struct GpuPt {

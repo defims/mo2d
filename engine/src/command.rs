@@ -89,6 +89,7 @@ pub fn registry() -> Vec<CmdSpec> {
         CmdSpec { name: "node.delete", args: "{line, index}", doc: "Delete a node (and its keyframe if it lives on a track line)." },
         CmdSpec { name: "seg.set", args: "{line, index, type?, visible?, interp?}", doc: "Merge segment attributes (straight/curve, visibility, interp for track segments)." },
         CmdSpec { name: "relation.create", args: "{id?, type: bind|share|track|gradient|group|sim|particles|oscillate|respond, ...}", doc: "bind: {target, skeleton, falloff?, stretch?}; share: {driver: {line,node}, driven: {line,node}}; track: {trackLine, target: {line, node?, attr: position|width|color}}; gradient (B3): {bar, target, role?: fill|stroke}; group (B4): {box, members, visible?} — transform-box line; sim (B6): {line, anchors: [{node, driver: {line,node}}], gravity?, damping?, iterations?, collideWith?, radius?, selfCollide?} — deterministic trailing rope with optional collisions; particles (B6): {emitter, node?, rate?, speed?, dir?, spread?, life?, gravity?, damping?, size?, color?, len?, seed?, collideWith?, bounce?, radius?}; oscillate (C7): {target, node?, attr?: position|width, axis?, wave?: 0|1|2, period?, phase?, amplitude?} — deterministic periodic driver (breathe/sway/float); respond (C7): {trigger, event: tap|press|release|hoverIn|hoverOut|overlap|timePoint|<named>, at? (timePoint tick), other? (overlap), radius?, minHold?, maxHold? (release hold discrimination, C8), guard?: {line, node?, op?: <|<=|=|>=|>, value} — line may be a gesture/<target> phase line, actions: [{write: {line, node?, attr: width|position, mode?: set|add, value}} | {fire: {name}}]}. Auto id r<N>." },
+        CmdSpec { name: "svg.import", args: "{xml, name?, scale?}", doc: "Import an SVG document (C3 geometry import): paths/shapes (rect/circle/ellipse/line/polygon/polyline), transforms flattened, paint inherited — everything converted to editable cubic lines, wrapped as one layer (invisible transform-box line + group relation). v1 skips text/image/gradients/clip/mask/CSS. Deterministic; the inverse removes the whole layer. Stage: drag-drop an .svg file posts this command." },
         CmdSpec { name: "event.fire", args: "{name, tick, target?, x?, y?, radius?}", doc: "Record an interaction event (C7/C8): appended to the document's event prefix AND atomically materialized as a phase key on the gesture line gesture/<target> (broadcast → gesture/pointer) — a read-only step track line (im=3, phases 0 out/1 hover/2 pressed). Events are irreversible facts (inverse noop); evaluation folds events up to the queried tick (relations.md §4)." },
         CmdSpec { name: "event.fire", args: "{name, tick, target?, x?, y?}", doc: "Record an interaction event (C7): appended to the document's event prefix; evaluation folds events up to the queried tick (relations.md §4). Events are irreversible facts — the inverse is noop." },
         CmdSpec { name: "relation.delete", args: "{id}", doc: "Delete a relation." },
@@ -1488,6 +1489,65 @@ pub fn apply(doc: &mut Document, cmd: &Command) -> Result<Effect, String> {
             // materialized gesture line) — the inverse is noop.
             let inv = obj_command("noop", &[]);
             Ok(Effect { inverse: inv, summary: "fire event".into() })
+        }
+
+        "svg.import" => {
+            let xml = need_str(cmd, "xml")?.to_string();
+            let name_raw = cmd.arg("name").and_then(|v| v.as_str()).unwrap_or("svg").to_string();
+            let name: String = name_raw
+                .chars()
+                .map(|c| if c.is_ascii_alphanumeric() || c == '_' { c } else { '_' })
+                .collect();
+            let name = if name.is_empty() { "svg".to_string() } else { name };
+            let scale = cmd.arg("scale").and_then(|v| v.as_f64()).unwrap_or(1.0);
+            if scale <= 0.0 {
+                return Err(format!("svg.import: scale must be > 0, got {}", scale));
+            }
+            let layer = crate::svgimport::import_svg(&xml, &name, scale)?;
+            let mut created: Vec<String> = Vec::new();
+            let mut l = layer.lines;
+            let box_line = layer.box_line;
+            created.push(box_line.id.clone());
+            for line in l.iter().chain(std::iter::once(&box_line)) {
+                if doc.line(&line.id).is_ok() {
+                    return Err(format!("svg.import: line id '{}' already exists (use a different name)", line.id));
+                }
+            }
+            for line in l.drain(..) {
+                created.push(line.id.clone());
+                doc.lines.push(line);
+            }
+            doc.lines.push(box_line);
+            let rel_id = next_auto_id(doc, "r");
+            let member_strs: Vec<String> = created[1..].to_vec();
+            let members: Vec<&str> = member_strs.iter().map(|s| s.as_str()).collect();
+            let rel = Relation::new_group(&rel_id, &created[0], &members, true);
+            doc.relations.push(rel);
+            let mut full = vec![rel_id];
+            full.extend(created.clone());
+            let created = full;
+            let inv = obj_command(
+                "svg.import@undo",
+                &[("ids", Value::Arr(created.iter().map(|s| Value::Str(s.clone())).collect()))],
+            );
+            Ok(Effect {
+                inverse: inv,
+                summary: format!("import svg '{}' as layer '{}' ({} lines + box + group)", name, created[0], members.len()),
+            })
+        }
+
+        "svg.import@undo" => {
+            let ids = cmd.arg("ids").and_then(|v| v.as_arr()).ok_or("svg.import@undo: 'ids' must be an array")?;
+            let _: Vec<String> = ids
+                .iter()
+                .map(|v| v.as_str().ok_or("svg.import@undo: ids must be strings").map(|s| s.to_string()))
+                .collect::<Result<_, _>>()?;
+            let idlist: Vec<String> = ids.iter().map(|v| v.as_str().unwrap_or("").to_string()).collect();
+            if let Some(rel) = idlist.first() {
+                doc.relations.retain(|r| r.id != *rel);
+            }
+            doc.lines.retain(|l| !idlist.contains(&l.id));
+            Ok(Effect { inverse: obj_command("noop", &[]), summary: "undo svg import".into() })
         }
 
         "noop" => Ok(Effect { inverse: obj_command("noop", &[]), summary: "noop".into() }),

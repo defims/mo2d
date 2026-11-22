@@ -4,7 +4,7 @@ title: "Roadmap: Three-Phase Advance (2026-11-11 v4, stage pulled forward into t
 description: Phase A = MVP tentacle v4 (AI compiles, engine executes + A6 minimal stage = first example of a generatable view); Phase B = performance and vocabulary rollout (rendering & invalidation formalization / brush strokes / gradients / layers & groups / bitmap mesh / simulation / format formalization); Phase C = AI ecosystem (relation IR / controls-as-lines / import / audio / collaboration / wasm); six-components → phase mapping and performance metrics.
 tags: [roadmap, phases, mvp, long-term, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-18T03:15:26Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-22T15:10:00Z }
 sources:
   - id: mvp-doc
     resource: /mvp.md
@@ -84,7 +84,7 @@ Dependencies: B1 depends on A's SoA layout; B2–B6 are mutually independent and
 |---|---|---|
 | C1 **Relation IR + custom relation generation** | Natural language → relation IR (restricted intermediate representation, sandboxed); **generate → pass the determinism gate → freeze into the library** (architecture §2.1) | "Make the tentacle follow the cursor" — one sentence becomes an animation; playable offline once frozen into the library |
 | C2 Controls as lines | Ephemeral control system (slider = track line + cursor line; color picker strip = control bar; transform box = box) | The AI generates controls on demand, discarded after use |
-| C3 Importers/interchange | **Bidirectional SVG**: frame-level export (a natural byproduct of display-edit unification) + geometry import ([file-format.md](file-format.md) §4 three-layer format); .moho as a long-term option ([moho-mapping.md](moho-mapping.md) is a ready-made mapping table; acceptance via the 84-project tutorial corpus) | Exported frame SVG viewable in any tool; import real SVG/tutorial projects |
+| C3 Importers/interchange | **Bidirectional SVG**: frame-level export (a natural byproduct of display-edit unification) + geometry import ([file-format.md](file-format.md) §4 three-layer format); .moho as a long-term option ([moho-mapping.md](moho-mapping.md) is a ready-made mapping table; acceptance via the 84-project tutorial corpus) — **geometry import landed (2026-11-22)**: `svg.import` command + stage drag-drop → editable cubic lines as one layer (gate_svg + the svg_face frozen demo); frame-level export still pending | Exported frame SVG viewable in any tool; import real SVG/tutorial projects |
 | C4 Audio | Audio-track layer: media payload + level/jump tracks; Tick dividing 44.1k/48k evenly exists exactly for this | Lip-sync/beat-driven animation |
 | C5 Collaboration & versioning | Command-stream merging, change records, reference layers | Multi-session collaboration without conflicts |
 | C6 WebAssembly + frame streaming | wasm release + MCP over WebSocket + **streaming rendering** (architecture §3.2: frame-stream protocol; pixel streams for export, display-list streams for remote stages) | tentacle demo in the browser, zero install; remote stage renders progressively |

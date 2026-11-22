@@ -74,6 +74,7 @@ def main() -> None:
         "tapJump": "tap_jump.json",
         "recordWave": "record_wave.json",
         "tapVsHold": "tap_vs_hold.json",
+        "svgFace": "svg_face.json",
     }
     for key, name in c_demos.items():
         doc_path = out / f"{key}.mo2d"

@@ -808,7 +808,7 @@ fn apply_sim(doc: &Document, lines: &mut [EvalLine], r: &Relation, tick: i64) ->
 fn resolve_colliders(lines: &[EvalLine], ids: &[String]) -> Vec<(Vec3, Vec3)> {
     let mut segs = Vec::new();
     for id in ids {
-        let Some(li) = lines.iter().position(|l| &l.id == id) else { continue };
+        let Some(li) = lines.iter().position(|l| &l.id == id) else { continue }; // single lookup, not in a member loop
         let l = &lines[li];
         for k in 0..l.nodes.len().saturating_sub(1) {
             segs.push((l.nodes[k].p, l.nodes[k + 1].p));
@@ -990,7 +990,15 @@ fn apply_group(
     if rest_box.len() < 2 {
         return Err(format!("group: box '{}' needs ≥ 2 nodes", box_id));
     }
-    let bi = lines.iter().position(|l| l.id == box_id).ok_or_else(|| format!("group: box '{}' missing", box_id))?;
+    // First-match index (id -> line index): O(L) build + O(1) lookups instead
+    // of an O(members x lines) scan per frame. First-match matches the
+    // `position()` semantics exactly, so targets resolve identically.
+    let mut index: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+    for (i, l) in lines.iter().enumerate()
+    {
+        index.entry(l.id.as_str()).or_insert(i);
+    }
+    let bi = *index.get(&box_id[..]).ok_or_else(|| format!("group: box '{}' missing", box_id))?;
     let cur_box: Vec<Vec3> = lines[bi].nodes.iter().map(|n| n.p).collect();
 
     let (r0, r1) = (rest_box[0], rest_box[rest_box.len() - 1]);
@@ -1008,9 +1016,22 @@ fn apply_group(
         (1.0, 0.0, 1.0)
     };
     let z0 = r0.z;
-    for m in members {
-        let mline = doc.line(m)?;
-        let mi = lines.iter().position(|l| &l.id == m).ok_or_else(|| format!("group: member '{}' missing", m))?;
+    let member_idx: Vec<usize> = members
+        .iter()
+        .map(|m| index.get(&m[..]).copied().ok_or_else(|| format!("group: member '{}' missing", m)))
+        .collect::<Result<_, _>>()?;
+    drop(index);
+    // Doc-side rest-state index (Document::line is a linear scan; per-member
+    // calls made this O(members x doc lines) per frame).
+    let mut doc_index: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+    for (i, l) in doc.lines.iter().enumerate()
+    {
+        doc_index.entry(l.id.as_str()).or_insert(i);
+    }
+    for (m, &mi) in members.iter().zip(&member_idx)
+    {
+        let dli = *doc_index.get(&m[..]).ok_or_else(|| format!("group: member '{}' missing", m))?;
+        let mline = &doc.lines[dli];
         for (i, n) in mline.nodes.iter().enumerate() {
             let p = n
                 .pos

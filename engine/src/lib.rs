@@ -27,5 +27,6 @@ pub mod png;
 pub mod render;
 pub mod schema;
 pub mod sha;
+pub mod svgimport;
 pub mod stage;
 pub mod validate;

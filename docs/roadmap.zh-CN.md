@@ -4,7 +4,7 @@ title: "路线图:三阶段推进(2026-11-11 v4,舞台提前入 MVP)"
 description: Phase A=MVP 触手 v4(AI 编译引擎执行 + A6 最小舞台=生成的视图第一例);Phase B=性能与词表铺开(渲染与失效正式化/笔触/渐变/层群组/位图网格/模拟/格式正式化);Phase C=AI 生态(关系 IR/控件即线/导入/音频/协作/wasm);六部件→阶段映射与性能指标。
 tags: [roadmap, phases, mvp, long-term, interactivity]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-18T03:15:26Z }
+generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-22T15:10:00Z }
 sources:
   - id: mvp-doc
     resource: /mvp.md
@@ -78,7 +78,7 @@ round-trip 字节相等、求值吞吐、校验器在岗、**直接操纵等价*
 |---|---|---|
 | C1 **关系 IR + 自定义关系生成** | 自然语言 → 关系 IR(受限中间表示,沙箱);**生成 → 过确定性门 → 入库冻结**(architecture §2.1) | "让触手跟着光标"一句话成动画,入库后离线可播 |
 | C2 控件即线 | 临时控件系统(滑杆=轨道线+游标线;取色条=控制棒;变换框=方框) | AI 按需生成控件,用后即弃 |
-| C3 导入器/交换 | **SVG 双向**:帧级导出(展示编辑一体的自然产物)+ 几何导入([file-format.md](file-format.zh-CN.md) §4 三层格式);.moho 远期选项([moho-mapping.md](moho-mapping.zh-CN.md) 即现成映射表,84 教程语料验收) | 导出帧 SVG 任意工具可看;导入真实 SVG/教程工程 |
+| C3 导入器/交换 | **SVG 双向**:帧级导出(展示编辑一体的自然产物)+ 几何导入([file-format.md](file-format.zh-CN.md) §4 三层格式);.moho 远期选项([moho-mapping.md](moho-mapping.zh-CN.md) 即现成映射表,84 教程语料验收)——**几何导入已落地(2026-11-22)**:`svg.import` 命令+舞台拖放 → 可编辑三次曲线成一层(gate_svg+svg_face 冻结 demo);帧级导出仍待做 | 导出帧 SVG 任意工具可看;导入真实 SVG/教程工程 |
 | C4 音频 | 音轨层:媒体载荷+level/jump 轨道;Tick 整除 44.1k/48k 正为此 | 口型/节拍驱动动画 |
 | C5 协作与版本 | 命令流合并、变更记录、引用层 | 多会话协作无冲突 |
 | C6 WebAssembly + 帧流 | wasm 发布 + MCP over WebSocket + **流式渲染**(architecture §3.2:帧流协议,像素流导出/显示列表流远端舞台) | 网页里跑触手 demo,零安装;远端舞台渐进呈现 |
