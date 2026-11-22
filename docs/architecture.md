@@ -4,7 +4,7 @@ title: "Architecture Draft: Layering, Document Model, GPU Strategy, and Format P
 description: The mo2d architecture draft — document model = a flat line collection + relation graph (no rigid tree); L0-L4 layering; a dedicated GPU-strategy section (SoA / unified vertex format / DAG parallelism / PBD-compute / CPU oracle + damage rendering / instancing, referencing BUI); storage-format principles; tech stack leaning toward Rust + wgpu/wasm (to be decided).
 tags: [architecture, gpu, damage-rendering, storage-format, layering, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-19T14:20:00Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-22T17:29:52Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -72,6 +72,92 @@ The boundary of "more capability to AI, engine focused on performance" lands in 
    on hot paths; **AI generates → passes the determinism gate (byte-equal command replay) → only then stored**;
    once stored it is frozen as data (re-evaluation never calls the AI again);
 3. The runtime never calls AI (a veto, see [vision.md](vision.md) §6); offline playback = pure engine.
+
+### 2.1.1 Representation boundary for relations — JSON truth, wasm as compiled execution (resolved 2026-11-13/14 after eight rounds of owner pressure-testing)
+
+**The owner's JSX analogy** ("like JSX, where the XML is actually function calls — can wasm methods represent line
+relations and parameters BE the lines?") is correct in one direction and reversed in the other. JSX itself is three layers:
+source (written/reviewed/diffed) → function calls (algebra) → element tree (runtime truth is pure data). JSX never runs in
+the browser; its compiled output does; and the runtime truth is plain data. The resolution mirrors that shape:
+
+1. **Truth layer = `.mo2d` JSON** (lines + relations + channels + body source text) — AI-readable, diffable,
+   schema-validatable, byte-deterministic. Never replaced;
+2. **Execution layer = relation IR → wasm** — custom relation bodies compile to a sandboxed cache: derived data,
+   regenerable, excluded from the canonical hash, falls back to data evaluation when stale (same class as preview /
+   checkpoints). Whole-graph compilation is permitted as an execution cache; in-browser loading uses
+   `instantiateStreaming`;
+3. **Host vocabulary = the predefined-relation library, each entry declaring its read/write sets** — required so the
+   DAG stays visible (invalidation/parallelism depend on static access sets; an opaque wasm call graph is a black box).
+
+**Why the format cannot BE wasm/WAST — the injury list (with the streaming re-adjudication)**:
+
+| # | Injury | Notes |
+|---|---|---|
+| 1 | AI readability dies (binary; decompiling recovers call graphs, not semantics) | mo2d's first principle |
+| 2 | Byte-determinism loses its anchor (same graph compiles to different bytes) | frozen gate needs a canonical source form |
+| 3 | DAG visibility dies → invalidation/parallelism/GPU batching regress | unless effects are declared — which is just the IR again |
+| 4 | ABI freeze: every old document is a program compiled against an old host vocabulary | vs unknown-key passthrough |
+| 5 | Validation becomes program analysis; malformed-but-valid-WAST passes | two stacked validators anyway |
+| 6 | Editing/merging/commands degrade (one-param edit = module recompile; CRDT/merge over binary) | |
+| 7 | Progressive open — **re-adjudicated**: `instantiateStreaming` genuinely wins *time-to-full*; but the JSON head + BLOB
+    Range layout wins *time-to-first-frame* (field-level atoms; a wasm data segment arrives whole). Different axes; the
+    semantic-level progressive story is still missing in wasm-as-format | |
+
+**WAST specifically**: text fixes half of injury 1 (LLMs parse WAT), but it is still a program format: no record types
+(fields decay into offsets), bulk geometry degenerates to hex data segments (readability dies again), browsers execute
+wasm not WAST (a compile step every load, plus a wabt toolchain-version dependency).
+
+**"JSON also needs compiling" — the toll asymmetry**: parsing is an entry fee everyone pays; the difference is the
+product. JSON parse yields *the addressable truth itself*; WAT compilation yields *a program that must be analyzed
+again* to recover which lines exist and with what parameters (format validation + field validation stack on top).
+Cost is also ~3–10× (typecheck + encode + instantiate per load). The architecture's answer: pay once — parse the truth,
+derive the execution cache, skip re-parses entirely.
+
+**Animation is alive / external variables (round five)**: correct that pure data hits a wall — the wall is pre-built
+into the model: **code slots** (relation `body` stores source text in the truth) + **input lines** (cursor/audio/
+gamepad are lines the host writes every frame) + determinism upgraded to **document + recorded input replay** (game
+replay recipe).
+
+**The zip:json analogy (round seven)**: holds at the *encoding* layer (wasm = .gz to JSON's .json — delivery/compute
+packaging) and breaks at the *content* layer (unzipped zip is still your readable file; instantiated wasm is a program
+bound to a host ABI). That placement is exactly layers 1↔2 above.
+
+**One semantics, two projections**: source for humans/AI/diff; bytes for machines/sandbox/speed. The optional
+s-expr writing sugar (KiCad-style tagged nodes, version+generator header, per-key tolerant parsing, comments live in
+the sugar only) compiles to the same JSON truth.
+
+### 2.2 Component storage and declarative scheduling (resolved 2026-11-22/23 — ECS as internal projection)
+
+**Adopted**: ECS organizes **parameters (storage)** and **relation scheduling**, not the semantic layer. The relation
+graph, command protocol, and `.mo2d` format are unchanged; this is an internal projection (the same
+one-semantics-two-projections pattern).
+
+- **Component columns (SoA)**: width/color/zOrder/transform/velocity become per-type column tables — retiring the
+  fat-AoS `Node` (~96 B/evaluated node) debt flagged in the WASM assessment, and making GPU uploads naturally SoA;
+- **Relation = declared access set + pure function**: `relation bind { read: Bone.WorldXform, write: Node.Position }`
+  — the scheduler derives topological order, intra-layer parallelism, and invalidation from declarations
+  (Bevy-style scheduling; relations.md §2.1's "declared effects" is this);
+- **Change detection replaces reverse-dependency bookkeeping**: per-column version counters; relations subscribe to
+  columns (`inval.rs` keeps its behavior, gains a simpler model);
+- **Dynamic-relation state becomes explicit components** (velocity/phase as columns; checkpoints = column snapshots);
+- **Zero dependencies, hand-rolled**: no bevy/flecs — at 10–100k rows, sorted SoA tables + version counters suffice
+  (AGENTS CPU-oracle rule); deterministic iteration (sorted entity ids), deterministic merge order — all
+  frozen-gate-tested;
+- **Rollout (each step passes 47+ tests and the frozen gate)**: ①scalar columns first (zOrder/width/opacity);
+  ②bind/track rewritten as query+function templates; ③inval.rs re-implemented as change detection; ④fat Node retired.
+
+**LineCore universal bundle (2026-11-23, owner: "every entity has line attributes and can be processed by line
+functions")**: every entity without exception — layers (transform box), groups, bones, tracks, cameras, gradient
+bars, mesh families, text outlines — carries `{nodes, segment attrs, domain tag}`. Type differences are *additional
+components* (LayerParams…), never type hierarchies. Consequences:
+
+- **Universal line functions**: hit test, bounds, spatial index, tessellation, export, upload — systems querying
+  LineCore only, applied uniformly to everything; no per-type dispatch;
+- **Domain tags are mandatory precision** (stage / time / UV): track lines live in the time domain, mesh lines in UV;
+  line functions apply per matching domain (hit-testing is a stage-domain function);
+- **Set geometry is derived**: a group's bounds = a derived line over members — lazy/cached, not stored, outside the
+  canonical hash;
+- **AI payoff**: one geometry language for the whole scene — the AI asks line-questions and hits every entity kind.
 
 ## 3. GPU strategy (dedicated section)
 

@@ -4,7 +4,7 @@ title: "Relations are Functions: The Predefined Relation Library and Custom Rela
 description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the predefined relation standard library (now incl. interaction: respond + oscillate, established 2026-11-17), custom relations, DAG evaluation, event-prefix folding and conflict handling.
 tags: [relation, function, linkage, evaluation, interaction, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:25:00Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-22T17:29:52Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -220,6 +220,10 @@ the non-line boundary no longer lists code; see the revised line-model §4).
 - AI generates from natural language: "make the tentacle tip follow the cursor" → generates a custom propagate/simulate relation;
 - Reverse explanation: with any relation selected, AI can translate its parameters and behavior back into natural language;
 - Custom relations can be promoted into the library as predefined relations (the extension mechanism the standard library opens).
+- **Representation boundary**: custom relation bodies compile via the relation IR into a wasm execution cache
+  (sandboxed, derived data, excluded from the canonical hash); external variables arrive as **input lines** the host
+  writes per frame; determinism = document + recorded-input replay. Full resolution:
+  [architecture.md](architecture.md) §2.1.1; component-column storage & LineCore: §2.2.
 
 ## 4. Evaluation Model
 

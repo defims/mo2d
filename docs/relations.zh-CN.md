@@ -4,7 +4,7 @@ title: "关系即函数:预定义关系库与自定义关系"
 description: mo2d 的行为模型——关系=函数(输入线与参数,输出派生结构与值);集合/层/群组=预定义关系,关系参数=集合参数;预定义关系标准库(2026-11-17 新增交互类:respond+oscillate)、自定义关系、DAG 求值、事件前缀折叠与冲突处理。
 tags: [relation, function, linkage, evaluation, interaction, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3-flash, at: 2026-11-17T13:25:00Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-22T17:29:52Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -193,6 +193,9 @@ owner 规范表述:**模拟过程本质是线和线的关系**——不是线之
 - AI 从自然语言生成:"让触手尖端跟随光标" → 生成一条自定义传导/模拟关系;
 - 反向解释:选中任意关系,AI 可将其参数与行为翻译回自然语言;
 - 自定义关系可被提升为预定义关系入库(标准库开放的扩展机制)。
+- **表示边界**:自定义关系体经关系 IR 编译为 wasm 执行缓存(沙箱、派生数据、不计规范哈希);外部变量以
+  **输入线**进入(宿主每帧写入);确定性=文档+录制输入重放。完整决议见
+  [architecture.zh-CN.md](architecture.zh-CN.md) §2.1.1;组件列存储与 LineCore:§2.2。
 
 ## 4. 求值模型
 

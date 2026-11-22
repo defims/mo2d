@@ -38,6 +38,7 @@ mo2d——AI 原生的 2D 矢量动画引擎(万物皆线)——的正式文档�
 * [3d-extension.md](3d-extension.zh-CN.md) - 3D 扩展路径:四条语义规则+六项预防决策(Vec3 从第一天);Phase D 远期
 * [lines.md](lines.zh-CN.md) - 线到底:空间、时间、生成、流——fold 与 slice 两个普适算子;为将来生成关系切片铺垫
 * [legal-risks.md](legal-risks.zh-CN.md) - 法务风险登记册:GPL 隔离/商标/净室/语料红线/许可证待办(八项行动清单)
+* [renderer-survey.zh-CN.md](renderer-survey.zh-CN.md) - 渲染器调研:Rive 管线与 GPv3 对照(参照系分工、借鉴清单)
 * [glossary.md](glossary.zh-CN.md) - 术语表(中英对照)
 
 # 相关资源(bundle 之外)
