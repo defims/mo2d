@@ -4,7 +4,7 @@ title: "关系即函数:预定义关系库与自定义关系"
 description: mo2d 的行为模型——关系=函数(输入线与参数,输出派生结构与值);集合/层/群组=预定义关系,关系参数=集合参数;预定义关系标准库(2026-11-17 新增交互类:respond+oscillate)、自定义关系、DAG 求值、事件前缀折叠与冲突处理。
 tags: [relation, function, linkage, evaluation, interaction, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-22T17:29:52Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-24T16:31:22Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -54,15 +54,22 @@ sources:
 | 生成 | **形状 shape(填充域)** | ([曲线引用|段引用(带方向)], …) → 可渲染区域;**一曲线可被 N 个 shape 关系共享**(关系只读线,曲线复用即多关系同输入) | fillOn/strokeOn、填充规则、样式、**zOrder(参数,叠放可动画)** |
 | 引用 | **外部资产引用 external-ref** | (文档外实体) → 可锚定的载荷 | file:// 路径、相对基准 |
 
-### 1.0.1 曲线复用与叠放(shape 关系,2026-11-13 owner 确立)
+### 1.0.1 线与图形拆分:shape 关系修订(2026-11-13 确立;2026-11-24 owner 拍板方案 A)
 
-**一个曲线多个图形**:shape(填充域)是预定义关系,输入是**曲线/段引用**(带方向
-flag,对应 Moho Shape 的 `edges {curve, segment, flag}`[^mohoproj-format])——同一条
-曲线可被 N 个 shape 关系引用(改曲线一处,N 个形状同变);曲线自身仍可描边
-(线级 `strokeOn`),Moho 的"一曲线双角色"由此回归。
+**一个曲线多个图形的本质:一条曲线 + 一个图形群组,与层完全同构——将线和图形拆开来。**
+
+- **线 = 纯几何**:有序节点序列 + 段/手柄,**不再携带 fill/stroke 语义**;
+- **图形(shape)= 独立实体**:边界引用(整条曲线/某段带方向/多线复合带洞,对应 Moho
+  `edges {curve, segment, flag}`[^mohoproj-format])+ **画笔(填充+描边)+ zOrder**;
+- **一曲线 N 图形** = 该曲线被 N 个 shape 实体引用(改曲线一处,N 个形状同变);
+  曲线不再有 fillOn/strokeOn——描边也走图形(Moho 的"一曲线双角色"以更彻底的形态回归);
+- **裸线便捷糖**:开放线的描边由引擎自动生成**隐式图形**(显式化后即可编辑)——
+  线是纯几何,画笔统一住在图形上(2026-11-24 owner 拍板方案 A);
+- 同构原则:**几何(线/节点)与语义组织(层/图形/骨架)正交**——层组织线集合,
+  图形组织"边界+画笔",骨架组织节点。
 
 **叠放位置**:
-- shape 关系与线各带 **zOrder 参数**(Moho `shape_order` 本就可动画[^mohoproj-format])
+- shape 实体带 **zOrder 参数**(Moho `shape_order` 本就可动画[^mohoproj-format])
   ⇒ **叠放顺序可打关键帧**(翻牌/遮挡反转);
 - 改动方便的三层:命令 `rel.set zOrder`;AI 自然语言;舞台直接操纵(AI 现场生成
   深度滑杆——控制棒即线);语义命令 bringForward/sendBackward/toFront/toBack
@@ -71,6 +78,11 @@ flag,对应 Moho Shape 的 `edges {curve, segment, flag}`[^mohoproj-format])—�
   `(层序, zOrder)`;
 - 同曲线的两个重叠填充域都渲染、按 zOrder 定先后(良定义);填充规则为 shape
   关系的参数(逻辑载荷)。
+
+**连锁修订(渐进)**:①线级词表缩编——fillOn/strokeOn/fillColor/strokeColor/lineWidth
+迁移至图形画笔([moho-mapping.zh-CN.md](moho-mapping.zh-CN.md) §7.1 注记);②gradient
+关系目标改挂图形(引擎已落地版落在线 fill/stroke 角色,需一次重构);③删线时引用它的
+图形失边 → 校验器报"缺边界"。
 
 对照 Moho 语义的映射依据:
 - 角约束:Bone `fConstraints`/`fMinConstraint`/`fMaxConstraint`[^m-bone];

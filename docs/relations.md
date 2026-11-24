@@ -4,7 +4,7 @@ title: "Relations are Functions: The Predefined Relation Library and Custom Rela
 description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the predefined relation standard library (now incl. interaction: respond + oscillate, established 2026-11-17), custom relations, DAG evaluation, event-prefix folding and conflict handling.
 tags: [relation, function, linkage, evaluation, interaction, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-22T17:29:52Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-24T16:31:22Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -57,24 +57,46 @@ is a parameter of that relation function; document-level parameters such as "fra
 | Generate | **shape (fill region)** | ([curve-ref | segment-ref (with direction flag)], …) → a renderable region; **one curve may be shared by N shape relations** (relations only read lines; curve reuse = several relations with the same input) | fillOn/strokeOn, fill rule, style, **zOrder (a parameter — stacking is animatable)** |
 | Reference | **external asset reference external-ref** | (out-of-document entity) → an anchorable payload | file:// path, relative base |
 
-### 1.0.1 Curve reuse and stacking (the shape relation; established 2026-11-13 by the owner)
+### 1.0.1 Line/shape split — the revised shape relation (established 2026-11-13; option A decided by the owner 2026-11-24)
 
-**One curve, multiple shapes**: a shape (fill region) is a predefined relation whose inputs are
-**curve/segment references** (with a direction flag — corresponding to Moho Shape's
-`edges {curve, segment, flag}`[^mohoproj-format]). The same curve can be referenced by N shape
-relations (edit the curve once, all N shapes change); the curve itself may still stroke
-(line-level `strokeOn`) — Moho's "one curve, two roles" returns.
+**The essence of "one closed curve, multiple shapes": one curve + a group of shape
+entities — structurally identical to layers. Line and shape are split apart.**
+
+- **Line = pure geometry**: ordered nodes + segments/handles, carrying **no fill/stroke
+  semantics**;
+- **Shape = an independent entity**: boundary reference (whole curve / a segment with
+  direction / multi-curve compound with holes — Moho's `edges {curve, segment, flag}`
+  [^mohoproj-format]) + **paint (fill + stroke) + zOrder**;
+- **One curve, N shapes** = the curve referenced by N shape entities (edit the curve
+  once, all N shapes change); the curve no longer carries fillOn/strokeOn — strokes live
+  on shapes too (Moho's "one curve, two roles" returns in a more thorough form);
+- **Bare-line sugar**: an open line's stroke is auto-materialized by the engine as an
+  **implicit shape** (explicit once edited) — lines are pure geometry, all paint lives on
+  shapes (option A, decided by the owner 2026-11-24);
+- Isomorphism principle: **geometry (lines/nodes) and semantic organization
+  (layers/shapes/skeletons) are orthogonal** — layers organize line sets, shapes
+  organize "boundary + paint", skeletons organize nodes.
 
 **Stacking order**:
-- each shape relation and line carries a **zOrder parameter** (Moho's `shape_order` is itself
-  animatable[^mohoproj-format]) ⇒ **stacking can be keyframed** (card flips, occlusion reversals);
-- three layers of convenience: the command `rel.set zOrder`; AI natural language; direct stage
-  manipulation (the AI generates a temporary depth slider on the spot — a control bar is a line);
-  semantic commands bringForward/sendBackward/toFront/toBack (= deterministic zOrder arithmetic);
-- **two-level ordering composed lexicographically**: between layers = the ownership relation's
-  ordering parameter; within a layer = the zOrder parameter; global render order = `(layerOrder, zOrder)`;
-- two overlapping fill regions over the same curve both render, ordered by zOrder (well-defined);
-  the fill rule is a parameter of the shape relation (logic payload).
+- shape entities carry a **zOrder parameter** (Moho's `shape_order` is itself
+  animatable[^mohoproj-format]) ⇒ **stacking can be keyframed** (card flips, occlusion
+  reversals);
+- three layers of convenience: the command `rel.set zOrder`; AI natural language; direct
+  stage manipulation (the AI generates a temporary depth slider on the spot — a control
+  bar is a line); semantic commands bringForward/sendBackward/toFront/toBack (=
+  deterministic zOrder arithmetic);
+- **two-level ordering composed lexicographically**: between layers = the ownership
+  relation's ordering parameter; within a layer = the zOrder channel; global render
+  order = `(layerOrder, zOrder)`;
+- two overlapping fill regions over the same curve both render, ordered by zOrder
+  (well-defined); the fill rule is a parameter of the shape relation (logic payload).
+
+**Knock-on revisions (incremental)**: (1) line-level vocabulary shrinks —
+fillOn/strokeOn/fillColor/strokeColor/lineWidth migrate to shape paint
+([moho-mapping.md](moho-mapping.md) §7.1 note); (2) the gradient relation's target moves
+to shapes (the landed engine version targets line fill/stroke roles — one refactor);
+(3) deleting a curve leaves referencing shapes boundary-less → validator reports
+"missing boundary".
 
 Grounding in Moho semantics:
 - Angle constraints: Bone `fConstraints`/`fMinConstraint`/`fMaxConstraint`[^m-bone];

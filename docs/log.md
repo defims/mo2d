@@ -3,6 +3,9 @@
 > 本文件是变更日志:条目按 OKF 规程以其书写语言保留,**不提供翻译**(与主流仓库惯例一致)。
 > This file is a change journal; entries stay in the language they were written in and are NOT translated.
 
+## 2026-11-24
+
+* **决议**: **D12 线/图形拆分——方案 A:描边跟图形走**(owner 拍板;shape 关系修订,relations §1.0.1 双语重写)。**一个曲线多个图形的本质 = 一条曲线 + 一个图形群组,与层完全同构**——将线和图形拆开来:①**线 = 纯几何**(节点/段/手柄,不再携带 fill/stroke 语义);②**图形(shape)= 独立实体**:边界引用(整线/段带方向/多线复合带洞,对应 Moho edges{curve,segment,flag})+ 画笔(填充+描边)+ zOrder;③一曲线 N 图形 = 曲线被 N 个 shape 引用(改线一处 N 形状同变);④**裸线便捷糖**:开放线描边由引擎自动生成隐式图形(显式化后可编辑)——画笔统一住图形上;⑤同构原则:几何(线/节点)与语义组织(层/图形/骨架)正交。保留:zOrder 参数(两层字典序合成 (层序,zOrder))、填充规则参数、重叠域按 zOrder 渲染。**连锁修订**:①线级词表缩编(fillOn/strokeOn/fillColor/strokeColor/lineWidth 迁至图形画笔,moho-mapping §7.1 注记);②gradient 目标改挂图形(已落地版落在线角色,一次重构);③删线致图形失边→校验器报"缺边界"。check-okf 0 错误。
 ## 2026-11-22
 
 * **归档**: 表示层八轮压测 + ECS/LineCore + Rive/GPv3 调研,四组决议批量落档(双语同步)。①architecture 新增 §2.1.1 关系的表示边界(JSON 真值/wasm 执行缓存/host 词汇表声明读写集;六伤半含流式改判 instantiateStreaming=到全量 vs JSON头+Range=到首帧;WAST 半修+数据段无家;通行费三差别;糖层 KiCad 式带名节点;代码槽+输入线+录制输入重放;zip:json 类比=编码层座位;一种语义两种投影);②architecture 新增 §2.2 组件化存储与声明式调度(ECS 作内部投影:组件列 SoA 还清胖 AoS Node 旧账、关系=声明访问集+纯函数、变更检测替反向依赖簿记、动态状态显式组件化、零依赖手写、四步渐进;LineCore 万有组件束+域标签舞台/时间/UV+集合几何派生不落存储+AI 一种几何语言);③新增 renderer-survey(.zh-CN)渲染器调研:Rive 管线五阶段/五级 CoverageType/三级间接寻址/覆盖-2 偏移编码/高斯 LUT 羽化/skyline atlas/ore 六后端含 wgpu/runtime 侧 ImportStack+板级字节区间懒解码+脏位拓扑配方,GPv3 数据模型与删除清单,参照系分工(变形→Rive/素材时序→GPv3/语义→Moho),八条可执行借鉴(advance bool/MAPPED_ONCE/Path::extend/Skia 混合编号/hold 盒子/fill_id 分组 CDT 等),法务注记(Rive MIT 已核验/Blender GPL 仅文档);④relations 双语补表示边界指针;⑤index 双语加 renderer-survey;⑥校验器抓出两处语言行置于 frontmatter 之前的错误已修。check-okf 0 错误。
@@ -16,10 +19,6 @@
 
 
 * **落地**: **C3 几何导入——拖入 SVG 自动转为 mo2d 可编辑曲线,作为一个"层"**(owner 目标:"拖入svg自动转为mo2d可编辑曲线,且为mo2d的层";双语注记同步)。**①新模块 `svgimport.rs`(零依赖)**:手写 XML 扫描器(实体解码/注释/CDATA/DOCTYPE 跳过)+SVG 语义——path 全命令集(M/L/H/V/C/S/Q/T/A/Z,绝对+相对+隐式重复),rect(圆角)/circle/ellipse/line/polygon/polyline,transform 摊平(translate/scale/rotate/matrix/skew,左到右 SVG 组合序),样式继承(fill/stroke/fill-opacity/opacity/stroke-width+inline style),y 翻转经文档高度;全部转三次贝塞尔(弧→≤90° 分段 kappa 逼近,Q→升三次),句柄=节点相对偏移(mo2d 约定,renderer 加法语义);跳过 defs/text/image/use/clipPath/mask/gradients/CSS(v1 记录)。**②`svg.import` 命令**:原子导入为**一个"层"**——隐形变换盒线+group 关系(B4 机制)包全部导入线,拖盒即整体移动缩放;逆命令整层移除;注册表+CLI replay 可用。**③舞台**:拖 .svg 文件进画布=发 svg.import(零控件原则不破);提示行同步。**④可编辑证明**:导入产物即普通线——node.set/舞台拖节点/group 变换盒全部直接可用(gate 断言)。**⑤门与 demo**:gate_svg 六测(曲线导入含句柄与 y 翻转/形状+变换摊平/层包裹+可编辑/弧→三次+defs·text 跳过/确定性+往返/垃圾拒绝)+冻结 **svg_face** demo(自造 SVG 脸:kappa 圆脸+双眼+微笑 Q 曲线+头发,5 线一层)。**排障三课**:①自闭合元素发 Close 事件会把 g 的变换 frame 弹掉(shape 丢失父变换)——自闭合只发 Open;②ellipse/rect 构造器句柄偏移符号错(底节点 h_out 应朝左)造成叶形/扭曲——按 90° 弧 kappa 推导重写;③**渲染器耳切 bug**(顺手修复, longstanding):浅弧 16 步采样的近共线耳被 `<=1e-12` 凸性阈值+边界点计入 contains 拒掉 → 闭合曲线填充只剩碎片——判定改为严格 reflex(<−1e-9)拒绝+contains 只认严格内部(>1e-9),对直线多边形零行为差。**合规边界**(owner 问 Magnific 免费素材):第三方 SVG 素材及其派生物不入仓库(免费档 ND 性质禁再分发),fixtures 一律自造;本机测试可用。151 测试全绿(136+gate_svg 六+svgFace 冻结+render 耳切回归);冻结门纯增量(svgFace 新增);check-okf 0 错误。
-
-## 2026-11-18
-
-* **决议**: **D11——3D 永不单独支持,转为 2D 支持**(owner 原话照录:"既然3d可以由2d表示和操控，那3d就不用单独支持，而是转为2d支持";[mvp.md](mvp.md) §8 D11 行 + §5/§7 修订注释)。背景:owner 问"3d可以用2d表示和操控吗",答后引出本决议——表示(投影线/侧影轮廓/转面表,renderer-is-3D 使 3D 的表示天然是投影后 2D 线)+操控(2D 参数线驱动通道/2D 绘制即指令/拖投影点射线吸附)皆走 2D。**后果**:①不变的:D3 Vec3/D6 渲染器即 3D(内部实现,遮挡与相机天然正确)/三角形面/相机 JSON——引擎内部保留,永远不做的是 **3D 创作与交互界面**(3D 导航/工作平面/深度拾取作为 3D 原生概念不存在);②roadmap **Phase D 撤销**(原深化清单带删除线存档),转为小型 2D 原生切片:生成关系 lift/view(hull 探针即存在性证明)/表面盖章(内部线锚定表面)/相机挂架即线(环绕缩放=2D 驱动通道)/射线吸附操纵(拖投影点→射线→表面);③灯光/材质/阴影作为引擎特性删除,替代候选=色调线盖印表面(**待 owner 确认**);④glTF 去留(**待 owner 确认**:删除 vs 降级为烘焙工件导入);⑤3d-extension.md 顶部修订注记(§1–§4 为扩展数学记录仍有效;§4"AI 命令式 3D 建模"优势改经转面→lift 实现;§5 改名之问作废,mo2d 名实俱为 2D);⑥对小白门的意义:2D 表示+操控 3D 是守住 N5 概念预算的唯一路线——舞台永远是一张纸,3D 在纸后面;⑦本体论衔接:表示=slice、操控=slice 里提议由 fold 解析,无第三算子(lines.md 四句的落地推论)。roadmap/3d-extension/mvp 三对双语文档同步修订,generated 六件更新。check-okf 0 错误。
 
 ## 2026-11-19
 
@@ -36,6 +35,10 @@
 
 
 * **确立**: vision §6.1 精度与表现力(owner 命题:"既然一切皆线,线可以用几何代数来精确计算,也就是参考线可以精确,ai是经验型不精确的,那实际动画交给ai渲染,即可实现ai动画的精确可控,但又富有表现力"——原话录为规范表述,双语同步)。**保住一票否决的读法**:"AI 渲染"=AI 在授权时间渲染表现层,产出编译为线,绝非运行时逐帧推理。原理分解:①精度在线代数(纯函数求值;参考线精确可复现——贝塞尔 48 步二分/sim 种子重放/hull 构造包含为实证);②表现力在 AI 经验型生成,且只在编译为线时被接受(动作→轨道键/中间帧→曲线键(线条几何派)/风格→样式模板/有机动态→自定义关系 C1);③种子让经验型可复现(随机性=显式参数,splitmix64 先例——经验型变成可回放的经验型);④参考线是轨道(hull 雕走量界/Mixamo 标记确认/C8 手势泳道——不精确关在选择点 F13)。结论:精度来自代数、表现力来自 AI、可复现来自字节确定性,三层可合成——"AI 动画精确可控又富有表现力"不是取舍,是两层。
+
+## 2026-11-18
+
+* **决议**: **D11——3D 永不单独支持,转为 2D 支持**(owner 原话照录:"既然3d可以由2d表示和操控，那3d就不用单独支持，而是转为2d支持";[mvp.md](mvp.md) §8 D11 行 + §5/§7 修订注释)。背景:owner 问"3d可以用2d表示和操控吗",答后引出本决议——表示(投影线/侧影轮廓/转面表,renderer-is-3D 使 3D 的表示天然是投影后 2D 线)+操控(2D 参数线驱动通道/2D 绘制即指令/拖投影点射线吸附)皆走 2D。**后果**:①不变的:D3 Vec3/D6 渲染器即 3D(内部实现,遮挡与相机天然正确)/三角形面/相机 JSON——引擎内部保留,永远不做的是 **3D 创作与交互界面**(3D 导航/工作平面/深度拾取作为 3D 原生概念不存在);②roadmap **Phase D 撤销**(原深化清单带删除线存档),转为小型 2D 原生切片:生成关系 lift/view(hull 探针即存在性证明)/表面盖章(内部线锚定表面)/相机挂架即线(环绕缩放=2D 驱动通道)/射线吸附操纵(拖投影点→射线→表面);③灯光/材质/阴影作为引擎特性删除,替代候选=色调线盖印表面(**待 owner 确认**);④glTF 去留(**待 owner 确认**:删除 vs 降级为烘焙工件导入);⑤3d-extension.md 顶部修订注记(§1–§4 为扩展数学记录仍有效;§4"AI 命令式 3D 建模"优势改经转面→lift 实现;§5 改名之问作废,mo2d 名实俱为 2D);⑥对小白门的意义:2D 表示+操控 3D 是守住 N5 概念预算的唯一路线——舞台永远是一张纸,3D 在纸后面;⑦本体论衔接:表示=slice、操控=slice 里提议由 fold 解析,无第三算子(lines.md 四句的落地推论)。roadmap/3d-extension/mvp 三对双语文档同步修订,generated 六件更新。check-okf 0 错误。
 
 ## 2026-11-17
 
