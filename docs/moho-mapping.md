@@ -4,7 +4,7 @@ title: "Moho Concept-by-Concept Mapping: Complete Table of Point/Line Attributes
 description: Every concept of Moho Pro 14.4 understood one by one and classified into mo2d's lines/nodes/three attribute levels (line-level/node-level/segment-level)/nine relation classes/channels/payloads — covering 31 top-level keys, 25 project_data keys, 10 layer types and 49 common keys, the mesh three-layer structure, 61 Bone keys, 34 style keys, and 135 channel codes, producing a complete mo2d-side list of attribute values and relation parameters.
 tags: [moho, mapping, attributes, segment, relations, reference-table]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-24T16:31:22Z }
 sources:
   - id: fmt
     resource: file:///Users/wei/maohou/plan/moho/mohoproj-format.md
@@ -347,6 +347,9 @@ carried by save/load (or are saved to a separate session file).
 ## 7. Complete mo2d-side inventories (merged result)
 
 ### 7.1 Line-level attribute vocabulary (with channel marker ⟨ch⟩)
+
+> **D12 revision (2026-11-24)**: fillOn/strokeOn/fillColor/strokeColor/lineWidth have migrated to the **shape entity's paint** — lines are now pure geometry (see [relations.md](relations.md) §1.0.1, option A decided by the owner). The table below keeps the original Moho mapping placement as a historical record of vocabulary evolution.
+
 
 closed, width, cap, fillOn, strokeOn, fillColor⟨ch⟩, strokeColor⟨ch⟩, opacity⟨ch⟩, blend⟨ch⟩,
 trimStart⟨ch⟩, trimEnd⟨ch⟩, colorDrift⟨ch⟩, zOrder⟨ch⟩, offset⟨ch⟩, scale⟨ch⟩, rotation⟨ch⟩, thickness3d⟨ch⟩,

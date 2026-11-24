@@ -4,7 +4,7 @@ title: "Moho 概念逐项映射:点线属性关系全表"
 description: Moho Pro 14.4 全部概念逐个理解并归入 mo2d 的线/节点/三级属性(线级/节点级/段级)/九类关系/通道/载荷——覆盖 31 顶层键、project_data 25 键、10 层型 49 公共键、mesh 三层结构、Bone 61 键、styles 34 键、通道码 135 项,产出 mo2d 侧完整属性值与关系参数清单。
 tags: [moho, mapping, attributes, segment, relations, reference-table]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-11T09:53:55Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-24T16:31:22Z }
 sources:
   - id: fmt
     resource: file:///Users/wei/maohou/plan/moho/mohoproj-format.md
@@ -332,6 +332,9 @@ maop 扩展 maop_color(色彩管理)→ 根参数 color。**信封元数据**:mi
 ## 7. mo2d 侧完整清单(归并结果)
 
 ### 7.1 线级属性词表(含通道标记⟨ch⟩)
+
+> **D12 修订(2026-11-24)**:fillOn/strokeOn/fillColor/strokeColor/lineWidth 已迁移至**图形(shape)实体的画笔**——线退化为纯几何(见 [relations.zh-CN.md](relations.zh-CN.md) §1.0.1,owner 拍板方案 A)。下表保留 Moho 对照的原始落位,作为词表演化的历史记录。
+
 
 closed、width、cap、fillOn、strokeOn、fillColor⟨ch⟩、strokeColor⟨ch⟩、opacity⟨ch⟩、blend⟨ch⟩、
 trimStart⟨ch⟩、trimEnd⟨ch⟩、colorDrift⟨ch⟩、zOrder⟨ch⟩、offset⟨ch⟩、scale⟨ch⟩、rotation⟨ch⟩、thickness3d⟨ch⟩、
