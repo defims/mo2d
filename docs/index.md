@@ -36,6 +36,8 @@ editing any .md here) and [log.md](log.md) for the change journal.
 * [3d-extension.md](3d-extension.md) - 3D extension path + preemptive decisions (Vec3 from day one)
 * [lines.md](lines.md) - Lines all the way: space, time, generation, stream — fold & slice as the two universal operators; grounds a future generation-relation slice
 * [legal-risks.md](legal-risks.md) - Legal risk register (GPL isolation, trademark, corpus redlines)
+* [h2o-decompose-survey.md](h2o-decompose-survey.md) - Survey: h2o-video-decompose (measurement + dispatch + acceptance; the canvas2d+js contract)
+* [reference-derive.md](reference-derive.md) - Reference objects & derivation chains (video layer, white-model pipeline, fill reconciliation)
 * [renderer-survey.md](renderer-survey.md) - Renderer survey: Rive pipeline & GPv3 comparison (reference division of labor, borrow list)
 
 # Related resources (outside the bundle)

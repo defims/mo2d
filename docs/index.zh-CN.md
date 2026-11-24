@@ -4,7 +4,7 @@ title: "mo2d 知识库(中文目录)"
 description: mo2d 文档库中文版目录——英语为主语言,本页为 docs/index.md 的中文孪生。
 tags: [index, zh-CN]
 status: stable
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-12T07:10:24Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-24T17:05:00Z }
 ---
 
 [English](index.md) | **简体中文**
@@ -38,6 +38,8 @@ mo2d——AI 原生的 2D 矢量动画引擎(万物皆线)——的正式文档�
 * [3d-extension.md](3d-extension.zh-CN.md) - 3D 扩展路径:四条语义规则+六项预防决策(Vec3 从第一天);Phase D 远期
 * [lines.md](lines.zh-CN.md) - 线到底:空间、时间、生成、流——fold 与 slice 两个普适算子;为将来生成关系切片铺垫
 * [legal-risks.md](legal-risks.zh-CN.md) - 法务风险登记册:GPL 隔离/商标/净室/语料红线/许可证待办(八项行动清单)
+* [h2o-decompose-survey.zh-CN.md](h2o-decompose-survey.zh-CN.md) - 调研:h2o-video-decompose(测量+派工+验收;canvas2d+js 合同)
+* [reference-derive.zh-CN.md](reference-derive.zh-CN.md) - 可参考对象与派生链(视频层、白模管线、填充对账)
 * [renderer-survey.zh-CN.md](renderer-survey.zh-CN.md) - 渲染器调研:Rive 管线与 GPv3 对照(参照系分工、借鉴清单)
 * [glossary.md](glossary.zh-CN.md) - 术语表(中英对照)
 
