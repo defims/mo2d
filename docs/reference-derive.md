@@ -4,7 +4,7 @@ title: "Reference objects & derivation chains — video layer, white-model pipel
 description: mo2d design resolution — "reference" is a role, not a type (any entity may serve as reference and continue deriving); the video layer (frame box + payload + time-remap track, own timeline); the white-model pipeline (video → parts/joints/skeleton/tracks as an AI-in-the-loop derivation relation); derivation chains with live-link vs snapshot; fill kinds reconciled as components (query-modify unified, ownership split).
 tags: [reference, derivation, video-layer, white-model, fill, reconciliation]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-25T00:12:00Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-25T16:18:23Z }
 sources:
   - id: h2o-survey
     resource: /h2o-decompose-survey.md
@@ -119,6 +119,8 @@ One new design point, a **parameter of the derive relation**:
 
 Precedents: GPv3 drawing instancing, Rive artboard references. Cycles stay forbidden
 (DAG rule). The lineage view (§4 of the relation graph) surfaces the chain.
+
+Every link on the chain is an **intermediate value** — a relation output as a first-class entity, with whole/member/snapshot modes (see [relations.md](relations.md) §1.0.2).
 
 ## 5. Fill kinds = component reconciliation (query-modify unified)
 

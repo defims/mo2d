@@ -4,7 +4,7 @@ title: "Relations are Functions: The Predefined Relation Library and Custom Rela
 description: mo2d's behavior model — relation = function (takes lines and parameters as input, outputs derived structure and values); sets/layers/groups = predefined relations, relation parameters = set parameters; the predefined relation standard library (now incl. interaction: respond + oscillate, established 2026-11-17), custom relations, DAG evaluation, event-prefix folding and conflict handling.
 tags: [relation, function, linkage, evaluation, interaction, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-24T16:31:22Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-25T16:18:23Z }
 sources:
   - id: m-bone
     resource: file:///Users/wei/maohou/plan/moho/m-bone.md
@@ -33,6 +33,9 @@ Document = the relation graph formed by all lines + all relations; animation = f
 > *A simulation process is, in essence, a relation between lines.*
 >
 > **嵌套层、父子层本质是线与线的关系映射。**
+>
+> **就像ae有合成层一样,视频、图形、群组其实是中间结果当作整体来处理的,相当于中间变量。**
+> *Like AE's precompositions: video, shapes and groups are intermediate results treated as wholes — intermediate variables.*
 > *Nested layers and parent-child layers are essentially relation mappings between lines.*
 
 Hence: layers/groups are not container types but **organizational predefined relations**; "a layer's opacity/blend mode"
@@ -104,6 +107,30 @@ Grounding in Moho semantics:
 - Bone dynamics (`fBoneDynamics` + the spring/damping/force parameter families[^m-bone]) → parameters of the simulate relation;
 - Point's `parent` bone index[^mohoproj-format] → the bind relation;
 - `fileref{path,relativeTo}`[^mohoproj-format] → the external asset reference.
+
+### 1.0.2 Intermediate values: relation outputs as first-class entities (established 2026-11-25 by the owner)
+
+**Owner normative statement**: "就像ae有合成层一样,视频、图形、群组其实是中间结果当作整体来处理的,相当于中间变量。"
+*Like AE's precompositions: video, shapes and groups are intermediate results treated as wholes — intermediate variables.*
+
+Every relation's output is a first-class addressable entity — video layers, shapes,
+groups, white models, gradient compositions are intermediate results treated as wholes
+(AE precomps):
+
+- **Whole-level operations**: transform/effects/time-mapping act on the intermediate
+  itself; composition transforms **never write into members** (live);
+- **Member-level operations**: query-modify unified — members remain their own entities,
+  openable and editable; the intermediate is a function of its members' current state;
+- **Snapshot** (a parameter of the derivation relation, see
+  [reference-derive.md](reference-derive.md) §4): freeze the composed result into
+  independent content, decoupled afterwards;
+- **Naming**: intermediates can be named — AI natural-language reference, debugging and
+  export all use the name as the interface (h2o's named semantic points, same technique);
+- **Cache boundaries**: invalidation is cut at intermediates (inputs unchanged →
+  whole-block cache hit) — the natural cache hierarchy for B1's change detection;
+- **Composition freedom**: intermediates keep participating in any relation
+  (re-transform / re-clip / re-nest) — the relation graph IS the dataflow; AE
+  precomp-in-precomp freedom with zero special mechanisms.
 
 ### 1.1 Landed forms in the engine (Phase B, 2026-11-12)
 

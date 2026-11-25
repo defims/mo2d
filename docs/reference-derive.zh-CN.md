@@ -4,7 +4,7 @@ title: "可参考对象与派生链——视频层、白模管线、填充对账
 description: mo2d 设计决议——"参考"是角色不是类型(任意实体可作参考并继续派生);视频层(帧框线+载荷+时间映射轨道,自带时间线);白模管线(视频→部件/关节/骨架/轨道的 AI 在环派生关系);派生链的活链接/快照;填充类型=组件对账(查改一体,所有权两分)。
 tags: [reference, derivation, video-layer, white-model, fill, reconciliation]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-25T00:12:00Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-25T16:18:23Z }
 sources:
   - id: h2o-survey
     resource: /h2o-decompose-survey.zh-CN.md
@@ -53,6 +53,8 @@ sources:
 且派生链继续:视频 → 白模 → 风格化角色 → 换装变体。每一环都是一条派生关系;每个
 中间体都可以成为下一环的参考。链是有向无环的(既有 DAG 规则强制);关系图之上的
 **血统视图**让"什么从什么派生"可见(零新存储——inputs/outputs 已经记录)。
+
+链上每个环节都是一个**中间变量**——关系输出作为一等实体,具备整体/成员/快照三模式(见 [relations.zh-CN.md](relations.zh-CN.md) §1.0.2)。
 
 **家族成员**:3D 参考球(D11:表示为侧影轮廓线/转面表)、视频层(时间性媒体)、
 任意矢量图形(派生源)、白模(被派生的参考)、导入的 SVG(派生源)。
