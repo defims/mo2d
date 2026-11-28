@@ -4,7 +4,7 @@ title: "Architecture Draft: Layering, Document Model, GPU Strategy, and Format P
 description: The mo2d architecture draft — document model = a flat line collection + relation graph (no rigid tree); L0-L4 layering; a dedicated GPU-strategy section (SoA / unified vertex format / DAG parallelism / PBD-compute / CPU oracle + damage rendering / instancing, referencing BUI); storage-format principles; tech stack leaning toward Rust + wgpu/wasm (to be decided).
 tags: [architecture, gpu, damage-rendering, storage-format, layering, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-22T17:29:52Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-28T15:50:00Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -158,6 +158,12 @@ components* (LayerParams…), never type hierarchies. Consequences:
 - **Set geometry is derived**: a group's bounds = a derived line over members — lazy/cached, not stored, outside the
   canonical hash;
 - **AI payoff**: one geometry language for the whole scene — the AI asks line-questions and hits every entity kind.
+
+**Owner re-derivation (2026-11-28)**: via a ComfyUI comparison the owner independently re-derived
+this model — entities = lines/groups/payloads, components = parameters, systems = relation evaluation,
+shared read/write emerges dependency, concrete pairing declared via relationship components, ComfyUI
+nodes = visualizations of system instances (entities themselves). §2.2 is owner-validated.
+
 
 ## 3. GPU strategy (dedicated section)
 
@@ -315,6 +321,59 @@ in-file interactivity essential. The engine answer keeps the pull model intact:
 Placement: roadmap C7; the `oscillate` periodic driver and step interpolation land first
 (pure `f(tick)`), respond + the event stream second. C8 (gesture timelines) materializes at
 the command layer on top of both — the fold gains only the hold lookback.
+
+### 3.4 External references: ComfyUI & Bevy — ECS and dataflow (owner round 2026-11-28)
+
+> **Owner re-derivation (2026-11-28)**: via a ComfyUI comparison, the owner independently re-derived
+> this section's model — lines/groups/payloads are entities, parameters are components, relation
+> evaluation is a system, shared read/write *emerges* dependency, concrete pairing is declared via
+> relationship components, and ComfyUI nodes are visualizations of system instances (themselves
+> entities). §2.2's storage/scheduling split is owner-validated.
+
+**ComfyUI wires carry typed intermediate objects** (MODEL / CLIP / VAE / CONDITIONING / LATENT /
+IMAGE buffers) between typed sockets; execution = lazy topological order with object sharing and
+partial recompute; node parameters stay local widgets. **Widget ↔ input conversion** gives every
+parameter slot two forms — locally set, or upstream-driven (the value's ownership moves). One-shot
+batch semantics: the workflow is a program, run once per Queue.
+
+**The fourth dimension**: entity-to-entity edges are **absent from classic E/C/S** (components
+attach to single entities; systems iterate) — ComfyUI wires, Bevy 0.16 relationships, and mo2d
+relations are three communities adding the same missing piece. Three implementations converge:
+flecs pairs / Bevy mirrored components on both endpoints (`ChildOf` forward pointer + `Children`
+reverse adjacency, hooks keep them consistent) / mo2d first-class relation entities.
+
+**Two kinds of dependency**:
+
+- **emergent** — systems reading/writing the same components: ordering, invalidation and
+  parallelism form automatically, no declaration;
+- **declared** — concrete pairing ("this feeds that"): stated via relationship components or
+  wires. Declaring the pairing once makes the mechanical dependencies (order/invalidation/cascade)
+  emerge from it.
+
+**Bevy's toolbox for suppressing emergent dependencies**:
+
+1. `ambiguous_with` / `ambiguous_with_all` — suppress the emergent order, buy parallelism;
+   execution order becomes nondeterministic — conflicts with byte determinism unless the merge
+   is provably order-independent or uses a deterministic tie-break (the frozen gate treats
+   undeclared nondeterministic parallelism as FAIL);
+2. component granularity design — split columns so accesses do not overlap (the primary,
+   deterministic lever; Bevy lacks per-field access, so granularity is the knob);
+3. narrow declared access (`Local<T>` private state, `Commands` deferred writes, events instead
+   of shared columns);
+4. schedule separation;
+5. reverse: `.chain()` / `.before()` / `.after()` — force order that does not emerge
+   (deferred spawns etc.).
+
+**Bevy first-class concepts beyond E/C/S** (inventory): relationships (0.16, mirrored components,
+hooks), observers (`OnAdd/OnInsert/OnRemove` — immediate reactive), required components
+(spawn-time composition sugar), states (first-class FSM **in the engine**), resources, events
+(two-frame lifetime), reflection/scenes, plugins, exclusive systems, run_if, SystemSets.
+
+**Adopt shortlist**: socket type contracts (misconnection physically impossible in the stage/
+relation editor); observer-style per-entity subscription granularity (inval refinement);
+required-components syntax (spawn sugar for LineCore + paint). **Not adopted**: immediate
+observers and transient events (conflict with byte determinism / capability-as-data — mo2d folds
+events into the command stream and materializes them as read-only gesture lines).
 
 ## 4. Storage-format principles
 

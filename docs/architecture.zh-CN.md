@@ -4,7 +4,7 @@ title: "架构草案:分层、文档模型、GPU 策略与格式原则"
 description: mo2d 架构草案——文档模型=扁平线集合+关系图(无刚性树);L0-L4 分层;GPU 策略专节(SoA/统一顶点格式/DAG 并行/PBD-compute/CPU oracle+损伤渲染/实例化参照 BUI);存储格式原则;技术栈倾向 Rust+wgpu/wasm(待定)。
 tags: [architecture, gpu, damage-rendering, storage-format, layering, events]
 status: draft
-generated: { by: zcode-agent/glm-5.3, at: 2026-11-22T17:29:52Z }
+generated: { by: zcode-agent/glm-5.3, at: 2026-11-28T15:50:00Z }
 sources:
   - id: line-model-doc
     resource: /line-model.md
@@ -143,6 +143,11 @@ version+generator 头、逐 key 容忍解析;注释只进糖层不进真值)编�
 - **集合几何是派生的**:群组包围=成员派生线——惰性/缓存,不落存储,不计规范哈希;
 - **AI 红利**:全场景一种几何语言——AI 问线问题,命中一切实体。
 
+**owner 独立复推(2026-11-28)**:owner 经 ComfyUI 对照独立推出本节模型——实体=线/群组/负载、
+组件=参数、系统=关系求值、共享读写涌现依赖、具体配对经关系组件声明、ComfyUI 节点=系统实例的
+可视化(本身也是实体)。§2.2 的存储/调度分工获 owner 复推验证。
+
+
 ## 3. GPU 策略(专节)
 
 owner:"线和线关系其实就可以最大化地利用 GPU,概念契合,提高性能。"
@@ -259,6 +264,45 @@ BLOB——渐进打开);工程目录形态(B7)再给文件粒度懒加载。唯�
 
 落位:路线图 C7;`oscillate` 周期驱动器与 step 插值先落(纯 `f(tick)`),respond+事件流其次。
 C8(手势时间线)在二者之上的命令层物化——fold 仅增 hold 回看。
+
+### 3.4 外部参照:ComfyUI 与 Bevy——ECS 与数据流(owner 轮,2026-11-28)
+
+> **owner 独立复推(2026-11-28)**:owner 经 ComfyUI 对照独立推出本节模型——线/群组/负载是实体、
+> 参数是组件、关系求值是系统、共享读写**涌现**依赖、具体配对经**关系组件**声明、ComfyUI 节点是
+> 系统实例的可视化(本身也是实体)。§2.2 的存储/调度分工获 owner 复推验证。
+
+**ComfyUI 的连线携带类型化中间对象**(MODEL/CLIP/VAE/CONDITIONING/LATENT/IMAGE 缓冲),在类型化
+socket 之间流动;执行=惰性拓扑序+对象共享+部分重算;节点参数留在本地控件。**控件↔输入双向
+转换**给每个参数槽两种形态——本地设值,或上行驱动(值的归属随之转移)。一次性批处理语义:
+workflow 是程序,每次 Queue 跑一遍。
+
+**第四维**:实体间边**不在经典 E/C/S 里**(组件挂单实体;系统做遍历)——ComfyUI 的线、Bevy 0.16
+relationships、mo2d 的关系,是三个社区给同一个缺口的补法。三种实现收敛:flecs pair / Bevy 双端
+镜像组件(`ChildOf` 前向指针+`Children` 反向邻接表,钩子保一致)/ mo2d 一等关系实体。
+
+**两种依赖**:
+
+- **涌现依赖**——系统读写相同组件:排序、失效、并行自动成立,无需声明;
+- **声明依赖**——具体配对("这个喂那个"):必须经关系组件或线声明。声明配对一次,机械依赖
+  (顺序/失效/级联)从声明中自动涌现。
+
+**Bevy 抑制涌现依赖的工具箱**:
+
+1. `ambiguous_with` / `ambiguous_with_all`——压制涌现顺序,换并行;执行序不确定——与字节确定性
+   冲突,除非合并可证顺序无关或有确定性 tie-break(冻结门把未声明的非确定并行判 FAIL);
+2. 组件粒度设计——拆列使访问不重叠(主要的确定性手段;Bevy 无字段级访问,粒度是唯一旋钮);
+3. 收窄声明访问(`Local<T>` 私有状态、`Commands` 延迟写、事件替代共享列);
+4. Schedule 拆分;
+5. 反向:`.chain()` / `.before()` / `.after()`——强加本不涌现的顺序(延迟 spawn 等)。
+
+**Bevy 超出 E/C/S 的一等概念**(清单):relationships(0.16,双端镜像组件+钩子)、observers
+(`OnAdd/OnInsert/OnRemove`——即时反应式)、required components(spawn 期组合糖)、states
+(**引擎内**的一等 FSM)、resources、events(双帧生命周期)、reflection/scenes、plugins、
+独占系统、run_if、SystemSets。
+
+**采纳短名单**:socket 类型契约(舞台/关系编辑器里错连物理不可能);observer 式"盯具体实体"
+订阅粒度(inval 细化);required components 语法(LineCore+画笔的 spawn 糖)。**不采纳**:即时
+observers 与瞬态事件(与字节确定性/能力即数据冲突——mo2d 把事件折进命令流并物化为只读手势线)。
 
 ## 4. 存储格式原则
 
